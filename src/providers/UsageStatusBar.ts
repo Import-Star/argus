@@ -22,7 +22,7 @@ function untilReset(date?: Date): string {
 }
 
 function windowIcon(window: UsageWindow): string {
-  return window.utilization >= 90 ? "$(error)" : window.utilization >= 75 ? "$(warning)" : "$(pass)";
+  return window.utilization >= 90 ? "✕" : window.utilization >= 75 ? "⚠" : "✓";
 }
 
 export class UsageStatusBar implements vscode.Disposable {
