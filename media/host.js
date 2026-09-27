@@ -105,6 +105,16 @@
     } catch (error) {
       section.innerHTML = `<div class="sync-error">Argus: this tab failed to load (${esc(error && error.message ? error.message : String(error))}).</div>`;
       console.error(`Argus: tab "${tabId}" mount() threw`, error);
+      return;
+    }
+    // The initially active tab is mounted here rather than through setActive() (which only runs on a later
+    // switch), so it needs its own onShow() call or its keydown listener (and other onShow-only setup) never runs.
+    if (tabId === activeTab) {
+      try {
+        impl.onShow?.();
+      } catch (error) {
+        console.error(`Argus: tab "${tabId}" onShow() threw`, error);
+      }
     }
   }
 
