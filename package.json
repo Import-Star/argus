@@ -1,0 +1,293 @@
+{
+  "name": "argus",
+  "displayName": "Argus",
+  "description": "Mission control for Claude Code: a live agent view of your sessions, optional Claude plan usage in the status bar, and a plugin API for extra tabs such as a kanban board and GitHub Actions.",
+  "version": "0.1.0",
+  "publisher": "importstar",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Import-Star/argus.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Import-Star/argus/issues"
+  },
+  "homepage": "https://github.com/Import-Star/argus#readme",
+  "galleryBanner": {
+    "color": "#1f1a17",
+    "theme": "dark"
+  },
+  "keywords": [
+    "claude",
+    "claude code",
+    "ai",
+    "agents",
+    "sessions",
+    "worktrees",
+    "plugins"
+  ],
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Argus runs git and gh in your workspace and installs hooks into your Claude Code settings."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Argus needs local files and the git and gh CLIs."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "argus.openControlCentre",
+        "title": "Argus: Open Control Centre"
+      },
+      {
+        "command": "argus.sessions.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "argus.sessions.open",
+        "title": "Open Session Tab",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "argus.sessions.markRead",
+        "title": "Mark Read",
+        "icon": "$(check)"
+      },
+      {
+        "command": "argus.sessions.archive",
+        "title": "Archive",
+        "icon": "$(archive)"
+      },
+      {
+        "command": "argus.sessions.unarchive",
+        "title": "Unarchive",
+        "icon": "$(history)"
+      },
+      {
+        "command": "argus.sessions.showAttention",
+        "title": "Argus: Sessions Needing You"
+      },
+      {
+        "command": "argus.sessions.installHooks",
+        "title": "Argus: Set Up Session Tracking"
+      },
+      {
+        "command": "argus.sessions.removeHooks",
+        "title": "Argus: Remove Session Tracking"
+      },
+      {
+        "command": "argus.sessions.openWorktree",
+        "title": "Open Worktree in New Window",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "argus.sessions.rename",
+        "title": "Rename Chat",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "argus.sessions.newChat",
+        "title": "New Chat",
+        "icon": "$(add)"
+      },
+      {
+        "command": "argus.usage.show",
+        "title": "Argus: Show Claude Plan Usage"
+      },
+      {
+        "command": "argus.usage.refresh",
+        "title": "Argus: Refresh Claude Plan Usage"
+      }
+    ],
+    "configuration": {
+      "title": "Argus",
+      "properties": {
+        "argus.sessions.staleAfterHours": {
+          "type": "number",
+          "default": 24,
+          "minimum": 1,
+          "description": "Closed sessions with no open PR are archived after this many hours without activity."
+        },
+        "argus.sessions.prRefreshMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "description": "How often PR states refresh in the background, for session cards."
+        },
+        "argus.sessions.retentionDays": {
+          "type": "number",
+          "default": 30,
+          "minimum": 1,
+          "description": "Session record files for sessions that are no longer open are deleted once they have not been updated for this many days."
+        },
+        "argus.sessions.scope": {
+          "type": "string",
+          "enum": [
+            "window",
+            "all"
+          ],
+          "default": "window",
+          "enumDescriptions": [
+            "Only show sessions whose folder, or git repo and worktrees, belongs to this window's workspace folders.",
+            "Show every Claude Code session on this machine in every window."
+          ],
+          "description": "Which sessions this VS Code window shows. With no folder open, all sessions are shown."
+        },
+        "argus.notifications": {
+          "type": "string",
+          "enum": [
+            "all",
+            "input",
+            "off"
+          ],
+          "default": "all",
+          "enumDescriptions": [
+            "Notify when a session needs permission, asks a question, or finishes.",
+            "Only when a session needs permission or asks a question.",
+            "No notifications."
+          ],
+          "description": "Show a VS Code notification, with a button to open the session, when a Claude Code session in this window starts waiting on you."
+        },
+        "argus.prs.cacheSeconds": {
+          "type": "number",
+          "default": 300,
+          "minimum": 30,
+          "description": "How long a fetched PR state is reused before gh is called again, in seconds."
+        },
+        "argus.prs.maxConcurrent": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Maximum concurrent gh PR sync calls."
+        },
+        "argus.usage.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Show Claude plan usage in the status bar. Reads the sign-in Claude Code stores on this machine (`~/.claude/.credentials.json`, or the macOS keychain) and sends it only to Anthropic's undocumented usage endpoint (`api.anthropic.com/api/oauth/usage`). Off by default."
+        },
+        "argus.usage.refreshMinutes": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "description": "How often Claude plan usage refreshes in the background."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "argus",
+          "title": "Argus",
+          "icon": "$(telescope)"
+        }
+      ]
+    },
+    "views": {
+      "argus": [
+        {
+          "id": "argusSessions",
+          "name": "Sessions",
+          "icon": "$(telescope)"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "argus.sessions.newChat",
+          "when": "view == argusSessions",
+          "group": "navigation@0"
+        },
+        {
+          "command": "argus.sessions.refresh",
+          "when": "view == argusSessions",
+          "group": "navigation"
+        },
+        {
+          "command": "argus.openControlCentre",
+          "when": "view == argusSessions"
+        },
+        {
+          "command": "argus.sessions.installHooks",
+          "when": "view == argusSessions"
+        },
+        {
+          "command": "argus.sessions.removeHooks",
+          "when": "view == argusSessions"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "argus.sessions.open",
+          "when": "view == argusSessions && viewItem =~ /session/",
+          "group": "inline@1"
+        },
+        {
+          "command": "argus.sessions.markRead",
+          "when": "view == argusSessions && viewItem =~ /unread/",
+          "group": "inline@2"
+        },
+        {
+          "command": "argus.sessions.archive",
+          "when": "view == argusSessions && viewItem =~ /session/ && viewItem =~ /active/",
+          "group": "inline@3"
+        },
+        {
+          "command": "argus.sessions.unarchive",
+          "when": "view == argusSessions && viewItem =~ /archived/",
+          "group": "inline@3"
+        },
+        {
+          "command": "argus.sessions.openWorktree",
+          "when": "view == argusSessions && viewItem == worktree",
+          "group": "inline@1"
+        },
+        {
+          "command": "argus.sessions.rename",
+          "when": "view == argusSessions && viewItem =~ /session/",
+          "group": "inline@0"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "argusSessions",
+        "contents": "No Claude Code sessions yet.\n[Set up session tracking](command:argus.sessions.installHooks)\nRun this once to install the hooks and the Rename Session skill, then start or resume a Claude Code session. It appears here after its first prompt.\n[New Chat](command:argus.sessions.newChat)"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./ && tsc -p tsconfig.hooks.json",
+    "compile:plugins": "tsc -p plugins/kanban && tsc -p plugins/actions",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "vscode:uninstall": "node ./out/uninstall.js",
+    "package:vsix": "npx @vscode/vsce package --no-dependencies",
+    "publish:store": "npx @vscode/vsce publish --no-dependencies",
+    "test": "echo \"No tests yet\""
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/vscode": "~1.90.0",
+    "@vscode/vsce": "^4.0.0",
+    "typescript": "^7.0.2"
+  }
+}
