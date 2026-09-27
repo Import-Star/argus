@@ -3,6 +3,8 @@
 Mission control for [Claude Code](https://claude.com/claude-code) in VS Code. See every Claude Code session at a
 glance, and know which ones are waiting on you.
 
+![Argus Demo](assets/demo.gif)
+
 ## Features
 
 ### Sessions board
