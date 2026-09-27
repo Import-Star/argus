@@ -36,12 +36,6 @@ try {
   # ELECTRON_RUN_AS_NODE is set inside VS Code terminals and breaks the CLI wrapper.
   $env:ELECTRON_RUN_AS_NODE = $null
 
-  # Remove the pre-0.1 build (it registered the same commands). Only when installed: in Windows PowerShell 5.1,
-  # stderr from a failing native command is a terminating error under $ErrorActionPreference = 'Stop'.
-  if ((& $codeCmd --list-extensions) -contains 'local.active-work-board') {
-    Invoke-Checked $codeCmd @('--uninstall-extension', 'local.active-work-board')
-  }
-
   Invoke-Checked $codeCmd @('--install-extension', $vsixFile, '--force')
 
   Write-Host "Installed $vsixFile locally."

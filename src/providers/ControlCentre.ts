@@ -4,6 +4,19 @@ import { ArgusTab, TabHandle } from "../types";
 
 const ACTIVE_TAB_KEY = "argus.controlCentre.activeTab";
 
+// media/logo-mono.svg inlined (an <img> can't take currentColor), so the header mark picks up the coral accent.
+const MARK_SVG =
+  `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">` +
+  `<defs><path id="argus-mark-eye" d="M-2.3 0C-1.3-1.7 1.3-1.7 2.3 0C1.3 1.7-1.3 1.7-2.3 0Z"/></defs>` +
+  `<g transform="translate(12 12)">` +
+  [0, 45, 90, 135, 180, 225, 270, 315]
+    .map((angle) => `<use href="#argus-mark-eye" transform="rotate(${angle}) translate(0 -10)"/>`)
+    .join("") +
+  `</g>` +
+  `<path d="M5.2 12C7.2 8.6 16.8 8.6 18.8 12C16.8 15.4 7.2 15.4 5.2 12Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>` +
+  `<circle cx="12" cy="12" r="2.3"/>` +
+  `</svg>`;
+
 interface RegisteredTab {
   tab: ArgusTab;
   badge?: number;
@@ -221,7 +234,7 @@ export class ControlCentre implements vscode.Disposable {
   </head>
   <body>
     <header class="top-bar" id="argus-top-bar">
-      <div class="mark"><span>✻</span>Argus</div>
+      <div class="mark"><span>${MARK_SVG}</span>Argus</div>
       <div class="tabs" id="argus-tabs"></div>
     </header>
     <main id="argus-tab-content">${sections}</main>

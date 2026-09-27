@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Argus</title>
+  <!-- Argus Panoptes: a watchful central eye ringed by twelve more. Some of his eyes always slept
+       while the others kept watch, so three here are closed. -->
+  <defs>
+    <g id="awake">
+      <path d="M-8 0C-4.5-6 4.5-6 8 0C4.5 6-4.5 6-8 0Z" fill="#d97757"/>
+      <circle r="2.5" fill="#1f1a17"/>
+    </g>
+    <g id="asleep" fill="none" stroke="#9a5842" stroke-width="2.2" stroke-linecap="round">
+      <path d="M-7.5-1.5C-3.5 3 3.5 3 7.5-1.5"/>
+      <path d="M-3.8 2.2L-4.8 5M0 3.3V6.2M3.8 2.2L4.8 5"/>
+    </g>
+    <clipPath id="sclera">
+      <path d="M31 64C43 45 85 45 97 64C85 83 43 83 31 64Z"/>
+    </clipPath>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="#1f1a17"/>
+  <g transform="translate(64 64)">
+    <use href="#awake" transform="rotate(0) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(30) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(60) translate(0 -46)"/>
+    <use href="#asleep" transform="rotate(90) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(120) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(150) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(180) translate(0 -46)"/>
+    <use href="#asleep" transform="rotate(210) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(240) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(270) translate(0 -46)"/>
+    <use href="#asleep" transform="rotate(300) translate(0 -46)"/>
+    <use href="#awake" transform="rotate(330) translate(0 -46)"/>
+  </g>
+  <path d="M31 64C43 45 85 45 97 64C85 83 43 83 31 64Z" fill="#f3e7da"/>
+  <g clip-path="url(#sclera)">
+    <circle cx="64" cy="64" r="15" fill="#d97757"/>
+    <circle cx="64" cy="64" r="6.5" fill="#1f1a17"/>
+    <circle cx="68.5" cy="59.5" r="2.4" fill="#f3e7da"/>
+  </g>
+</svg>

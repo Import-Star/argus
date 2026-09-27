@@ -1,9 +1,9 @@
 # Argus (VS Code extension)
 
-Core: the Claude Code Sessions board (sidebar, status bar, Control Centre Sessions tab) and a plugin API. Work
-(kanban), GitHub Actions and Claude plan usage are separate extensions in `plugins/`, built on that API. Plain
-TypeScript compiled with `tsc`; see [DEVELOPING.md](DEVELOPING.md) for the architecture map and
-[README.md](README.md) for user-facing behaviour.
+Core: the Claude Code Sessions board (sidebar, status bar, Control Centre Sessions tab), the Claude plan usage
+status bar item, and a plugin API. Work (kanban) and GitHub Actions are separate extensions in `plugins/`, built on
+that API. Plain TypeScript compiled with `tsc`; see [DEVELOPING.md](DEVELOPING.md) for the architecture map
+and [README.md](README.md) for user-facing behaviour.
 
 ## Commands
 

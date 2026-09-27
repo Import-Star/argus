@@ -51,14 +51,14 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const register = (command: string, handler: (...args: unknown[]) => unknown) =>
     context.subscriptions.push(vscode.commands.registerCommand(command, handler));
 
-  // Plan usage reads Claude Code's local sign-in, so it is opt-in (argus.usage.enabled) and toggles without a reload.
+  // Plan usage reads Claude Code's local sign-in. On by default; argus.usage.enabled turns it off without a reload.
   let usage: { service: UsageService; bar: UsageStatusBar } | undefined;
   const applyUsageSetting = () => {
     const config = vscode.workspace.getConfiguration("argus.usage");
-    if (config.get<boolean>("enabled", false) && !usage) {
+    if (config.get<boolean>("enabled", true) && !usage) {
       const service = new UsageService(Math.max(1, config.get<number>("refreshMinutes", 5)) * 60_000);
       usage = { service, bar: new UsageStatusBar(service) };
-    } else if (!config.get<boolean>("enabled", false) && usage) {
+    } else if (!config.get<boolean>("enabled", true) && usage) {
       usage.bar.dispose();
       usage.service.dispose();
       usage = undefined;

@@ -1,7 +1,7 @@
 {
   "name": "argus",
   "displayName": "Argus",
-  "description": "Mission control for Claude Code: a live agent view of your sessions, optional Claude plan usage in the status bar, and a plugin API for extra tabs such as a kanban board and GitHub Actions.",
+  "description": "Mission control for Claude Code: a live agent view of your sessions, Claude plan usage in the status bar, and a plugin API for extra tabs such as a kanban board and GitHub Actions.",
   "version": "0.1.0",
   "publisher": "importstar",
   "license": "MIT",
@@ -181,7 +181,7 @@
         "argus.usage.enabled": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Show Claude plan usage in the status bar. Reads the sign-in Claude Code stores on this machine (`~/.claude/.credentials.json`, or the macOS keychain) and sends it only to Anthropic's undocumented usage endpoint (`api.anthropic.com/api/oauth/usage`). Off by default."
+          "markdownDescription": "Show Claude plan usage in the status bar. Reads the sign-in Claude Code stores on this machine (`~/.claude/.credentials.json`, or the macOS keychain) and sends it only to Anthropic's undocumented usage endpoint (`api.anthropic.com/api/oauth/usage`). On by default; turn off to stop reading the sign-in."
         },
         "argus.usage.refreshMinutes": {
           "type": "number",
@@ -196,7 +196,7 @@
         {
           "id": "argus",
           "title": "Argus",
-          "icon": "$(telescope)"
+          "icon": "media/logo-mono.svg"
         }
       ]
     },
@@ -205,7 +205,7 @@
         {
           "id": "argusSessions",
           "name": "Sessions",
-          "icon": "$(telescope)"
+          "icon": "media/logo-mono.svg"
         }
       ]
     },

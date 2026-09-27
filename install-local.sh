@@ -46,8 +46,6 @@ unset ELECTRON_RUN_AS_NODE
 if [[ "$use_open_fallback" == "true" ]]; then
   open -a "Visual Studio Code" --args --install-extension "$vsix_file" --force
 else
-  # Remove the pre-0.1 build (it registered the same commands). Ignore failure if it is not installed.
-  "$code_cmd" --uninstall-extension local.active-work-board >/dev/null 2>&1 || true
   "$code_cmd" --install-extension "$vsix_file" --force
 fi
 

@@ -33,19 +33,19 @@ cd plugins/kanban && npm run package:vsix
 ```
 
 `package:vsix` is `npx @vscode/vsce package --no-dependencies`; it produces `argus-kanban-<version>.vsix` (or the
-matching name for `actions`/`usage`) inside that plugin's folder. There is no root script that packages or
+matching name for `actions`) inside that plugin's folder. There is no root script that packages or
 installs the plugins for you — see below.
 
 ## Run it locally
 
 Requirements: Node.js 24+ (the hook runs TypeScript natively), the `code` CLI on your PATH, and this repo cloned.
 
-**1. Extension Development Host (fast loop while editing).** Open `apps/argus` in VS Code and press `F5` (**Run
+**1. Extension Development Host (fast loop while editing).** Open the repo folder in VS Code and press `F5` (**Run
 Argus**). A second VS Code window opens with your build of the core loaded. `npm run watch` in a terminal
 recompiles the core on save; reload the host window (`Ctrl+R`) to pick up changes. Pick **Run Argus + plugins**
 instead to load the core and both plugins together (it compiles them all first).
 
-**2. Install as your daily extension.** From `apps/argus`:
+**2. Install as your daily extension.** From the repo root:
 
 ```bash
 ./install-local.sh      # macOS / Linux
@@ -65,7 +65,7 @@ Run **Argus: Set Up Session Tracking** once per machine. Re-run it after changin
 
 ## Working with an agent
 
-Point your Claude Code session at `apps/argus` and it will pick up [CLAUDE.md](CLAUDE.md), which describes the
+Point your Claude Code session at the repo and it will pick up [CLAUDE.md](CLAUDE.md), which describes the
 layout and the rules. A good loop:
 
 1. Ask the agent for a change ("add a session chip for X", "write a plugin that shows Y").
@@ -92,7 +92,7 @@ src/providers/
 src/services/
   SessionStore.ts                 merges hook records + Claude Code's session registry into cards and columns
   HookInstaller.ts                edits ~/.claude/settings.json, copies the hook script and the skill
-  GhPrSyncService.ts / gh.ts      PR state through the gh CLI, exposed to plugins as api.prs
+  GhPrSyncService.ts              PR state through the gh CLI, exposed to plugins as api.prs
   openSession.ts                  opens Claude Code tabs via claude-vscode.editor.open
   archiveSession.ts               archive plus plugin-supplied cleanup (registerArchiveCleanup)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse

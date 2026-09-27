@@ -35,8 +35,8 @@ board; installing a plugin adds its tab alongside it.
 
 ### Claude plan usage
 
-An optional status bar item showing your Claude plan usage as a percentage (amber at 75%, red at 90%). Enable it
-with `argus.usage.enabled`. It reads the Claude Code sign-in that Claude Code stores locally
+A status bar item showing your Claude plan usage as a percentage (amber at 75%, red at 90%). It is on by default;
+turn it off with `argus.usage.enabled`. It reads the Claude Code sign-in that Claude Code stores locally
 (`~/.claude/.credentials.json`, or the macOS keychain) and sends it only to Anthropic's undocumented usage
 endpoint (`https://api.anthropic.com/api/oauth/usage`). The token is not stored, cached or logged. Usage updates
 every `argus.usage.refreshMinutes` (default 5). Check Anthropic's terms on using your Claude subscription sign-in
@@ -78,7 +78,7 @@ Argus is local-only. It has no telemetry.
 | `~/.claude/argus/config.json` | Optional: `titleNudge` customises or disables that note. |
 | `~/.claude/argus/sessions/<id>.json` | One record per session, written by the hook on SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PermissionRequest, Notification, Stop and SessionEnd. It holds prompt snippets, the last assistant message and any pending tool command in plain text. Deleted `argus.sessions.retentionDays` days after the session closes. |
 | `~/.claude/sessions/<pid>.json` | Claude Code's own registry of open sessions (read only). |
-| `~/.claude/.credentials.json` | Claude Code sign-in (read only, when `argus.usage.enabled` is on). Sent only to the Anthropic usage endpoint. |
+| `~/.claude/.credentials.json` | Claude Code sign-in (read only, while `argus.usage.enabled` is on, which is the default). Sent only to the Anthropic usage endpoint. |
 
 Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (`argus.prs.cacheSeconds` and
 `argus.prs.maxConcurrent`). A plugin may make its own network calls; see its own README.
@@ -94,7 +94,7 @@ Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (
 | `argus.notifications` | `all` | Show notifications when a session needs attention: `all` (permission, question or finished), `input` (permission and questions only), or `off`. |
 | `argus.prs.cacheSeconds` | `300` | How long a fetched PR state is reused before `gh` is called again. |
 | `argus.prs.maxConcurrent` | `5` | Maximum concurrent `gh` PR sync calls. |
-| `argus.usage.enabled` | `false` | Enable Claude plan usage in the status bar. |
+| `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
 
 ## Commands

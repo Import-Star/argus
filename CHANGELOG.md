@@ -14,8 +14,10 @@ Nothing has been published yet. This is the plan for the first public release.
 - PR status for sessions through the `gh` CLI, exposed to plugins as `api.prs`.
 - A plugin API (`api/index.d.ts`, `api/webview.d.ts`): `registerTab`, `registerSessionChips`,
   `registerArchiveCleanup`, and `sessions.start` with a `link` back to a plugin's own item.
-- Claude plan usage in the status bar (off by default); enable with `argus.usage.enabled`. Reads the Claude Code
+- Claude plan usage in the status bar (on by default); turn off with `argus.usage.enabled`. Reads the Claude Code
   sign-in from `~/.claude/.credentials.json` (or macOS keychain) and sends it only to Anthropic's undocumented
   usage endpoint.
 - Work (kanban) and GitHub Actions split out into separate plugin extensions (`importstar.argus-kanban`,
   `importstar.argus-actions`), each built on the plugin API.
+- Argus logo (a watching eye ringed by twelve more, after Argus Panoptes) as the Marketplace icon, the activity bar
+  icon and the Control Centre header mark.
