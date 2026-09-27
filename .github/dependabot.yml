@@ -1,0 +1,24 @@
+version: 2
+updates:
+  # Dev dependencies only (the extensions ship with no runtime dependencies). The plugins have no lockfile of their
+  # own, so their package.json ranges are kept in step with the core's.
+  - package-ecosystem: npm
+    directories:
+      - "/"
+      - "/plugins/kanban"
+      - "/plugins/actions"
+    schedule:
+      interval: weekly
+    groups:
+      dev-dependencies:
+        dependency-type: development
+    ignore:
+      # Must match engines.vscode; bump both by hand when raising the minimum VS Code version.
+      - dependency-name: "@types/vscode"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # No workflows yet; this keeps SHA-pinned actions current once they exist.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
