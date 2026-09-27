@@ -180,7 +180,7 @@
         },
         "argus.usage.enabled": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "markdownDescription": "Show Claude plan usage in the status bar. Reads the sign-in Claude Code stores on this machine (`~/.claude/.credentials.json`, or the macOS keychain) and sends it only to Anthropic's undocumented usage endpoint (`api.anthropic.com/api/oauth/usage`). Off by default."
         },
         "argus.usage.refreshMinutes": {
