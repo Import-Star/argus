@@ -46,8 +46,8 @@ Optional plugins, built on Argus's plugin API:
 
 | Plugin | What it adds |
 | --- | --- |
-| [Argus Kanban](https://marketplace.visualstudio.com/items?itemName=importstar.argus-kanban) (`importstar.argus-kanban`) | A **Work** tab: a kanban board of tickets, with GitHub PR state and links to the Claude Code sessions working on each card. |
-| [Argus Actions](https://marketplace.visualstudio.com/items?itemName=importstar.argus-actions) (`importstar.argus-actions`) | An **Actions** tab: GitHub Actions runs, deployment approvals and workflow dispatch, through the `gh` CLI. |
+| Argus Kanban (`importstar.argus-kanban`) | A **Work** tab: a kanban board of tickets, with GitHub PR state and links to the Claude Code sessions working on each card. |
+| Argus Actions (`importstar.argus-actions`) | An **Actions** tab: GitHub Actions runs, deployment approvals and workflow dispatch, through the `gh` CLI. |
 
 Want your own tab, or a different chip on session cards? See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for
 the plugin API and a worked example.
