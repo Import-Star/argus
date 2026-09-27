@@ -1,0 +1,13 @@
+.vscode/**
+.gitignore
+src/**
+node_modules/**
+tsconfig*.json
+install-local.*
+CLAUDE.md
+DEVELOPING.md
+**/*.map
+**/*.vsix
+plugins/**
+api/**
+.claude/**
