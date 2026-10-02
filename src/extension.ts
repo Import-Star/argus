@@ -9,6 +9,7 @@ import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSe
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { checkNode, installHooks, removeHooks } from "./services/HookInstaller";
 import { newChat, openSession, openWorktree } from "./services/openSession";
+import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
 import { renameSessionPrompt, SessionStore } from "./services/SessionStore";
 import { UsageStatusBar } from "./providers/UsageStatusBar";
 import { UsageService } from "./services/UsageService";
@@ -139,19 +140,41 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
       }
       void vscode.window.showInformationMessage(
         result.added + result.updated > 0
-          ? `Argus: ${result.added} hook(s) added, ${result.updated} updated in ${result.settingsPath}, and a "Rename Session" Claude Code skill installed at ${result.skillPath}. New Claude Code sessions will use them.`
-          : "Argus: session tracker hooks and skill are already installed and up to date."
+          ? `Argus: ${result.added} hook(s) added, ${result.updated} updated in ${result.settingsPath}. New Claude Code sessions will use them.`
+          : "Argus: session tracker hooks are already installed and up to date."
       );
     } catch (error) {
       void vscode.window.showErrorMessage(`Argus: could not install hooks: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
+  const plugins = new PluginHost(context, api);
+  context.subscriptions.push(plugins);
+  void plugins.load();
+
+  register("argus.plugins.reload", () => plugins.reload());
+  register("argus.plugins.resetTrust", () => plugins.resetTrust());
+  register("argus.plugins.openFolder", () => vscode.env.openExternal(vscode.Uri.file(PLUGINS_DIR)));
+  register("argus.plugins.runCommand", async () => {
+    const commands = plugins.commands();
+    if (commands.length === 0) {
+      void vscode.window.showInformationMessage(`Argus: no plugin commands. Plugins live in ${PLUGINS_DIR}.`);
+      return;
+    }
+    const picked = await vscode.window.showQuickPick(
+      commands.map((entry) => ({ label: entry.title, description: entry.plugin, command: entry.command })),
+      { placeHolder: "Run a plugin command" }
+    );
+    if (picked) {
+      await vscode.commands.executeCommand(picked.command);
+    }
+  });
+
   register("argus.sessions.removeHooks", () => {
     try {
       const result = removeHooks();
       void vscode.window.showInformationMessage(
         result.removed > 0 || result.skillRemoved
-          ? `Argus: removed ${result.removed} hook(s) from ${result.settingsPath}${result.skillRemoved ? " and the Rename Session skill" : ""}.`
+          ? `Argus: removed ${result.removed} hook(s) from ${result.settingsPath}${result.skillRemoved ? " and the old Rename Session skill" : ""}.`
           : "Argus: no session tracker hooks were installed."
       );
     } catch (error) {

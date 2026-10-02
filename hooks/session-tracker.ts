@@ -12,8 +12,10 @@ interface SessionRecord {
   startedAt: number;
   updatedAt: number;
   stateSince: number;
+  lastMessageAt?: number;
   state: SessionState;
   title?: string;
+  titleSource?: "user";
   lastPrompt?: string;
   pending?: string;
   lastMessage?: string;
@@ -40,39 +42,12 @@ interface HookInput {
 }
 
 const DIR = path.join(os.homedir(), ".claude", "argus", "sessions");
-const CONFIG_FILE = path.join(os.homedir(), ".claude", "argus", "config.json");
 
 // A session's first prompt may carry `[argus:<plugin>:<id>]` markers (sessions.start({ link })). Plugin ids are
 // `[a-z0-9-]+`, item ids `[A-Za-z0-9_.-]+`. The legacy `[argus-card:<id>]` marker maps to `links.kanban`.
 const MARKER_RE = /\[argus:([a-z0-9-]+):([A-Za-z0-9_.-]+)\]/g;
 const LEGACY_CARD_MARKER = /\[argus-card:([A-Za-z0-9_]+)\]/g;
-const SESSION_ID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-const DEFAULT_TITLE_NUDGE =
-  "Argus: once the task is clear, give this session a short title (under 60 chars) with the argus-rename-session skill. Session id: {sessionId}. If you create or move into a git worktree, link it with the same skill.";
-
-// Fed to the agent on a session's first prompt so it names the session. {"titleNudge": "text"} in
-// ~/.claude/argus/config.json replaces the text (supports a {sessionId} placeholder); "" or false turns it off.
-function titleNudge(sessionId: string): string | undefined {
-  const template = ((): string | undefined => {
-    try {
-      const value = (JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8")) as { titleNudge?: unknown }).titleNudge;
-      if (value === undefined) {
-        return DEFAULT_TITLE_NUDGE;
-      }
-      if (value === false) {
-        return undefined;
-      }
-      if (typeof value === "string") {
-        return value.trim() ? value : undefined;
-      }
-      return DEFAULT_TITLE_NUDGE;
-    } catch {
-      return DEFAULT_TITLE_NUDGE;
-    }
-  })();
-  return template?.replace(/\{sessionId\}/g, sessionId);
-}
 const PR_URL = /https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/\d+/g;
 
 function readStdin(): string {
@@ -114,6 +89,29 @@ function save(record: SessionRecord): void {
 function clip(text: string, max: number): string {
   const flat = text.replace(/\s+/g, " ").trim();
   return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
+}
+
+// Claude Code appends an `ai-title` line to the transcript every turn, so the tail always holds the latest one.
+function aiTitle(transcriptPath: string | undefined): string | undefined {
+  if (!transcriptPath) {
+    return undefined;
+  }
+  try {
+    const fd = fs.openSync(transcriptPath, "r");
+    try {
+      const size = fs.fstatSync(fd).size;
+      const length = Math.min(size, 1_048_576);
+      const buffer = Buffer.alloc(length);
+      fs.readSync(fd, buffer, 0, length, size - length);
+      const matches = [...buffer.toString("utf8").matchAll(/"type":"ai-title","aiTitle":("(?:[^"\\]|\\.)*")/g)];
+      const last = matches.at(-1);
+      return last ? clip(JSON.parse(last[1]) as string, 120) : undefined;
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch {
+    return undefined;
+  }
 }
 
 function stripIdeTags(text: string): string {
@@ -216,16 +214,10 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       }
       if (prompt) {
         record.lastPrompt = clip(prompt, 200);
-        if (!record.title) {
-          record.title = clip(prompt, 120);
-          // UserPromptSubmit stdout is shown to the agent as context.
-          const nudge = titleNudge(record.sessionId);
-          if (nudge) {
-            process.stdout.write(`${nudge}\n`);
-          }
-        }
+        record.title ??= clip(prompt, 120);
       }
       record.pending = undefined;
+      record.lastMessageAt = now;
       setState(record, "working", now);
       return;
     }
@@ -268,11 +260,18 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       if (input.last_assistant_message) {
         record.lastMessage = clip(input.last_assistant_message, 300);
       }
+      record.lastMessageAt = now;
+      if (record.titleSource !== "user") {
+        record.title = aiTitle(input.transcript_path ?? record.transcriptPath) ?? record.title;
+      }
       setState(record, "done", now);
       return;
     case "SessionEnd":
       record.endReason = input.reason;
-      setState(record, "ended", now);
+      // Keep "working" so the board can show a session closed mid-turn as interrupted.
+      if (record.state !== "working") {
+        setState(record, "ended", now);
+      }
       return;
     default:
       return;
@@ -333,124 +332,59 @@ function hookMain(): void {
   save(record);
 }
 
-// --- CLI mode: `node session-tracker.ts set [--session <id>] [--title <text>] [--worktree <path>]...` ---
-// Lets the argus-rename-session skill update a session's record without its own script.
-
-function isAncestorOrSame(ancestor: string, dir: string): boolean {
-  const rel = path.relative(ancestor, dir);
-  return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));
+// The session a `set` call without --session means: the only one in state "working", which the PreToolUse hook has
+// just bumped because the agent is running this command.
+function workingSessionId(): string | undefined {
+  const working = fs
+    .readdirSync(DIR)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => load(file.slice(0, -5)))
+    .filter((record): record is SessionRecord => record?.state === "working" && Date.now() - record.updatedAt < 120_000);
+  if (working.length > 1) {
+    throw new Error(`${working.length} sessions are working, pass --session: ${working.map((r) => `${r.sessionId} (${r.title ?? ""})`).join(", ")}`);
+  }
+  return working[0]?.sessionId;
 }
 
-// Picks the session a CLI invocation without --session most likely refers to: the record in state "working"
-// updated most recently within the last 2 minutes, preferring one whose cwd is (or is an ancestor of) ours.
-// The PreToolUse hook has just bumped that session, because the agent is running this command through a tool.
-function guessSessionId(): string | undefined {
-  const cwd = process.cwd();
-  const cutoff = Date.now() - 2 * 60 * 1000;
-  let files: string[];
-  try {
-    files = fs.readdirSync(DIR);
-  } catch {
-    return undefined;
-  }
-  let best: SessionRecord | undefined;
-  let bestMatchesCwd = false;
-  for (const file of files) {
-    if (!file.endsWith(".json")) {
-      continue;
-    }
-    let record: SessionRecord | undefined;
-    try {
-      record = JSON.parse(fs.readFileSync(path.join(DIR, file), "utf8")) as SessionRecord;
-    } catch {
-      continue;
-    }
-    if (record.state !== "working" || record.updatedAt < cutoff) {
-      continue;
-    }
-    const matchesCwd = isAncestorOrSame(record.cwd, cwd);
-    if (!best || (matchesCwd && !bestMatchesCwd) || (matchesCwd === bestMatchesCwd && record.updatedAt > best.updatedAt)) {
-      best = record;
-      bestMatchesCwd = matchesCwd;
-    }
-  }
-  return best?.sessionId;
-}
+const PR_ARG = /^https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/\d+$/;
 
-class UsageError extends Error {}
-
-function cli(argv: string[]): void {
-  const args = argv.slice(3);
+// `node session-tracker.ts set [--session <id>] --pr <url>...` links PRs the hooks missed (e.g. a script ran gh pr create).
+function setPrs(args: string[]): void {
   let sessionId: string | undefined;
-  let title: string | undefined;
-  const worktrees: string[] = [];
+  const urls: string[] = [];
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === "--session") {
+    if (args[i] === "--session") {
       sessionId = args[++i];
-    } else if (arg === "--title") {
-      title = args[++i];
-    } else if (arg === "--worktree") {
-      const value = args[++i];
-      if (value === undefined) {
-        throw new UsageError("--worktree needs a path");
-      }
-      worktrees.push(value);
+    } else if (args[i] === "--pr" && PR_ARG.test(args[i + 1] ?? "")) {
+      urls.push(args[++i]);
     } else {
-      throw new UsageError(`unknown argument: ${arg}`);
+      throw new Error(`bad argument: ${args[i]}. Usage: set [--session <id>] --pr <github pull request url>...`);
     }
   }
-
-  if (title === undefined && worktrees.length === 0) {
-    throw new UsageError("nothing to do: pass --title and/or --worktree");
+  sessionId ??= workingSessionId();
+  const record = sessionId ? load(sessionId) : undefined;
+  if (!record || urls.length === 0) {
+    throw new Error("needs an existing session (--session <id>) and at least one --pr");
   }
-
-  const resolvedId = (sessionId && sessionId.trim()) || guessSessionId();
-  if (!resolvedId) {
-    throw new UsageError("no --session given and no recently active session was found");
-  }
-  if (!SESSION_ID_RE.test(resolvedId)) {
-    throw new UsageError(`not a valid session id: ${resolvedId}`);
-  }
-  const record = load(resolvedId);
-  if (!record) {
-    throw new UsageError(`no session record for ${resolvedId}`);
-  }
-
-  const notes: string[] = [];
-  if (title !== undefined) {
-    const trimmed = title.trim().slice(0, 120);
-    record.title = trimmed;
-    notes.push(`title set to "${trimmed}"`);
-  }
-  for (const worktree of worktrees) {
-    const dir = path.resolve(process.cwd(), worktree);
-    const root = worktreeRoot(dir);
-    if (root) {
-      linkWorktree(record, dir);
-      notes.push(`linked worktree ${root}`);
-    } else {
-      notes.push(`${dir} is not a linked git worktree`);
-    }
-  }
-
+  const added = urls.filter((url) => !record.prs.includes(url));
+  record.prs.push(...added);
   record.updatedAt = Date.now();
   save(record);
-  console.log(`Argus: ${notes.join("; ")} (session ${resolvedId}).`);
+  console.log(`Argus: linked ${added.length} PR(s), ${urls.length - added.length} already linked (session ${record.sessionId}).`);
 }
 
 function main(): void {
   if (process.argv[2] === "set") {
     try {
-      cli(process.argv);
+      setPrs(process.argv.slice(3));
     } catch (error) {
       process.stderr.write(`Argus: ${error instanceof Error ? error.message : String(error)}\n`);
       process.exitCode = 1;
     }
     return;
   }
-  // Every other invocation is a Claude Code hook: it must never throw or print unexpected output, since stdout
-  // is shown to the agent as context and a thrown error would break the event that invoked it.
+  // A Claude Code hook must never throw or print unexpected output, since stdout is shown to the agent as context
+  // and a thrown error would break the event that invoked it.
   try {
     hookMain();
   } catch {

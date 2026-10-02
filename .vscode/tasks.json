@@ -14,21 +14,6 @@
       "isBackground": true,
       "problemMatcher": "$tsc-watch",
       "label": "npm: watch"
-    },
-    {
-      "type": "npm",
-      "script": "compile:plugins",
-      "label": "npm: compile:plugins",
-      "problemMatcher": "$tsc"
-    },
-    {
-      "label": "npm: compile all",
-      "dependsOn": [
-        "npm: compile",
-        "npm: compile:plugins"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
     }
   ]
 }

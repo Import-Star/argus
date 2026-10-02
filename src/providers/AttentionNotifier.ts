@@ -34,7 +34,8 @@ export class AttentionNotifier implements vscode.Disposable {
     const mode = vscode.workspace.getConfiguration("argus").get<Mode>("notifications", "all");
     for (const card of fresh) {
       const input = card.record.state === "permission" || card.record.state === "question";
-      if (mode === "off" || (mode === "input" && !input)) {
+      // The user usually caused the interrupt (Esc), so a popup would only repeat it back to them.
+      if (card.interrupted || mode === "off" || (mode === "input" && !input)) {
         continue;
       }
       void this.notify(card, input);

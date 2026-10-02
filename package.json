@@ -66,6 +66,11 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "argus.sessions.rename",
+        "title": "Rename Chat",
+        "icon": "$(edit)"
+      },
+      {
         "command": "argus.sessions.markRead",
         "title": "Mark Read",
         "icon": "$(check)"
@@ -98,11 +103,6 @@
         "icon": "$(link-external)"
       },
       {
-        "command": "argus.sessions.rename",
-        "title": "Rename Chat",
-        "icon": "$(edit)"
-      },
-      {
         "command": "argus.sessions.newChat",
         "title": "New Chat",
         "icon": "$(add)"
@@ -114,6 +114,22 @@
       {
         "command": "argus.usage.refresh",
         "title": "Argus: Refresh Claude Plan Usage"
+      },
+      {
+        "command": "argus.plugins.reload",
+        "title": "Argus: Reload Plugins"
+      },
+      {
+        "command": "argus.plugins.runCommand",
+        "title": "Argus: Run Plugin Command"
+      },
+      {
+        "command": "argus.plugins.openFolder",
+        "title": "Argus: Open Plugins Folder"
+      },
+      {
+        "command": "argus.plugins.resetTrust",
+        "title": "Argus: Reset Plugin Trust"
       }
     ],
     "configuration": {
@@ -188,6 +204,22 @@
           "default": 5,
           "minimum": 1,
           "description": "How often Claude plan usage refreshes in the background."
+        },
+        "argus.plugins.paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Extra plugin folders to load, on top of every folder in `~/.claude/argus/plugins`. Each entry is one plugin folder containing an `argus-plugin.json`. Use it to run a plugin straight from a git checkout. `~` is expanded."
+        },
+        "argus.plugins.config": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "object"
+          },
+          "markdownDescription": "Settings for locally installed Argus plugins, keyed by plugin id: `\"argus.plugins.config\": { \"kanban\": { \"boardFile\": \"active-work.json\" } }`. Each plugin's README lists its keys. User and workspace scopes are merged key by key."
         }
       }
     },
@@ -241,6 +273,11 @@
           "group": "inline@1"
         },
         {
+          "command": "argus.sessions.rename",
+          "when": "view == argusSessions && viewItem =~ /session/",
+          "group": "inline@0"
+        },
+        {
           "command": "argus.sessions.markRead",
           "when": "view == argusSessions && viewItem =~ /unread/",
           "group": "inline@2"
@@ -259,24 +296,18 @@
           "command": "argus.sessions.openWorktree",
           "when": "view == argusSessions && viewItem == worktree",
           "group": "inline@1"
-        },
-        {
-          "command": "argus.sessions.rename",
-          "when": "view == argusSessions && viewItem =~ /session/",
-          "group": "inline@0"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "argusSessions",
-        "contents": "No Claude Code sessions yet.\n[Set up session tracking](command:argus.sessions.installHooks)\nRun this once to install the hooks and the Rename Session skill, then start or resume a Claude Code session. It appears here after its first prompt.\n[New Chat](command:argus.sessions.newChat)"
+        "contents": "No Claude Code sessions yet.\n[Set up session tracking](command:argus.sessions.installHooks)\nRun this once to install the hooks, then start or resume a Claude Code session. It appears here after its first prompt.\n[New Chat](command:argus.sessions.newChat)"
       }
     ]
   },
   "scripts": {
     "compile": "tsc -p ./ && tsc -p tsconfig.hooks.json",
-    "compile:plugins": "tsc -p plugins/kanban && tsc -p plugins/actions",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "vscode:uninstall": "node ./out/uninstall.js",

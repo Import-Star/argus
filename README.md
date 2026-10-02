@@ -12,6 +12,9 @@ glance, and know which ones are waiting on you.
 A sidebar view (Argus icon in the activity bar) groups your Claude Code sessions into **Needs you**, **Working**,
 **PR open**, **Idle** and **Archived**. Cards move on their own as session state changes.
 
+- A session stopped mid-turn (Esc, a crash or a closed tab) shows as **interrupted** in **Needs you**, so you know
+  to resume it. Sessions closed mid-turn are only caught after re-running **Argus: Set Up Session Tracking**.
+
 - Each VS Code window shows only its own sessions: those started in the window's workspace folders, or in any
   checkout or worktree of the same git repo. Set `argus.sessions.scope` to `all` to see every session in every
   window. A window with no folder open shows everything.
@@ -22,7 +25,8 @@ A sidebar view (Argus icon in the activity bar) groups your Claude Code sessions
   session.
 - Sessions archive themselves when every PR they created is merged or closed, or when a closed session made no
   PR. Archiving can also run cleanup offered by an installed plugin (you are asked first).
-- Rename a chat by double-clicking its title. Search with `/`, move with `j`/`k`, open with `Enter`, archive with
+- A card's title is the session's first prompt until you name it with Claude Code's `/rename`, which also sets
+  the name other sessions use to message it. Search with `/`, move with `j`/`k`, open with `Enter`, archive with
   `e`, new chat with `n`.
 - Notifications appear in VS Code when a session starts waiting on you: a warning when it needs permission or
   asks a question, info when finished. The **Open Session** button jumps straight to the session tab. Disable with
@@ -44,8 +48,54 @@ with third-party tools.
 
 ## Plugins
 
-Extend Argus with your own plugins via it's open API. See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for
-the plugin API and a worked example.
+A plugin adds a tab to the Control Centre, chips to session cards, or extra steps when a session is archived.
+Plugins are folders in `~/.claude/argus/plugins`, loaded by Argus on startup — nothing is installed into
+VS Code.
+
+### Installing one
+
+Clone it into the plugins folder and build it:
+
+```bash
+mkdir -p ~/.claude/argus/plugins && cd ~/.claude/argus/plugins
+
+# Work board: a kanban of tickets, with PR state and linked Claude Code sessions.
+git clone https://github.com/Import-Star/argus-kanban.git kanban
+
+# GitHub Actions: workflow runs, approvals and per-app status.
+git clone https://github.com/Import-Star/argus-actions.git actions
+
+# PR Reviews: picks up review requests from Slack and runs Claude Code reviews.
+git clone https://github.com/Import-Star/argus-pr-reviews.git pr-reviews
+
+for p in kanban actions pr-reviews; do (cd $p && npm install && npm run build); done
+```
+
+Then run **Argus: Reload Plugins**. Argus asks once per folder before it loads a plugin for the first time,
+because a plugin runs with the same access to your machine that Argus has.
+
+Update one the same way: `git pull && npm install && npm run build`, then **Argus: Reload Plugins**.
+
+Useful commands: **Argus: Reload Plugins**, **Argus: Open Plugins Folder**, **Argus: Run Plugin Command**,
+**Argus: Reset Plugin Trust**.
+
+### Configuring one
+
+Plugin settings live under one key, keyed by plugin id, and work at user or workspace level:
+
+```json
+"argus.plugins.config": {
+  "kanban": { "boardFile": "active-work.json" },
+  "actions": { "repo": "owner/name" }
+}
+```
+
+Each plugin's README lists its keys. `argus.plugins.paths` loads extra plugin folders from anywhere on disk,
+which is how you run one straight from a checkout.
+
+### Writing one
+
+See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest and a worked example.
 
 ## Requirements
 
@@ -61,10 +111,9 @@ the plugin API and a worked example.
 
 1. Install Argus.
 2. Run **Argus: Set Up Session Tracking** from the command palette (or click the link in the empty Sessions
-   view). This installs the hooks and a Claude Code skill; it's required for sessions to appear.
-3. Start or resume a Claude Code session. On its first prompt, Argus asks the agent to title the session with
-   that skill, and it appears in the sidebar. Sessions that were already open show up once they next fire a
-   hook.
+   view). This installs the hooks; it's required for sessions to appear.
+3. Start or resume a Claude Code session. It appears in the sidebar after its first prompt. Sessions that were
+   already open show up once they next fire a hook.
 
 ## What Argus reads and writes
 
@@ -74,8 +123,7 @@ Argus is local-only. It has no telemetry.
 | --- | --- |
 | `~/.claude/settings.json` | "Set Up Session Tracking" adds hook entries; "Remove Session Tracking" removes them. A `.bak` copy is written first. |
 | `~/.claude/argus/session-tracker.ts` | The hook script, copied out of the extension so updates never break the path in settings. |
-| `~/.claude/skills/argus-rename-session/SKILL.md` | The skill the hook's note asks the agent to use to title a session. |
-| `~/.claude/argus/config.json` | Optional: `titleNudge` customises or disables that note. |
+| `~/.claude/argus/plugins/` | Plugin folders, loaded on startup. Argus also writes `argus.d.ts` and `argus-webview.d.ts` here for plugin authors. |
 | `~/.claude/argus/sessions/<id>.json` | One record per session, written by the hook on SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PermissionRequest, Notification, Stop and SessionEnd. It holds prompt snippets, the last assistant message and any pending tool command in plain text. Deleted `argus.sessions.retentionDays` days after the session closes. |
 | `~/.claude/sessions/<pid>.json` | Claude Code's own registry of open sessions (read only). |
 | `~/.claude/.credentials.json` | Claude Code sign-in (read only, while `argus.usage.enabled` is on, which is the default). Sent only to the Anthropic usage endpoint. |
@@ -96,6 +144,8 @@ Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (
 | `argus.prs.maxConcurrent` | `5` | Maximum concurrent `gh` PR sync calls. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
+| `argus.plugins.config` | `{}` | Settings for locally installed plugins, keyed by plugin id. See [Plugins](#plugins). |
+| `argus.plugins.paths` | `[]` | Extra plugin folders to load, on top of everything in `~/.claude/argus/plugins`. |
 
 ## Commands
 
@@ -106,7 +156,7 @@ Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)
 - **Argus: Refresh Claude Plan Usage** (`argus.usage.refresh`)
 
-The Sessions view also has per-item and toolbar commands (refresh, open, mark read, archive/unarchive, rename,
+The Sessions view also has per-item and toolbar commands (refresh, open, mark read, archive/unarchive,
 open worktree, new chat) available from its icons and context menu.
 
 ## Troubleshooting
@@ -121,8 +171,8 @@ open worktree, new chat) available from its icons and context menu.
 
 ## Uninstalling
 
-Uninstalling the extension automatically removes the hook entries from `~/.claude/settings.json` and the
-`argus-rename-session` skill (the same as running **Argus: Remove Session Tracking** first). It keeps your
+Uninstalling the extension automatically removes the hook entries from `~/.claude/settings.json` (the same as
+running **Argus: Remove Session Tracking** first). It keeps your
 session records under `~/.claude/argus/sessions`.
 
 ## License

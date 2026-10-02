@@ -74,7 +74,7 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
       record.worktrees?.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None
     );
     const where = card.worktree ? `${card.repo}/${card.worktree}` : card.repo;
-    item.description = `${where}${card.name ? ` · ${card.name}` : ""} · ${stateLabel(card)} ${formatElapsed(record.stateSince)}`;
+    item.description = `${where}${card.name && card.name !== record.title ? ` · ${card.name}` : ""} · ${stateLabel(card)} ${formatElapsed(record.stateSince)}`;
     item.iconPath = ICON[card.column];
     item.tooltip = tooltipFor(card);
     item.contextValue = ["session", card.column === "archived" ? "archived" : "active", card.column === "needs-you" && record.state === "done" ? "unread" : ""].join(" ");
@@ -100,6 +100,12 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
 }
 
 export function stateLabel(card: SessionCard): string {
+  if (card.interrupted) {
+    return "interrupted";
+  }
+  if (card.column === "working") {
+    return "working";
+  }
   switch (card.record.state) {
     case "permission":
       return "permission";

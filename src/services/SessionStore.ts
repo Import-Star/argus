@@ -16,7 +16,9 @@ interface RegistryEntry {
   pid: number;
   sessionId: string;
   name?: string;
+  nameSource?: string;
   status?: string;
+  statusUpdatedAt?: number;
 }
 
 export const COLUMN_ORDER: SessionColumn[] = ["needs-you", "working", "idle", "pr-open", "archived"];
@@ -83,6 +85,15 @@ export class SessionStore implements vscode.Disposable {
     const state = this.readBoardState();
     const registry = this.readRegistry();
     const records = this.readRecords();
+    for (const record of records) {
+      const entry = registry.get(record.sessionId);
+      // A /rename name lives only in Claude Code's registry, which drops it when the session closes.
+      const name = entry?.nameSource === "user" ? entry.name?.slice(0, 120) : undefined;
+      if (name && name !== record.title) {
+        record.title = name;
+        this.saveTitle(record.sessionId, name);
+      }
+    }
     const inWindow = windowFilter();
     const now = Date.now();
     const staleMs = this.staleHours() * 3_600_000;
@@ -93,7 +104,7 @@ export class SessionStore implements vscode.Disposable {
       .filter((card): card is SessionCard => card !== undefined)
       .sort((a, b) => {
         const byColumn = COLUMN_ORDER.indexOf(a.column) - COLUMN_ORDER.indexOf(b.column);
-        return byColumn !== 0 ? byColumn : a.record.stateSince - b.record.stateSince;
+        return byColumn !== 0 ? byColumn : (b.record.lastMessageAt ?? b.record.startedAt) - (a.record.lastMessageAt ?? a.record.startedAt);
       });
 
     this.emitter.fire(this.cards);
@@ -128,13 +139,22 @@ export class SessionStore implements vscode.Disposable {
     this.refresh();
   }
 
-  public rename(sessionId: string, title: string): void {
+  private saveTitle(sessionId: string, title: string): void {
     const file = path.join(SESSIONS_DIR, `${sessionId}.json`);
-    const record = JSON.parse(fs.readFileSync(file, "utf8")) as SessionRecord;
-    record.title = title.slice(0, 120);
-    const tmp = `${file}.${process.pid}.tmp`;
-    fs.writeFileSync(tmp, JSON.stringify(record, null, 2));
-    fs.renameSync(tmp, file);
+    try {
+      const record = JSON.parse(fs.readFileSync(file, "utf8")) as SessionRecord;
+      record.title = title;
+      record.titleSource = "user";
+      const tmp = `${file}.${process.pid}.tmp`;
+      fs.writeFileSync(tmp, JSON.stringify(record, null, 2));
+      fs.renameSync(tmp, file);
+    } catch (error) {
+      output.appendLine(`Argus: could not save title for ${sessionId}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  public rename(sessionId: string, title: string): void {
+    this.saveTitle(sessionId, title.slice(0, 120));
     this.refresh();
   }
 
@@ -187,7 +207,8 @@ export class SessionStore implements vscode.Disposable {
     const read = (state.readAt[record.sessionId] ?? 0) >= record.stateSince;
     const archivedManually = state.archived[record.sessionId] !== undefined;
     const { repo, worktree } = describeCwd(record.cwd);
-    const column = this.columnFor(record, registry, prs, read, archivedManually, now, staleMs);
+    const interrupted = isInterrupted(record, registry);
+    const column = this.columnFor(record, registry, prs, read, archivedManually, interrupted, now, staleMs);
     if (!column) {
       return undefined;
     }
@@ -199,6 +220,7 @@ export class SessionStore implements vscode.Disposable {
       open,
       name: registry?.name,
       read,
+      interrupted,
       archivedManually,
       prs,
       column
@@ -211,6 +233,7 @@ export class SessionStore implements vscode.Disposable {
     prs: PrSummary[],
     read: boolean,
     archivedManually: boolean,
+    interrupted: boolean,
     now: number,
     staleMs: number
   ): SessionColumn | undefined {
@@ -222,11 +245,11 @@ export class SessionStore implements vscode.Disposable {
     if (closed && !record.lastPrompt && !record.title) {
       return undefined;
     }
-    const busy = registry?.status === "busy" || (!closed && record.state === "working");
+    const busy = registry?.status === "busy" || (!closed && record.state === "working" && !interrupted);
     if (archivedManually || (!busy && (allPrsSettled || (stale && record.prs.length === 0)))) {
       return "archived";
     }
-    if (record.state === "permission" || record.state === "question") {
+    if (interrupted || record.state === "permission" || record.state === "question") {
       return "needs-you";
     }
     // The main agent can Stop while background sub-agents keep the session busy, and Claude Code's own registry
@@ -331,21 +354,6 @@ export class SessionStore implements vscode.Disposable {
   }
 }
 
-export async function renameSessionPrompt(store: SessionStore, sessionId: string): Promise<void> {
-  const card = store.getCards().find((candidate) => candidate.record.sessionId === sessionId);
-  if (!card) {
-    return;
-  }
-  const title = await vscode.window.showInputBox({
-    title: "Rename chat",
-    value: card.record.title ?? "",
-    validateInput: (value) => (value.trim() ? undefined : "Title is required")
-  });
-  if (title !== undefined) {
-    store.rename(sessionId, title.trim());
-  }
-}
-
 function readJsonDir<T>(dir: string): T[] {
   let files: string[];
   try {
@@ -362,6 +370,18 @@ function readJsonDir<T>(dir: string): T[] {
     }
   }
   return items;
+}
+
+// Claude Code fires no hook on Esc, so a turn that never reached Stop shows as "working" in our record. Once the
+// registry has gone idle after our last update, or the process is gone, that turn was cut short.
+function isInterrupted(record: SessionRecord, registry: RegistryEntry | undefined): boolean {
+  if (record.state !== "working") {
+    return false;
+  }
+  if (!registry) {
+    return true;
+  }
+  return registry.status !== "busy" && (registry.statusUpdatedAt ?? 0) > record.updatedAt;
 }
 
 function isAlive(pid: number): boolean {
@@ -396,4 +416,19 @@ export function formatElapsed(sinceMs: number, now = Date.now()): string {
     return `${hours}h ${minutes % 60}m`;
   }
   return `${Math.floor(hours / 24)}d`;
+}
+
+export async function renameSessionPrompt(store: SessionStore, sessionId: string): Promise<void> {
+  const card = store.getCards().find((candidate) => candidate.record.sessionId === sessionId);
+  if (!card) {
+    return;
+  }
+  const title = await vscode.window.showInputBox({
+    title: "Rename chat",
+    value: card.record.title ?? "",
+    validateInput: (value) => (value.trim() ? undefined : "Title is required")
+  });
+  if (title !== undefined) {
+    store.rename(sessionId, title.trim());
+  }
 }

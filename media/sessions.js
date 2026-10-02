@@ -112,15 +112,17 @@
 
     stateLabel(card) {
       const s = card.record.state;
+      if (card.interrupted) return "interrupted";
       if (s === "permission") return "permission";
       if (s === "question") return "question";
       if (s === "done") return card.read ? "idle" : "finished";
-      if (s === "working") return "Working…";
+      if (card.column === "working") return "Working…";
       return card.open ? "idle" : "tab closed";
     },
 
     glyphFor(card) {
-      if (card.record.state === "working") return `<span class="glyph spin">✻</span>`;
+      if (card.interrupted) return `<span class="glyph dot">⏸</span>`;
+      if (card.column === "working") return `<span class="glyph spin">✻</span>`;
       if (card.column === "needs-you") return card.record.state === "done" ? `<span class="glyph ok">✓</span>` : `<span class="glyph dot">⏺</span>`;
       return `<span class="glyph">○</span>`;
     },
@@ -140,13 +142,13 @@
       const r = card.record;
       const id = esc(r.sessionId);
       const where = card.worktree ? `${card.repo} / ${card.worktree}` : card.repo;
-      const working = r.state === "working";
+      const working = card.column === "working";
       const pendingTool = r.state === "question" ? "AskUserQuestion" : (r.pending || "").split(" ")[0];
       const pendingArgs = r.state === "question" ? r.pending : (r.pending || "").slice(pendingTool.length + 1);
       const prompt = r.pending
         ? `<div class="prompt mono">${esc(pendingTool)}${r.state === "question" ? "" : `(${esc(pendingArgs)})`}<div class="q">${r.state === "question" ? esc(pendingArgs) : "Waiting for approval"}</div></div>`
         : "";
-      const activity = working && r.lastTool ? `<div class="activity mono">⎿ ${esc(r.lastTool)}</div>` : "";
+      const activity = r.state === "working" && r.lastTool ? `<div class="activity mono">⎿ ${esc(r.lastTool)}</div>` : "";
       const last = !r.pending && !working && r.lastMessage && card.column !== "archived" ? `<div class="last">${esc(r.lastMessage.replace(/\*\*|__|`|^#+\s*/g, ""))}</div>` : "";
       const chips = [
         ...card.prs.map((pr) => this.prChip(pr)),
@@ -162,8 +164,8 @@
       ].join("");
       return `
         <article class="row col-${esc(card.column)}${working ? " working" : ""}${this.state.selected === r.sessionId ? " selected" : ""}" data-session-id="${id}">
-          <div class="l1">${this.glyphFor(card)}<span class="title" data-action="rename-session" data-session-id="${id}" title="Double-click to rename">${esc(r.title || "New chat")}</span><span class="t mono" data-since="${r.stateSince}" data-precise="${working}">${esc(working ? this.ctx.elapsedPrecise(r.stateSince) : this.ctx.elapsed(r.stateSince))}</span><div class="actions mono">${actions}</div></div>
-          <div class="l2 mono"><span class="state">${esc(this.stateLabel(card))}</span> · ${esc(where)}${card.name && card.open ? ` · ${esc(card.name)}` : ""}</div>
+          <div class="l1">${this.glyphFor(card)}<span class="title">${esc(r.title || "New chat")}</span><span class="t mono" data-since="${r.stateSince}" data-precise="${working}">${esc(working ? this.ctx.elapsedPrecise(r.stateSince) : this.ctx.elapsed(r.stateSince))}</span><div class="actions mono">${actions}</div></div>
+          <div class="l2 mono"><span class="state">${esc(this.stateLabel(card))}</span> · ${esc(where)}${card.name && card.open && card.name !== r.title ? ` · ${esc(card.name)}` : ""}</div>
           ${prompt}${activity}${last}
           ${chips ? `<div class="chips mono">${chips}</div>` : ""}
         </article>`;
@@ -210,7 +212,7 @@
         </div>
         ${this.statusLine()}
         ${this.renderBoard()}
-        <footer class="keys"><kbd>/</kbd>search <kbd>j</kbd><kbd>k</kbd>move <kbd>↵</kbd>open <kbd>e</kbd>archive <kbd>n</kbd>new chat · double-click a title to rename</footer>
+        <footer class="keys"><kbd>/</kbd>search <kbd>j</kbd><kbd>k</kbd>move <kbd>↵</kbd>open <kbd>e</kbd>archive <kbd>n</kbd>new chat</footer>
       `;
 
       this.bindEvents();
@@ -234,14 +236,13 @@
       const actions = {
         "open-session": () => (sessionId) => this.ctx.openSession(sessionId),
         "read-session": () => (sessionId) => this.ctx.post({ type: "markSessionRead", sessionId }),
-        "rename-session": () => (sessionId) => this.ctx.post({ type: "renameSession", sessionId }),
         "archive-session": () => (sessionId) => this.ctx.post({ type: "archiveSession", sessionId }),
         "unarchive-session": () => (sessionId) => this.ctx.post({ type: "unarchiveSession", sessionId })
       };
       for (const [action, makeHandler] of Object.entries(actions)) {
         const handler = makeHandler();
         for (const el of this.root.querySelectorAll(`[data-action='${action}']`)) {
-          el.addEventListener(action === "rename-session" ? "dblclick" : "click", (event) => {
+          el.addEventListener("click", (event) => {
             event.stopPropagation();
             handler(el.getAttribute("data-session-id"));
           });
