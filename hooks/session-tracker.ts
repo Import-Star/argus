@@ -267,7 +267,6 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       record.lastTool = undefined;
       if (input.last_assistant_message) {
         record.lastMessage = clip(input.last_assistant_message, 300);
-        collectPrs(record, input.last_assistant_message);
       }
       setState(record, "done", now);
       return;
