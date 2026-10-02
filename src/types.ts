@@ -10,7 +10,10 @@ export type {
   CleanupItem,
   ArgusTab,
   TabHandle,
-  ArgusApi
+  ArgusApi,
+  PluginConfig,
+  ArgusPluginContext,
+  ArgusPluginModule
 } from "../api";
 
 // Core-internal state, not part of the plugin API.

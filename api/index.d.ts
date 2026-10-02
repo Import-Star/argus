@@ -20,8 +20,11 @@ export interface SessionRecord {
   startedAt: number;
   updatedAt: number;
   stateSince: number;
+  lastMessageAt?: number;
   state: SessionState;
   title?: string;
+  // "user" once set by /rename or a board rename, so the hook stops replacing it with Claude's title.
+  titleSource?: "user";
   lastPrompt?: string;
   pending?: string;
   lastMessage?: string;
@@ -65,6 +68,8 @@ export interface SessionCard {
   open: boolean;
   name?: string;
   read: boolean;
+  // The session stopped mid-turn (Esc, crash or closed tab) and needs resuming.
+  interrupted: boolean;
   archivedManually: boolean;
   prs: PrSummary[];
 }
@@ -138,4 +143,38 @@ export interface ArgusApi {
   registerSessionChips(provider: (card: SessionCard) => SessionChip[] | undefined): vscode.Disposable & { refresh(): void };
   // Extra cleanup offered when a session is archived. Return [] when there is nothing to do.
   registerArchiveCleanup(provider: (card: SessionCard) => Promise<CleanupItem[]> | CleanupItem[]): vscode.Disposable;
+}
+
+// A plugin's slice of the "argus.plugins" setting. Keys missing from settings fall back to the defaults in the
+// plugin's argus-plugin.json. User and workspace scopes are merged key by key, so a workspace can override one
+// key without restating the rest.
+export interface PluginConfig {
+  get<T>(key: string): T | undefined;
+  get<T>(key: string, fallback: T): T;
+  // Writes argus.plugins.<pluginId>.<key>. Target defaults to the global (user) settings file.
+  update(key: string, value: unknown, target?: vscode.ConfigurationTarget): Promise<void>;
+  // Fires with the keys whose values changed.
+  readonly onDidChange: vscode.Event<readonly string[]>;
+}
+
+// What a locally installed plugin gets in place of vscode.ExtensionContext. Argus owns the plugin's lifetime:
+// everything pushed to `subscriptions` is disposed when plugins are reloaded or Argus shuts down.
+export interface ArgusPluginContext {
+  readonly pluginId: string;
+  subscriptions: { dispose(): unknown }[];
+  // The plugin's own folder, for media files handed to ArgusTab.script / .style.
+  readonly extensionUri: vscode.Uri;
+  readonly extensionPath: string;
+  // A folder of the plugin's own under Argus's global storage. Created before activate() is called.
+  readonly globalStorageUri: vscode.Uri;
+  readonly globalState: vscode.Memento;
+  readonly workspaceState: vscode.Memento;
+  readonly config: PluginConfig;
+}
+
+// The shape of a plugin's main module (argus-plugin.json "main"). Argus requires the file and calls activate().
+// Inside plugin files `import * as vscode from "vscode"` works as it does in any extension.
+export interface ArgusPluginModule {
+  activate(argus: ArgusApi, context: ArgusPluginContext): void | Promise<void>;
+  deactivate?(): void | Promise<void>;
 }

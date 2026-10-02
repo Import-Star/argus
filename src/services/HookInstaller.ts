@@ -11,6 +11,8 @@ const INSTALLED_SCRIPT = path.join(ARGUS_DIR, SCRIPT);
 const SKILL_NAME = "argus-rename-session";
 const SKILL_DIR = path.join(CLAUDE_DIR, "skills", SKILL_NAME);
 const SKILL_FILE = path.join(SKILL_DIR, "SKILL.md");
+const LINK_SKILL_NAME = "argus-link-prs";
+const LINK_SKILL_DIR = path.join(CLAUDE_DIR, "skills", LINK_SKILL_NAME);
 
 interface HookEntry {
   matcher?: string;
@@ -46,14 +48,12 @@ function installScript(extensionPath: string): string {
   return `node --no-warnings "${INSTALLED_SCRIPT}"`;
 }
 
-// Writes the argus-rename-session skill into ~/.claude/skills, with {{SCRIPT}} replaced by the quoted, absolute
-// path to the installed hook script (the same one the "set" CLI mode runs from).
-function installSkill(extensionPath: string): string {
-  const template = fs.readFileSync(path.join(extensionPath, "skills", SKILL_NAME, "SKILL.md"), "utf8");
-  const filled = template.split("{{SCRIPT}}").join(`node "${INSTALLED_SCRIPT}"`);
-  fs.mkdirSync(SKILL_DIR, { recursive: true });
-  fs.writeFileSync(SKILL_FILE, filled);
-  return SKILL_FILE;
+// Writes the argus-link-prs skill into ~/.claude/skills, with {{SCRIPT}} replaced by the command that runs the
+// installed hook script.
+function installLinkSkill(extensionPath: string): void {
+  const template = fs.readFileSync(path.join(extensionPath, "skills", LINK_SKILL_NAME, "SKILL.md"), "utf8");
+  fs.mkdirSync(LINK_SKILL_DIR, { recursive: true });
+  fs.writeFileSync(path.join(LINK_SKILL_DIR, "SKILL.md"), template.split("{{SCRIPT}}").join(`node "${INSTALLED_SCRIPT}"`));
 }
 
 // Returns a problem description when node is missing or older than 24, else undefined.
@@ -66,7 +66,7 @@ export function checkNode(): string | undefined {
   }
 }
 
-export function installHooks(extensionPath: string): { added: number; updated: number; settingsPath: string; skillPath: string } {
+export function installHooks(extensionPath: string): { added: number; updated: number; settingsPath: string } {
   const exists = fs.existsSync(SETTINGS);
   const settings = (exists ? JSON.parse(fs.readFileSync(SETTINGS, "utf8")) : {}) as { hooks?: Record<string, HookEntry[]> };
   settings.hooks ??= {};
@@ -99,20 +99,25 @@ export function installHooks(extensionPath: string): { added: number; updated: n
   fs.mkdirSync(path.dirname(SETTINGS), { recursive: true });
   fs.writeFileSync(SETTINGS, `${JSON.stringify(settings, null, 2)}\n`);
 
-  const skillPath = installSkill(extensionPath);
+  // Earlier versions installed a skill for agents to title sessions; titles now come from Claude Code's /rename.
+  removeSkill();
+  installLinkSkill(extensionPath);
 
-  return { added, updated, settingsPath: SETTINGS, skillPath };
+  return { added, updated, settingsPath: SETTINGS };
 }
 
-// True when ~/.claude/skills/argus-rename-session/SKILL.md exists and its frontmatter names our skill (so we
-// never delete a folder of the same name the user repurposed).
-function isOurSkill(): boolean {
+// Deletes ~/.claude/skills/argus-rename-session only when its frontmatter names our skill (so we never delete a
+// folder of the same name the user repurposed).
+function removeSkill(): boolean {
   try {
-    const content = fs.readFileSync(SKILL_FILE, "utf8");
-    return /^name:\s*argus-rename-session\s*$/m.test(content);
+    if (!/^name:\s*argus-rename-session\s*$/m.test(fs.readFileSync(SKILL_FILE, "utf8"))) {
+      return false;
+    }
   } catch {
     return false;
   }
+  fs.rmSync(SKILL_DIR, { recursive: true, force: true });
+  return true;
 }
 
 export function removeHooks(): { removed: number; settingsPath: string; skillRemoved: boolean } {
@@ -145,13 +150,10 @@ export function removeHooks(): { removed: number; settingsPath: string; skillRem
     }
   }
 
-  let skillRemoved = false;
-  if (isOurSkill()) {
-    fs.rmSync(SKILL_DIR, { recursive: true, force: true });
-    skillRemoved = true;
-  }
+  const skillRemoved = removeSkill();
 
   // Keep sessions/, board.json and config.json; only the hook script and its module marker are ours to remove.
+  fs.rmSync(LINK_SKILL_DIR, { recursive: true, force: true });
   fs.rmSync(INSTALLED_SCRIPT, { force: true });
   fs.rmSync(path.join(ARGUS_DIR, "package.json"), { force: true });
 

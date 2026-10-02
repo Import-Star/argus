@@ -8,6 +8,4 @@ CLAUDE.md
 DEVELOPING.md
 **/*.map
 **/*.vsix
-plugins/**
-api/**
 .claude/**

@@ -3,7 +3,7 @@ import { ArgusTab, SessionCard, SessionChip, TabHandle } from "../types";
 import { ArchiveCleanupRegistry, archiveWithCleanup } from "../services/archiveSession";
 import { SessionChipsRegistry } from "../api";
 import { newChat, openWorktree } from "../services/openSession";
-import { renameSessionPrompt, SessionStore } from "../services/SessionStore";
+import { SessionStore } from "../services/SessionStore";
 
 interface WireChip {
   text: string;
@@ -19,7 +19,6 @@ type FromWebview =
   | { type: "newChat" }
   | { type: "refreshSessions" }
   | { type: "markSessionRead"; sessionId: string }
-  | { type: "renameSession"; sessionId: string }
   | { type: "archiveSession"; sessionId: string }
   | { type: "unarchiveSession"; sessionId: string }
   | { type: "openWorktree"; folder: string }
@@ -71,9 +70,6 @@ export function createSessionsTab(
           return;
         case "markSessionRead":
           sessions.markRead(msg.sessionId);
-          return;
-        case "renameSession":
-          await renameSessionPrompt(sessions, msg.sessionId);
           return;
         case "archiveSession":
           await archiveWithCleanup(sessions, archiveCleanup, msg.sessionId);

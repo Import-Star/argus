@@ -10,11 +10,10 @@ another CI provider, a different status bar item.
 package.json, src/, hooks/, skills/, media/      the core extension (importstar.argus)
 api/index.d.ts                                    the plugin API (extension side)
 api/webview.d.ts                                   the plugin API (webview side)
-plugins/kanban/                                    Work tab (importstar.argus-kanban)
-plugins/actions/                                    Actions tab (importstar.argus-actions)
 ```
 
-Each plugin is its own VS Code extension with its own `package.json`, `README.md`, `CHANGELOG.md` and `out/`.
+Plugins are not in this repo. Each one is a folder in `~/.claude/argus/plugins`, loaded by the core at startup.
+See [Writing a plugin](#writing-a-plugin), and the README for the three we maintain.
 
 ## Build it
 
@@ -22,28 +21,20 @@ From the repo root:
 
 ```bash
 npm install
-npm run compile          # core: tsc -p ./ plus the hook's type-check
-npm run compile:plugins   # both plugins, one after another
+npm run compile      # tsc -p ./ plus the hook's type-check
+npm run package:vsix  # npx @vscode/vsce package --no-dependencies
 ```
 
-Each plugin also packages from its own folder:
-
-```bash
-cd plugins/kanban && npm run package:vsix
-```
-
-`package:vsix` is `npx @vscode/vsce package --no-dependencies`; it produces `argus-kanban-<version>.vsix` (or the
-matching name for `actions`) inside that plugin's folder. There is no root script that packages or
-installs the plugins for you — see below.
+A plugin builds from its own folder with `npm install && npm run build`. It is never packaged.
 
 ## Run it locally
 
 Requirements: Node.js 24+ (the hook runs TypeScript natively), the `code` CLI on your PATH, and this repo cloned.
 
 **1. Extension Development Host (fast loop while editing).** Open the repo folder in VS Code and press `F5` (**Run
-Argus**). A second VS Code window opens with your build of the core loaded. `npm run watch` in a terminal
-recompiles the core on save; reload the host window (`Ctrl+R`) to pick up changes. Pick **Run Argus + plugins**
-instead to load the core and both plugins together (it compiles them all first).
+Argus**). A second VS Code window opens with your build of the core loaded, and it loads the plugins in
+`~/.claude/argus/plugins` like any other window. `npm run watch` in a terminal recompiles the core on save;
+reload the host window (`Ctrl+R`) to pick up changes.
 
 **2. Install as your daily extension.** From the repo root:
 
@@ -52,16 +43,14 @@ instead to load the core and both plugins together (it compiles them all first).
 ./install-local.ps1     # Windows
 ```
 
-These scripts only build and install the **core** extension: they run `npm install`, `npm run compile` and
-`npm run package:vsix` in the root, then `code --install-extension argus-<version>.vsix --force`. They do not
-touch `plugins/`. To install a plugin locally, `cd` into its folder, run `npm install && npm run compile && npm
-run package:vsix`, then `code --install-extension argus-<plugin>-<version>.vsix --force` yourself.
+These run `npm install`, `npm run compile` and `npm run package:vsix`, then
+`code --install-extension argus-<version>.vsix --force`. Plugins are separate: clone them into
+`~/.claude/argus/plugins` and build each one there.
 
 After either script, run `Developer: Reload Window`. If you also installed Argus from the Marketplace, disable
 one copy so the two do not both register the same commands.
 
-Run **Argus: Set Up Session Tracking** once per machine. Re-run it after changing `hooks/session-tracker.ts` or
-`skills/argus-rename-session/SKILL.md`, because both are copied out to `~/.claude` on install.
+Run **Argus: Set Up Session Tracking** once per machine. Re-run it after changing `hooks/session-tracker.ts`, because it is copied out to `~/.claude` on install.
 
 ## Working with an agent
 
@@ -69,9 +58,9 @@ Point your Claude Code session at the repo and it will pick up [CLAUDE.md](CLAUD
 layout and the rules. A good loop:
 
 1. Ask the agent for a change ("add a session chip for X", "write a plugin that shows Y").
-2. It edits, then runs `npm run compile` (and `npm run compile:plugins` if a plugin changed). Compile errors are
-   the main check; there are no tests yet.
-3. You press `F5` or run the install script and try it.
+2. It edits, then runs `npm run compile` (or `npm run build` in a plugin folder). Compile errors are the main
+   check; there are no tests yet.
+3. You press `F5` or run the install script and try it. For a plugin change, **Argus: Reload Plugins** is enough.
 
 Ask it to keep changes small and to update the README and CHANGELOG when behaviour changes.
 
@@ -91,17 +80,16 @@ src/providers/
   UsageStatusBar.ts               Claude plan usage status bar item
 src/services/
   SessionStore.ts                 merges hook records + Claude Code's session registry into cards and columns
-  HookInstaller.ts                edits ~/.claude/settings.json, copies the hook script and the skill
+  HookInstaller.ts                edits ~/.claude/settings.json, copies the hook script
   GhPrSyncService.ts              PR state through the gh CLI, exposed to plugins as api.prs
   openSession.ts                  opens Claude Code tabs via claude-vscode.editor.open
   archiveSession.ts               archive plus plugin-supplied cleanup (registerArchiveCleanup)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse
   UsageService.ts                 Claude plan usage, reads from Anthropic's OAuth endpoint
+  PluginHost.ts                   finds, loads and reloads plugin folders; owns their lifetime
+  PluginConfig.ts                 a plugin's slice of argus.plugins.config
 hooks/session-tracker.ts         runs inside Claude Code hooks, writes session JSON
-skills/argus-rename-session/     the skill template installed to ~/.claude/skills
 media/host.js, styles.css        Control Centre webview shell: tab switching, shared CSS classes, timers
-plugins/kanban/                  Work tab plugin; the fullest example of the plugin API
-plugins/actions/                 Actions tab plugin; also bundles vendor/js-yaml.min.js to parse workflow YAML
 ```
 
 Data flow: Claude Code fires a hook, `session-tracker` writes `~/.claude/argus/sessions/<id>.json`,
@@ -111,59 +99,145 @@ bar and Sessions tab all subscribe to its `onDidChange`. The Control Centre webv
 
 ## Writing a plugin
 
-A plugin is an ordinary VS Code extension. To use the Argus API:
+A plugin is a folder in `~/.claude/argus/plugins` with an `argus-plugin.json` in it. Argus finds it on startup,
+loads it into its own process and calls `activate()`. There is nothing to package and nothing to install into
+VS Code, and **Argus: Reload Plugins** picks up a rebuild without reloading the window.
 
-**1. Declare the dependency**, so VS Code activates Argus first and your extension fails gracefully without it:
+Loading a plugin runs its code with the same access Argus has to this machine, so Argus asks once per folder
+before it loads one for the first time. **Argus: Reset Plugin Trust** makes it ask again.
 
-```json
-"extensionDependencies": ["importstar.argus"]
+### Layout
+
+```
+my-plugin/
+  argus-plugin.json      the manifest Argus reads
+  package.json           a plain npm package: typescript and @types, no VS Code fields
+  tsconfig.json
+  src/extension.ts       exports activate(argus, context)
+  out/extension.js       what "main" points at, built by npm run build
+  media/my-plugin.js     the tab's webview script
+  media/my-plugin.css    the tab's stylesheet (optional)
+  types/argus.d.ts       a copy of the API types
 ```
 
-**2. Get the API in `activate()`:**
+`~/.claude/argus/plugins/argus.d.ts` and `argus-webview.d.ts` are written there by the core every time it
+starts, so they always match the Argus you are running. Copy them into your plugin and refresh them with a
+script of your own:
 
-```ts
-import type { ArgusApi } from "../../../api"; // or wherever api/ sits relative to your plugin
+```json
+"sync:types": "cp ~/.claude/argus/plugins/argus.d.ts types/argus.d.ts && cp ~/.claude/argus/plugins/argus-webview.d.ts types/argus-webview.d.ts"
+```
 
-const extension = vscode.extensions.getExtension<ArgusApi>("importstar.argus");
-const api = await extension?.activate();
-if (!api || api.version < 1) {
-  return; // Argus is missing or too old
+### The manifest
+
+```json
+{
+  "id": "my-plugin",
+  "name": "My Plugin",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "main": "out/extension.js",
+  "config": { "refreshSeconds": 30 },
+  "commands": [{ "command": "argus.myPlugin.open", "title": "Argus: Open My Plugin" }]
 }
 ```
 
-**3. Add a tab with `registerTab`:**
+- `id` is lowercase letters, digits and dashes, and must be unique across loaded plugins.
+- `main` is relative to the folder and may not point outside it.
+- `apiVersion` is the plugin API this needs. Argus skips a plugin that asks for more than it provides.
+- `config` holds the default value of each setting. See [Settings](#settings).
+- `commands` is what **Argus: Run Plugin Command** lists. Register each one yourself in `activate()`.
+
+### The entry point
 
 ```ts
-const handle = api.registerTab({
-  id: "kanban",              // unique, lowercase [a-z0-9-]
-  title: "Work",
-  order: 10,                  // lower sorts first; the core Sessions tab is 0
-  script: vscode.Uri.joinPath(context.extensionUri, "media", "kanban.js"),
-  style: vscode.Uri.joinPath(context.extensionUri, "media", "kanban.css"),
-  onMessage(message) { /* handle a message the webview posted */ },
-  onDidChangeVisibility(visible) { /* start/stop polling */ }
-});
-context.subscriptions.push(handle);
+import * as vscode from "vscode";
+import type { ArgusApi, ArgusPluginContext } from "../types/argus";
+
+export function activate(argus: ArgusApi, context: ArgusPluginContext): void {
+  const handle = argus.registerTab({
+    id: "my-plugin",           // unique, lowercase [a-z0-9-]
+    title: "Mine",
+    order: 10,                  // lower sorts first; the core Sessions tab is 0
+    script: vscode.Uri.joinPath(context.extensionUri, "media", "my-plugin.js"),
+    style: vscode.Uri.joinPath(context.extensionUri, "media", "my-plugin.css"),
+    onMessage(message) { /* handle a message the webview posted */ },
+    onDidChangeVisibility(visible) { /* start/stop polling */ }
+  });
+
+  context.subscriptions.push(
+    handle,
+    vscode.commands.registerCommand("argus.myPlugin.open", () => argus.openControlCentre("my-plugin"))
+  );
+}
+
+export function deactivate(): void {}  // optional
 ```
+
+`import * as vscode from "vscode"` works in any file of the plugin, as it does in an extension. `deactivate()`
+and everything pushed to `context.subscriptions` run when plugins are reloaded or VS Code shuts down.
+
+`context` is an `ArgusPluginContext`, not a `vscode.ExtensionContext`: `pluginId`, `subscriptions`,
+`extensionUri` and `extensionPath` (your folder), `globalStorageUri` (a folder of your own, already created),
+`globalState`, `workspaceState` and `config`.
 
 `handle.post(message)` sends to your tab's webview script; `handle.setBadge(count)` sets the number on the tab.
 
-**4. Optional extras**, both usable without a tab:
+### Settings
 
-- `api.registerSessionChips(card => chips)` adds a small label to session cards (e.g. a linked ticket). Called on
-  every render, so keep it fast; call `.refresh()` on the returned handle when your data changes without a
-  session change.
-- `api.registerArchiveCleanup(card => items)` offers extra steps when a session is archived (e.g. "remove work
-  card"). Return `[]` when there is nothing to do for that card.
+A plugin's settings live under one core-owned key, in normal VS Code settings, so a user can set them per user
+or per workspace and Settings Sync carries them:
 
-**5. Start a linked session** with `api.sessions.start`:
+```json
+"argus.plugins.config": {
+  "my-plugin": { "refreshSeconds": 60 }
+}
+```
+
+Read them through `context.config`, which falls back to the `config` block of your manifest:
 
 ```ts
-await api.sessions.start({
+const seconds = context.config.get("refreshSeconds", 30);
+context.config.onDidChange((keys) => {
+  if (keys.includes("refreshSeconds")) { restartTimer(); }
+});
+await context.config.update("refreshSeconds", 15);
+```
+
+The user and workspace scopes are merged key by key, so a workspace can override one key without restating the
+rest. Document your keys in your plugin's README: they do not appear in the Settings UI.
+
+### Optional extras
+
+Both work without a tab:
+
+- `argus.registerSessionChips(card => chips)` adds a small label to session cards (e.g. a linked ticket). Called
+  on every render, so keep it fast; call `.refresh()` on the returned handle when your data changes without a
+  session change.
+- `argus.registerArchiveCleanup(card => items)` offers extra steps when a session is archived (e.g. "remove work
+  card"). Return `[]` when there is nothing to do for that card.
+
+### Start a linked session
+
+```ts
+await argus.sessions.start({
   prompt: "Fix the login bug",
-  link: { plugin: "kanban", id: card.id } // sets record.links.kanban = card.id once the prompt is submitted
+  link: { plugin: "my-plugin", id: card.id } // sets record.links["my-plugin"] = card.id once the prompt is submitted
 });
 ```
+
+### Developing against a checkout
+
+Point `argus.plugins.paths` at the folder instead of copying it into `~/.claude/argus/plugins`:
+
+```json
+"argus.plugins.paths": ["~/code/argus-my-plugin"]
+```
+
+Then the loop is: edit, `npm run build`, **Argus: Reload Plugins**.
+
+If a plugin throws on the way up, Argus logs it to the **Argus Plugins** output channel and carries on loading
+the others.
 
 ### Minimal webview-side tab
 
@@ -199,8 +273,9 @@ second as elapsed time; add `data-precise="true"` for seconds.
 `{ type: "ready" }` on mount and the extension side must answer with full state — never assume your first `post`
 from the extension arrives.
 
-`plugins/kanban` is the fullest example: a board webview, `registerSessionChips`, `registerArchiveCleanup`, and
-`sessions.start` with `link`, all wired together in `src/extension.ts` and `src/kanbanController.ts`.
+[argus-kanban](https://github.com/Import-Star/argus-kanban) is the fullest example: a board webview,
+`registerSessionChips`, `registerArchiveCleanup` and `sessions.start` with `link`, wired together in
+`src/extension.ts` and `src/kanbanController.ts`.
 
 ## Conventions
 
@@ -208,29 +283,29 @@ from the extension arrives.
   syntax (no enums, namespaces or parameter properties). `tsc` type-checks it via `tsconfig.hooks.json`. It must
   stay dependency-free and fast. It runs on every Claude Code event, so never make it slow, and never let it
   throw or write to stdout (stdout of some hooks is shown to the agent).
-- `api/*.d.ts` is the public plugin contract: changes must stay backwards compatible, or bump `version`.
+- `api/*.d.ts` is the public plugin contract: changes must stay backwards compatible, or bump `version` and
+  `API_VERSION` in `PluginHost.ts`. The core copies both files into `~/.claude/argus/plugins` on every start.
 - Plugins must only use the API, never import core code.
 - Every Control Centre webview has a strict CSP: no inline scripts, no remote scripts. Escape all interpolated
   text with `ctx.esc()`.
 - Nothing may be specific to one company or repo. Use settings instead of constants.
 - Never send or log the Claude OAuth token (relevant to `UsageService.ts`).
 - Keep public behaviour in the relevant README and add a CHANGELOG entry, for the core or the plugin you changed.
+  A plugin's settings only exist in its README, so a new key that is not written up is a key nobody will find.
 
 ## Publish your own build
 
-Use this for your own fork or a private team build. Core and each plugin publish separately, as separate
-Marketplace listings.
+Use this for your own fork or a private team build. Only the core is published; plugins are cloned, not
+installed from the Marketplace.
 
 1. Create a publisher at <https://marketplace.visualstudio.com/manage> and a Personal Access Token (Azure DevOps,
    scope `Marketplace > Manage`).
-2. In the core's `package.json`, and in each plugin's `package.json` you're publishing, set `publisher` to
-   yours, and update `repository`, `bugs` and `homepage`.
-3. Bump `version` (core and/or plugin), update the matching `CHANGELOG.md`.
-4. From that package's own folder: `npx @vscode/vsce login <publisher>` then `npm run publish:store` (core) or
-   `npx @vscode/vsce publish --no-dependencies` (a plugin, which has no `publish:store` script). To only build the
-   file, `npm run package:vsix`.
+2. In `package.json`, set `publisher` to yours, and update `repository`, `bugs` and `homepage`.
+3. Bump `version` and update `CHANGELOG.md`.
+4. `npx @vscode/vsce login <publisher>` then `npm run publish:store`. To only build the file,
+   `npm run package:vsix`.
 5. For Open VSX (VS Code forks such as VSCodium), use `npx ovsx publish` from the same folder.
 
-Before publishing, check the packaged file list with `npx @vscode/vsce ls` (run inside the folder you're
-publishing) and run through the README's "Getting started" steps in a clean VS Code profile (`code
---profile-temp`) to confirm a first-time user can get sessions to appear.
+Before publishing, check the packaged file list with `npx @vscode/vsce ls` — `api/*.d.ts` must be in it, because
+the core copies those out for plugin authors — and run through the README's "Getting started" steps in a clean
+VS Code profile (`code --profile-temp`) to confirm a first-time user can get sessions to appear.

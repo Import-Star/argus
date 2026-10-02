@@ -5,21 +5,13 @@
       "name": "Run Argus (Extension Development Host)",
       "type": "extensionHost",
       "request": "launch",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-      "outFiles": ["${workspaceFolder}/out/**/*.js"],
-      "preLaunchTask": "npm: compile"
-    },
-    {
-      "name": "Run Argus + plugins (Extension Development Host)",
-      "type": "extensionHost",
-      "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionDevelopmentPath=${workspaceFolder}/plugins/kanban",
-        "--extensionDevelopmentPath=${workspaceFolder}/plugins/actions"
+        "--extensionDevelopmentPath=${workspaceFolder}"
       ],
-      "outFiles": ["${workspaceFolder}/out/**/*.js", "${workspaceFolder}/plugins/*/out/**/*.js"],
-      "preLaunchTask": "npm: compile all"
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile"
     }
   ]
 }
