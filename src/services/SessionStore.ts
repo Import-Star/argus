@@ -222,7 +222,8 @@ export class SessionStore implements vscode.Disposable {
     if (closed && !record.lastPrompt && !record.title) {
       return undefined;
     }
-    if (archivedManually || allPrsSettled || (stale && record.prs.length === 0)) {
+    const busy = registry?.status === "busy" || (!closed && record.state === "working");
+    if (archivedManually || (!busy && (allPrsSettled || (stale && record.prs.length === 0)))) {
       return "archived";
     }
     if (record.state === "permission" || record.state === "question") {
