@@ -2,7 +2,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { parsePullRequestLinks } from "./PrLinkParser";
+import { parsePullRequestLinks, PullRequestRef } from "./PrLinkParser";
 import { PrCheck, PrSummary } from "../types";
 
 const execFileAsync = promisify(execFile);
@@ -24,15 +24,28 @@ interface GhStatusCheck {
   conclusion?: string;
 }
 
-interface GhPrView {
+interface GhPrNode {
   title?: string;
   url?: string;
   state?: string;
   isDraft?: boolean;
   reviewDecision?: string;
-  reviews?: GhReview[];
-  statusCheckRollup?: GhStatusCheck[];
+  reviews?: { nodes?: GhReview[] };
+  commits?: { nodes?: Array<{ commit?: { statusCheckRollup?: { contexts?: { nodes?: GhStatusCheck[] } } | null } }> };
 }
+
+interface GhBatchResponse {
+  data?: Record<string, { pullRequest?: GhPrNode | null } | null>;
+  errors?: Array<{ path?: string[]; message?: string }>;
+}
+
+const BATCH_SIZE = 50;
+const PR_FIELDS = `title url state isDraft reviewDecision
+  reviews(last: 100) { nodes { state author { login } } }
+  commits(last: 1) { nodes { commit { statusCheckRollup { contexts(first: 100) { nodes {
+    ... on CheckRun { name status conclusion }
+    ... on StatusContext { context }
+  } } } } } }`;
 
 export class GhPrSyncService {
   private readonly cache = new Map<string, PrCacheItem>();
@@ -45,19 +58,22 @@ export class GhPrSyncService {
     if (!availability.ok) {
       return result;
     }
-    const refs = urls.flatMap((url) => parsePullRequestLinks(url));
-    let current = 0;
-    const workers = new Array(Math.min(this.maxConcurrent(), refs.length)).fill(0).map(async () => {
-      while (current < refs.length) {
-        const ref = refs[current];
-        current += 1;
-        if (skipCache) {
-          this.cache.delete(ref.key);
-        }
-        result.set(ref.url, await this.getPrSummary(ref.owner, ref.repo, ref.number, ref.url));
+    const now = Date.now();
+    const stale: PullRequestRef[] = [];
+    for (const ref of urls.flatMap((url) => parsePullRequestLinks(url))) {
+      const cached = this.cache.get(ref.key);
+      // A merged or closed PR won't change, so it is never looked up again, even with skipCache.
+      if (cached && (isSettled(cached.data) || (!skipCache && cached.expiresAt > now))) {
+        result.set(ref.url, cached.data);
+      } else {
+        stale.push(ref);
       }
-    });
-    await Promise.all(workers);
+    }
+    for (let i = 0; i < stale.length; i += BATCH_SIZE) {
+      for (const summary of await this.fetchBatch(stale.slice(i, i + BATCH_SIZE))) {
+        result.set(summary.url, summary);
+      }
+    }
     return result;
   }
 
@@ -118,75 +134,56 @@ export class GhPrSyncService {
     }
   }
 
-  private maxConcurrent(): number {
-    const configured = vscode.workspace.getConfiguration("argus.prs").get<number>("maxConcurrent", 5);
-    return Math.max(1, Math.min(20, configured));
-  }
-
   private ttlMs(): number {
     const configured = vscode.workspace.getConfiguration("argus.prs").get<number>("cacheSeconds", 300);
     return Math.max(30, configured) * 1000;
   }
 
-  private async getPrSummary(owner: string, repo: string, number: number, defaultUrl: string): Promise<PrSummary> {
-    const key = `${owner}/${repo}#${number}`;
-    const cached = this.cache.get(key);
-    const now = Date.now();
-    if (cached && cached.expiresAt > now) {
-      return cached.data;
-    }
+  private async fetchBatch(refs: PullRequestRef[]): Promise<PrSummary[]> {
+    const query = `query {${refs
+      .map((ref, i) => `pr${i}: repository(owner: ${JSON.stringify(ref.owner)}, name: ${JSON.stringify(ref.repo)}) { pullRequest(number: ${ref.number}) { ${PR_FIELDS} } }`)
+      .join("\n")}}`;
 
-    const ghPath = await this.findGhPath();
-    const fields = [
-      "title",
-      "url",
-      "state",
-      "isDraft",
-      "reviewDecision",
-      "reviews",
-      "statusCheckRollup"
-    ].join(",");
-
+    let response: GhBatchResponse = {};
+    let callError: string | undefined;
     try {
-      const { stdout } = await execFileAsync(
-        ghPath,
-        ["pr", "view", String(number), "--repo", `${owner}/${repo}`, "--json", fields],
-        { timeout: 15000 }
-      );
-
-      const parsed = JSON.parse(stdout) as GhPrView;
-      const data: PrSummary = {
-        key,
-        title: parsed.title,
-        url: parsed.url ?? defaultUrl,
-        state: parsed.state ?? "unknown",
-        isDraft: Boolean(parsed.isDraft),
-        reviewDecision: parsed.reviewDecision,
-        reviewers: this.dedupeReviewers(parsed.reviews),
-        checks: this.mapChecks(parsed.statusCheckRollup),
-        syncedAt: new Date().toISOString()
-      };
-
-      this.cache.set(key, { data, expiresAt: now + this.ttlMs() });
-      return data;
+      const ghPath = await this.findGhPath();
+      const { stdout } = await execFileAsync(ghPath, ["api", "graphql", "-f", `query=${query}`], { timeout: 30000, maxBuffer: 20 * 1024 * 1024 });
+      response = JSON.parse(stdout) as GhBatchResponse;
     } catch (error) {
-      const message = this.errorMessage(
-        error,
-        "Failed to sync PR. Ensure gh is installed and run `gh auth login`."
-      );
-      const failed: PrSummary = {
-        key,
-        url: defaultUrl,
-        state: "unknown",
-        isDraft: false,
-        reviewers: [],
-        checks: [],
-        syncedAt: new Date().toISOString(),
-        error: message
-      };
-      this.cache.set(key, { data: failed, expiresAt: now + 15000 });
-      return failed;
+      // gh exits non-zero when any one PR fails, but still prints the rest of the batch.
+      const stdout = (error as { stdout?: string }).stdout;
+      try {
+        response = JSON.parse(stdout ?? "") as GhBatchResponse;
+      } catch {
+        callError = this.errorMessage(error, "Failed to sync PR. Ensure gh is installed and run `gh auth login`.");
+      }
     }
+
+    const now = Date.now();
+    return refs.map((ref, i) => {
+      const node = response.data?.[`pr${i}`]?.pullRequest;
+      const syncedAt = new Date().toISOString();
+      if (!node) {
+        const message = callError ?? response.errors?.find((e) => e.path?.[0] === `pr${i}`)?.message ?? "PR not found.";
+        const failed: PrSummary = { key: ref.key, url: ref.url, state: "unknown", isDraft: false, reviewers: [], checks: [], syncedAt, error: message };
+        this.cache.set(ref.key, { data: failed, expiresAt: now + 15000 });
+        return failed;
+      }
+      const data: PrSummary = {
+        key: ref.key,
+        title: node.title,
+        url: ref.url,
+        state: node.state ?? "unknown",
+        isDraft: Boolean(node.isDraft),
+        reviewDecision: node.reviewDecision ?? undefined,
+        reviewers: this.dedupeReviewers(node.reviews?.nodes),
+        checks: this.mapChecks(node.commits?.nodes?.[0]?.commit?.statusCheckRollup?.contexts?.nodes),
+        syncedAt
+      };
+      this.cache.set(ref.key, { data, expiresAt: now + this.ttlMs() });
+      return data;
+    });
   }
 
   private mapChecks(value: GhStatusCheck[] | undefined): PrCheck[] {
@@ -246,4 +243,8 @@ export class GhPrSyncService {
 
     return fallback;
   }
+}
+
+function isSettled(summary: PrSummary): boolean {
+  return summary.state === "MERGED" || summary.state === "CLOSED";
 }

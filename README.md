@@ -128,8 +128,8 @@ Argus is local-only. It has no telemetry.
 | `~/.claude/sessions/<pid>.json` | Claude Code's own registry of open sessions (read only). |
 | `~/.claude/.credentials.json` | Claude Code sign-in (read only, while `argus.usage.enabled` is on, which is the default). Sent only to the Anthropic usage endpoint. |
 
-Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (`argus.prs.cacheSeconds` and
-`argus.prs.maxConcurrent`). A plugin may make its own network calls; see its own README.
+Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (`argus.prs.cacheSeconds`).
+A plugin may make its own network calls; see its own README.
 
 ## Settings
 
@@ -141,7 +141,6 @@ Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (
 | `argus.sessions.retentionDays` | `30` | Session record files are deleted this many days after the session is no longer open. |
 | `argus.notifications` | `all` | Show notifications when a session needs attention: `all` (permission, question or finished), `input` (permission and questions only), or `off`. |
 | `argus.prs.cacheSeconds` | `300` | How long a fetched PR state is reused before `gh` is called again. |
-| `argus.prs.maxConcurrent` | `5` | Maximum concurrent `gh` PR sync calls. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
 | `argus.plugins.config` | `{}` | Settings for locally installed plugins, keyed by plugin id. See [Plugins](#plugins). |
