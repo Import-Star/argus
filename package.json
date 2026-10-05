@@ -54,7 +54,7 @@
     "commands": [
       {
         "command": "argus.openControlCentre",
-        "title": "Argus: Open Control Centre"
+        "title": "Argus: Open Control Center"
       },
       {
         "command": "argus.sessions.refresh",

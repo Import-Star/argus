@@ -75,7 +75,7 @@ api/webview.d.ts                 the webview-side contract for a tab
 src/providers/
   SessionTreeProvider.ts          sidebar tree of sessions
   AttentionStatusBar.ts           "N need you" status bar item
-  ControlCentre.ts                Control Centre webview panel: hosts every registered tab
+  ControlCenter.ts                Control Center webview panel: hosts every registered tab
   SessionsTab.ts                  the core's own tab (Sessions, larger), built on registerTab
   UsageStatusBar.ts               Claude plan usage status bar item
 src/services/
@@ -90,13 +90,13 @@ src/services/
   PluginHost.ts                   finds, loads and reloads plugin folders; owns their lifetime
   PluginConfig.ts                 a plugin's slice of argus.plugins.config
 hooks/session-tracker.ts         runs inside Claude Code hooks, writes session JSON
-media/host.js, styles.css        Control Centre webview shell: tab switching, shared CSS classes, timers
+media/host.js, styles.css        Control Center webview shell: tab switching, shared CSS classes, timers
 ```
 
 Data flow: Claude Code fires a hook, `session-tracker` writes `~/.claude/argus/sessions/<id>.json`,
 `SessionStore` watches that directory and Claude Code's own registry, builds `SessionCard`s, and the tree, status
-bar and Sessions tab all subscribe to its `onDidChange`. The Control Centre webview talks to the extension with
-`postMessage`; `ControlCentre.ts` routes each message to the tab it names.
+bar and Sessions tab all subscribe to its `onDidChange`. The Control Center webview talks to the extension with
+`postMessage`; `ControlCenter.ts` routes each message to the tab it names.
 
 ## Writing a plugin
 
@@ -242,7 +242,7 @@ the others.
 
 ### Minimal webview-side tab
 
-`ArgusTab.script` is loaded into the Control Centre webview after the core's own host script, which defines
+`ArgusTab.script` is loaded into the Control Center webview after the core's own host script, which defines
 `window.argus`. Register with the same id you used in `registerTab`:
 
 ```js
@@ -270,7 +270,7 @@ these classes, so use them instead of redefining them: `.mono`, `kbd`, `button`,
 `[data-tab-root="<your-id>"]`. An element with class `t` and `data-since="<epoch ms>"` is re-rendered every
 second as elapsed time; add `data-precise="true"` for seconds.
 
-**The rule**: `handle.post()` is dropped while the Control Centre panel is closed, so a tab script must post
+**The rule**: `handle.post()` is dropped while the Control Center panel is closed, so a tab script must post
 `{ type: "ready" }` on mount and the extension side must answer with full state — never assume your first `post`
 from the extension arrives.
 
@@ -287,7 +287,7 @@ from the extension arrives.
 - `api/*.d.ts` is the public plugin contract: changes must stay backwards compatible, or bump `version` and
   `API_VERSION` in `PluginHost.ts`. The core copies both files into `~/.claude/argus/plugins` on every start.
 - Plugins must only use the API, never import core code.
-- Every Control Centre webview has a strict CSP: no inline scripts, no remote scripts. Escape all interpolated
+- Every Control Center webview has a strict CSP: no inline scripts, no remote scripts. Escape all interpolated
   text with `ctx.esc()`.
 - Nothing may be specific to one company or repo. Use settings instead of constants.
 - Never send or log the Claude OAuth token (relevant to `UsageService.ts`).

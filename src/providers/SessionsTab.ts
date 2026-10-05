@@ -26,7 +26,7 @@ type FromWebview =
   | { type: "search"; query: string };
 
 // The built-in Sessions tab: registered through the same registerTab API a plugin uses (order 0), so it gets
-// no special treatment from ControlCentre beyond going first.
+// no special treatment from ControlCenter beyond going first.
 export function createSessionsTab(
   extensionUri: vscode.Uri,
   sessions: SessionStore,

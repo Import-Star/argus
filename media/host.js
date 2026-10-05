@@ -1,5 +1,5 @@
-// Control Centre tab host. Defines window.argus.registerTab (see api/webview.d.ts), renders the top bar and the
-// per-tab <section data-tab-root="id"> content areas (already present in the page from ControlCentre's HTML,
+// Control Center tab host. Defines window.argus.registerTab (see api/webview.d.ts), renders the top bar and the
+// per-tab <section data-tab-root="id"> content areas (already present in the page from ControlCenter's HTML,
 // one hidden section per registered tab), and routes messages between the extension and each tab's script.
 (function () {
   const vscode = acquireVsCodeApi();

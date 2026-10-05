@@ -23,9 +23,9 @@ interface RegisteredTab {
   lastVisible: boolean;
 }
 
-// Hosts the Control Centre webview panel: one tab host script (media/host.js) that mounts a Sessions tab
+// Hosts the Control Center webview panel: one tab host script (media/host.js) that mounts a Sessions tab
 // (registered by core through the same registerTab API a plugin uses) plus every tab a plugin registers.
-export class ControlCentre implements vscode.Disposable {
+export class ControlCenter implements vscode.Disposable {
   private panel?: vscode.WebviewPanel;
   private readonly tabs = new Map<string, RegisteredTab>();
   private activeTabId: string | undefined;
@@ -88,7 +88,7 @@ export class ControlCentre implements vscode.Disposable {
     this.attachPanel(
       vscode.window.createWebviewPanel(
         "argusControlCentre",
-        "Control Centre",
+        "Control Center",
         { viewColumn: vscode.ViewColumn.One, preserveFocus: false },
         { retainContextWhenHidden: true, ...this.webviewOptions() }
       )
@@ -245,7 +245,7 @@ export class ControlCentre implements vscode.Disposable {
       content="default-src 'none'; img-src ${webview.cspSource} https: data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';"
     />
     ${[...styleLinks, ...extraStyles].join("\n    ")}
-    <title>Control Centre</title>
+    <title>Control Center</title>
   </head>
   <body>
     <header class="top-bar" id="argus-top-bar">

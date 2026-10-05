@@ -5,7 +5,7 @@ import { GhPrSyncService } from "./services/GhPrSyncService";
 import { startChat } from "./services/openSession";
 import { parsePullRequestLinks } from "./services/PrLinkParser";
 import { SessionStore } from "./services/SessionStore";
-import { ControlCentre } from "./providers/ControlCentre";
+import { ControlCenter } from "./providers/ControlCenter";
 
 const LINK_PLUGIN = /^[a-z0-9-]+$/;
 const LINK_ID = /^[A-Za-z0-9_.-]+$/;
@@ -44,13 +44,13 @@ export class SessionChipsRegistry {
 export interface ArgusServices {
   sessions: SessionStore;
   prSync: GhPrSyncService;
-  controlCentre: ControlCentre;
+  controlCenter: ControlCenter;
   chips: SessionChipsRegistry;
   archiveCleanup: ArchiveCleanupRegistry;
 }
 
 export function createApi(services: ArgusServices): ArgusApi {
-  const { sessions, prSync, controlCentre, chips, archiveCleanup } = services;
+  const { sessions, prSync, controlCenter, chips, archiveCleanup } = services;
 
   return {
     version: 1,
@@ -88,11 +88,11 @@ export function createApi(services: ArgusServices): ArgusApi {
     },
 
     registerTab(tab: ArgusTab): TabHandle {
-      return controlCentre.registerTab(tab);
+      return controlCenter.registerTab(tab);
     },
 
     async openControlCentre(tabId?: string): Promise<void> {
-      await controlCentre.openControlCentre(tabId);
+      await controlCenter.openControlCentre(tabId);
     },
 
     registerSessionChips(provider: (card: SessionCard) => SessionChip[] | undefined): vscode.Disposable & { refresh(): void } {
