@@ -136,8 +136,23 @@ function tooltipFor(card: SessionCard): vscode.MarkdownString {
   if (record.lastMessage) {
     md.appendText(`Last: ${record.lastMessage}\n\n`);
   }
+  const agents = card.open ? Object.values(record.subagents ?? {}) : [];
+  if (agents.length > 0) {
+    md.appendText(`Agents running: ${agents.join(", ")}\n\n`);
+  }
+  if (card.usage?.usedTokens) {
+    const { contextTokens, usedTokens, compactions } = card.usage;
+    md.appendText(`${contextTokens ? `Context ${formatTokens(contextTokens)} · ` : ""}${formatTokens(usedTokens)} used${compactions ? ` · compacted ×${compactions}` : ""}\n\n`);
+  }
   for (const pr of card.prs) {
     md.appendMarkdown(`- [${pr.key}](${pr.url}) ${pr.state}${pr.isDraft ? " draft" : ""}\n`);
   }
   return md;
+}
+
+function formatTokens(n: number): string {
+  if (n >= 1e6) {
+    return `${(n / 1e6).toFixed(1)}M`;
+  }
+  return n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(n);
 }

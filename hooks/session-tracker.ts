@@ -24,6 +24,7 @@ interface SessionRecord {
   links?: Record<string, string>;
   lastTool?: string;
   endReason?: string;
+  subagents?: Record<string, string>;
 }
 
 interface HookInput {
@@ -38,7 +39,9 @@ interface HookInput {
   notification_type?: string;
   last_assistant_message?: string;
   reason?: string;
+  source?: string;
   agent_id?: string;
+  agent_type?: string;
 }
 
 const DIR = path.join(os.homedir(), ".claude", "argus", "sessions");
@@ -205,6 +208,10 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
     case "SessionStart":
       setState(record, "idle", now);
       record.pending = undefined;
+      // Background agents keep running through a compaction, but not across a restart or resume.
+      if (input.source !== "compact") {
+        record.subagents = undefined;
+      }
       return;
     case "UserPromptSubmit": {
       const raw = stripIdeTags(input.prompt ?? "");
@@ -268,6 +275,7 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       return;
     case "SessionEnd":
       record.endReason = input.reason;
+      record.subagents = undefined;
       // Keep "working" so the board can show a session closed mid-turn as interrupted.
       if (record.state !== "working") {
         setState(record, "ended", now);
@@ -295,6 +303,22 @@ function clearPermissionFromSubAgent(input: HookInput): void {
   save(record);
 }
 
+function trackSubAgent(input: HookInput): void {
+  const record = load(input.session_id);
+  if (!record || !input.agent_id) {
+    return;
+  }
+  const subagents = { ...(record.subagents ?? {}) };
+  if (input.hook_event_name === "SubagentStart") {
+    subagents[input.agent_id] = input.agent_type || "agent";
+  } else {
+    delete subagents[input.agent_id];
+  }
+  record.subagents = Object.keys(subagents).length > 0 ? subagents : undefined;
+  record.updatedAt = Date.now();
+  save(record);
+}
+
 function hookMain(): void {
   const raw = readStdin();
   if (!raw.trim()) {
@@ -302,6 +326,10 @@ function hookMain(): void {
   }
   const input = JSON.parse(raw) as HookInput;
   if (!input.session_id) {
+    return;
+  }
+  if (input.hook_event_name === "SubagentStart" || input.hook_event_name === "SubagentStop") {
+    trackSubAgent(input);
     return;
   }
   if (input.agent_id) {

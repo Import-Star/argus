@@ -27,6 +27,8 @@ const EVENTS: Array<{ event: string; matcher?: string }> = [
   { event: "PermissionRequest" },
   { event: "Notification" },
   { event: "Stop" },
+  { event: "SubagentStart" },
+  { event: "SubagentStop" },
   { event: "SessionEnd" }
 ];
 
