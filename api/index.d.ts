@@ -34,6 +34,18 @@ export interface SessionRecord {
   links?: Record<string, string>;
   lastTool?: string;
   endReason?: string;
+  // Sub-agents running right now, agent id to agent type. Cleared when the session restarts or ends.
+  subagents?: Record<string, string>;
+}
+
+// Token use read from the session's transcript and its sub-agents' transcripts.
+export interface SessionUsage {
+  // Size of the latest prompt the main agent sent: roughly how full its context is.
+  contextTokens?: number;
+  // New input, cache writes and output, summed over every model call. Cache reads are counted separately.
+  usedTokens: number;
+  cacheReadTokens: number;
+  compactions: number;
 }
 
 export interface PrCheck {
@@ -72,6 +84,8 @@ export interface SessionCard {
   interrupted: boolean;
   archivedManually: boolean;
   prs: PrSummary[];
+  // Undefined until the transcript has been read; archived sessions are only read when searched.
+  usage?: SessionUsage;
 }
 
 // A small label a plugin adds to session cards in the Sessions tab, e.g. the kanban ticket a session works on.

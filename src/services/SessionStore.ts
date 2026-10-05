@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import { PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord } from "../types";
 import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
+import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
 import { windowFilter } from "./windowScope";
 
 const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
@@ -42,6 +43,9 @@ export class SessionStore implements vscode.Disposable {
   private readonly scopeListeners: vscode.Disposable[] = [];
   private prTimer?: NodeJS.Timeout;
   private retentionTimer?: NodeJS.Timeout;
+  private readonly transcripts = new TranscriptIndex();
+  private usageScan?: Promise<void>;
+  private usageRescan = false;
 
   public constructor(private readonly prSync: GhPrSyncService) {
     fs.mkdirSync(SESSIONS_DIR, { recursive: true });
@@ -108,6 +112,28 @@ export class SessionStore implements vscode.Disposable {
       });
 
     this.emitter.fire(this.cards);
+    this.scanUsage();
+  }
+
+  // Every session in this window's scope, archived ones included.
+  public async searchTranscripts(query: string): Promise<Map<string, string>> {
+    return this.transcripts.search(transcriptRefs(this.cards), query);
+  }
+
+  // Reads new transcript lines for sessions not archived, then refreshes once if token use moved.
+  private scanUsage(): void {
+    if (this.usageScan) {
+      this.usageRescan = true;
+      return;
+    }
+    const refs = transcriptRefs(this.cards.filter((card) => card.column !== "archived"));
+    this.usageScan = this.transcripts.update(refs).then((changed) => {
+      this.usageScan = undefined;
+      if (changed || this.usageRescan) {
+        this.usageRescan = false;
+        this.refresh();
+      }
+    });
   }
 
   public async refreshPrs(): Promise<void> {
@@ -223,7 +249,8 @@ export class SessionStore implements vscode.Disposable {
       interrupted,
       archivedManually,
       prs,
-      column
+      column,
+      usage: record.transcriptPath ? this.transcripts.usage({ sessionId: record.sessionId, transcriptPath: record.transcriptPath }) : undefined
     };
   }
 
@@ -352,6 +379,10 @@ export class SessionStore implements vscode.Disposable {
   private prRefreshMs(): number {
     return Math.max(1, vscode.workspace.getConfiguration("argus").get<number>("sessions.prRefreshMinutes", 5)) * 60_000;
   }
+}
+
+function transcriptRefs(cards: SessionCard[]): TranscriptRef[] {
+  return cards.flatMap((card) => (card.record.transcriptPath ? [{ sessionId: card.record.sessionId, transcriptPath: card.record.transcriptPath }] : []));
 }
 
 function readJsonDir<T>(dir: string): T[] {

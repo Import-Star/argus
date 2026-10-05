@@ -34,8 +34,18 @@ A sidebar view (Argus icon in the activity bar) groups your Claude Code sessions
 
 ### Control Centre
 
-Run **Argus: Open Control Centre** for the full view. Out of the box it holds a larger copy of the Sessions
-board; installing a plugin adds its tab alongside it.
+Run **Argus: Open Control Centre** for the full view. Out of the box it holds the Sessions tab; installing a
+plugin adds its tab alongside it. The Sessions tab adds to the sidebar:
+
+- Columns side by side. Press `g` (or **by repo**) to split them into one row per repo, with repos that need
+  you first.
+- Token use on each card: `ctx` is the size of the latest prompt (how full the context is), `used` is new input,
+  cache writes and output summed over the session and its sub-agents, and how many times it was compacted. Read
+  from the session transcript in `~/.claude/projects`, only the lines added since the last read.
+- Search also looks through every prompt and reply in each session's transcript, archived sessions included, and
+  shows the matching text on the card. It starts at three characters.
+- Sub-agents running in a session, by type. Needs **Argus: Set Up Session Tracking** re-run once to add the
+  SubagentStart and SubagentStop hooks.
 
 ### Claude plan usage
 
@@ -124,8 +134,9 @@ Argus is local-only. It has no telemetry.
 | `~/.claude/settings.json` | "Set Up Session Tracking" adds hook entries; "Remove Session Tracking" removes them. A `.bak` copy is written first. |
 | `~/.claude/argus/session-tracker.ts` | The hook script, copied out of the extension so updates never break the path in settings. |
 | `~/.claude/argus/plugins/` | Plugin folders, loaded on startup. Argus also writes `argus.d.ts` and `argus-webview.d.ts` here for plugin authors. |
-| `~/.claude/argus/sessions/<id>.json` | One record per session, written by the hook on SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PermissionRequest, Notification, Stop and SessionEnd. It holds prompt snippets, the last assistant message and any pending tool command in plain text. Deleted `argus.sessions.retentionDays` days after the session closes. |
+| `~/.claude/argus/sessions/<id>.json` | One record per session, written by the hook on SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PermissionRequest, Notification, Stop, SubagentStart, SubagentStop and SessionEnd. It holds prompt snippets, the last assistant message and any pending tool command in plain text. Deleted `argus.sessions.retentionDays` days after the session closes. |
 | `~/.claude/sessions/<pid>.json` | Claude Code's own registry of open sessions (read only). |
+| `~/.claude/projects/**/*.jsonl` | Claude Code's session transcripts and sub-agent transcripts (read only), for token use and search. Kept in memory, never written anywhere. |
 | `~/.claude/.credentials.json` | Claude Code sign-in (read only, while `argus.usage.enabled` is on, which is the default). Sent only to the Anthropic usage endpoint. |
 
 Network use: `gh` calls to GitHub for PR state, using your existing `gh` login (`argus.prs.cacheSeconds`).

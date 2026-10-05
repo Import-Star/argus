@@ -7,6 +7,9 @@ Nothing has been published yet. This is the plan for the first public release.
 - Sessions board: a sidebar view of Claude Code sessions grouped into Needs you, Working, PR open, Idle and
   Archived, a status bar item, and the Sessions tab in the Control Centre. Sessions stopped mid-turn show as
   interrupted in Needs you.
+- Control Centre Sessions tab: columns side by side (the inline grid style was blocked by the webview CSP, so
+  they used to stack), an optional row per repo (`g`), token use and compaction count per card, search through
+  transcript prompts and replies including archived sessions, and running sub-agents per session.
 - **Argus: Set Up Session Tracking** installs the hooks; **Argus: Remove Session Tracking** removes them.
   Uninstalling the extension does the same automatically.
 - Session titles come from the first prompt, or from Claude Code's `/rename` once you use it, so Argus, `/resume`

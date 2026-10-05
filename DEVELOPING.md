@@ -80,6 +80,7 @@ src/providers/
   UsageStatusBar.ts               Claude plan usage status bar item
 src/services/
   SessionStore.ts                 merges hook records + Claude Code's session registry into cards and columns
+  TranscriptIndex.ts              reads transcripts incrementally for per-card token use and transcript search
   HookInstaller.ts                edits ~/.claude/settings.json, copies the hook script
   GhPrSyncService.ts              PR state through the gh CLI, exposed to plugins as api.prs
   openSession.ts                  opens Claude Code tabs via claude-vscode.editor.open

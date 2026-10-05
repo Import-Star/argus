@@ -22,7 +22,8 @@ type FromWebview =
   | { type: "archiveSession"; sessionId: string }
   | { type: "unarchiveSession"; sessionId: string }
   | { type: "openWorktree"; folder: string }
-  | { type: "chipClick"; sessionId: string; index: number };
+  | { type: "chipClick"; sessionId: string; index: number }
+  | { type: "search"; query: string };
 
 // The built-in Sessions tab: registered through the same registerTab API a plugin uses (order 0), so it gets
 // no special treatment from ControlCentre beyond going first.
@@ -80,6 +81,11 @@ export function createSessionsTab(
         case "openWorktree":
           await openWorktree(msg.folder);
           return;
+        case "search": {
+          const matches = await sessions.searchTranscripts(msg.query);
+          handle?.post({ type: "searchResults", query: msg.query, matches: Object.fromEntries(matches) });
+          return;
+        }
         case "chipClick": {
           const card = findCard(msg.sessionId);
           if (!card) {
