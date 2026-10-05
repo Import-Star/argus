@@ -168,7 +168,7 @@ export function activate(argus: ArgusApi, context: ArgusPluginContext): void {
 
   context.subscriptions.push(
     handle,
-    vscode.commands.registerCommand("argus.myPlugin.open", () => argus.openControlCentre("my-plugin"))
+    vscode.commands.registerCommand("argus.myPlugin.open", () => argus.openControlCenter("my-plugin"))
   );
 }
 

@@ -90,7 +90,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   });
   register("argus.usage.refresh", () => usage?.service.refresh());
 
-  register("argus.openControlCentre", (tabId?: unknown) => api.openControlCentre(typeof tabId === "string" ? tabId : undefined));
+  register("argus.openControlCenter", (tabId?: unknown) => api.openControlCenter(typeof tabId === "string" ? tabId : undefined));
   register("argus.sessions.newChat", () => newChat());
   register("argus.sessions.refresh", () => sessions.refreshPrs());
   register("argus.sessions.open", async (arg) => {

@@ -159,7 +159,7 @@ A plugin may make its own network calls; see its own README.
 
 ## Commands
 
-- **Argus: Open Control Center** (`argus.openControlCentre`)
+- **Argus: Open Control Center** (`argus.openControlCenter`)
 - **Argus: Sessions Needing You** (`argus.sessions.showAttention`)
 - **Argus: Set Up Session Tracking** (`argus.sessions.installHooks`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)

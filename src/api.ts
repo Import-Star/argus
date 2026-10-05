@@ -91,8 +91,8 @@ export function createApi(services: ArgusServices): ArgusApi {
       return controlCenter.registerTab(tab);
     },
 
-    async openControlCentre(tabId?: string): Promise<void> {
-      await controlCenter.openControlCentre(tabId);
+    async openControlCenter(tabId?: string): Promise<void> {
+      await controlCenter.openControlCenter(tabId);
     },
 
     registerSessionChips(provider: (card: SessionCard) => SessionChip[] | undefined): vscode.Disposable & { refresh(): void } {

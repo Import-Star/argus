@@ -151,7 +151,7 @@ export interface ArgusApi {
   // Adds a tab to the Control Center. Registering while the panel is open reloads it.
   registerTab(tab: ArgusTab): TabHandle;
   // Opens the Control Center on the given tab (or the last active one).
-  openControlCentre(tabId?: string): Promise<void>;
+  openControlCenter(tabId?: string): Promise<void>;
   // Chips for a session card, asked for on every render; keep it fast. Call `refresh` on the returned handle
   // when your chips change without a session change (e.g. a ticket was renamed).
   registerSessionChips(provider: (card: SessionCard) => SessionChip[] | undefined): vscode.Disposable & { refresh(): void };
