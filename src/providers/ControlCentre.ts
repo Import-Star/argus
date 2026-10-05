@@ -85,12 +85,27 @@ export class ControlCentre implements vscode.Disposable {
       return;
     }
 
-    this.panel = vscode.window.createWebviewPanel(
-      "argusControlCentre",
-      "Control Centre",
-      { viewColumn: vscode.ViewColumn.One, preserveFocus: false },
-      { retainContextWhenHidden: true, ...this.webviewOptions() }
+    this.attachPanel(
+      vscode.window.createWebviewPanel(
+        "argusControlCentre",
+        "Control Centre",
+        { viewColumn: vscode.ViewColumn.One, preserveFocus: false },
+        { retainContextWhenHidden: true, ...this.webviewOptions() }
+      )
     );
+  }
+
+  public registerSerializer(): vscode.Disposable {
+    return vscode.window.registerWebviewPanelSerializer("argusControlCentre", {
+      deserializeWebviewPanel: async (panel) => {
+        panel.webview.options = this.webviewOptions();
+        this.attachPanel(panel);
+      }
+    });
+  }
+
+  private attachPanel(panel: vscode.WebviewPanel): void {
+    this.panel = panel;
     this.panel.webview.html = this.getHtml(this.panel.webview);
 
     this.panel.onDidChangeViewState(() => this.notifyVisibility());

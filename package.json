@@ -37,7 +37,8 @@
   },
   "main": "./out/extension.js",
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onWebviewPanel:argusControlCentre"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
