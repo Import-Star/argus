@@ -32,6 +32,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const prSync = new GhPrSyncService();
   const sessions = new SessionStore(prSync);
   const controlCentre = new ControlCentre(context);
+  context.subscriptions.push(controlCentre.registerSerializer());
   const chips = new SessionChipsRegistry();
   const archiveCleanup = new ArchiveCleanupRegistry();
 
