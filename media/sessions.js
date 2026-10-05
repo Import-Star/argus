@@ -23,6 +23,9 @@
       };
       this.active = false;
       this.keydown = (event) => this.onKeydown(event);
+      this.masonry = new ResizeObserver((entries) => {
+        for (const { target } of entries) target.style.gridRowEnd = `span ${Math.ceil(target.offsetHeight) + 6}`;
+      });
       this.render();
       ctx.post({ type: "ready" });
     },
@@ -216,6 +219,8 @@
       `;
 
       this.bindEvents();
+      this.masonry.disconnect();
+      this.root.querySelectorAll(".rows > .row").forEach((row) => this.masonry.observe(row));
 
       if (focused) {
         const el = this.root.querySelector(`#${cssEscape(focused.id)}`);
