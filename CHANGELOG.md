@@ -5,9 +5,9 @@ Nothing has been published yet. This is the plan for the first public release.
 ## 0.1.0
 
 - Sessions board: a sidebar view of Claude Code sessions grouped into Needs you, Working, PR open, Idle and
-  Archived, a status bar item, and the Sessions tab in the Control Centre. Sessions stopped mid-turn show as
+  Archived, a status bar item, and the Sessions tab in the Control Center. Sessions stopped mid-turn show as
   interrupted in Needs you.
-- Control Centre Sessions tab: columns side by side (the inline grid style was blocked by the webview CSP, so
+- Control Center Sessions tab: columns side by side (the inline grid style was blocked by the webview CSP, so
   they used to stack), an optional row per repo (`g`), token use and compaction count per card, search through
   transcript prompts and replies including archived sessions, and running sub-agents per session.
 - **Argus: Set Up Session Tracking** installs the hooks; **Argus: Remove Session Tracking** removes them.
@@ -33,4 +33,4 @@ Nothing has been published yet. This is the plan for the first public release.
 - Work (kanban), GitHub Actions and PR Reviews moved out of this repo into their own repositories, each built on
   the plugin API.
 - Argus logo (a watching eye ringed by twelve more, after Argus Panoptes) as the Marketplace icon, the activity bar
-  icon and the Control Centre header mark.
+  icon and the Control Center header mark.

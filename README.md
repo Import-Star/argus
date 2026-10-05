@@ -32,9 +32,9 @@ A sidebar view (Argus icon in the activity bar) groups your Claude Code sessions
   asks a question, info when finished. The **Open Session** button jumps straight to the session tab. Disable with
   `argus.notifications` set to `input` (permission and questions only) or `off`.
 
-### Control Centre
+### Control Center
 
-Run **Argus: Open Control Centre** for the full view. Out of the box it holds the Sessions tab; installing a
+Run **Argus: Open Control Center** for the full view. Out of the box it holds the Sessions tab; installing a
 plugin adds its tab alongside it. The Sessions tab adds to the sidebar:
 
 - Columns side by side. Press `g` (or **by repo**) to split them into one row per repo, with repos that need
@@ -58,7 +58,7 @@ with third-party tools.
 
 ## Plugins
 
-A plugin adds a tab to the Control Centre, chips to session cards, or extra steps when a session is archived.
+A plugin adds a tab to the Control Center, chips to session cards, or extra steps when a session is archived.
 Plugins are folders in `~/.claude/argus/plugins`, loaded by Argus on startup — nothing is installed into
 VS Code.
 
@@ -159,7 +159,7 @@ A plugin may make its own network calls; see its own README.
 
 ## Commands
 
-- **Argus: Open Control Centre** (`argus.openControlCentre`)
+- **Argus: Open Control Center** (`argus.openControlCentre`)
 - **Argus: Sessions Needing You** (`argus.sessions.showAttention`)
 - **Argus: Set Up Session Tracking** (`argus.sessions.installHooks`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)

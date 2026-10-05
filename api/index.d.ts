@@ -112,7 +112,7 @@ export interface ArgusTab {
   style?: vscode.Uri;
   // A message the tab's webview script sent with ctx.post(). Reply with handle.post().
   onMessage?(message: unknown): void | Promise<void>;
-  // True while the Control Centre panel is visible and this tab is the active one.
+  // True while the Control Center panel is visible and this tab is the active one.
   onDidChangeVisibility?(visible: boolean): void;
 }
 
@@ -148,9 +148,9 @@ export interface ArgusApi {
     available(): Promise<{ ok: boolean; message?: string }>;
   };
 
-  // Adds a tab to the Control Centre. Registering while the panel is open reloads it.
+  // Adds a tab to the Control Center. Registering while the panel is open reloads it.
   registerTab(tab: ArgusTab): TabHandle;
-  // Opens the Control Centre on the given tab (or the last active one).
+  // Opens the Control Center on the given tab (or the last active one).
   openControlCentre(tabId?: string): Promise<void>;
   // Chips for a session card, asked for on every render; keep it fast. Call `refresh` on the returned handle
   // when your chips change without a session change (e.g. a ticket was renamed).

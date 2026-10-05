@@ -1,6 +1,6 @@
 # Argus (VS Code extension)
 
-Core: the Claude Code Sessions board (sidebar, status bar, Control Centre Sessions tab), the Claude plan usage
+Core: the Claude Code Sessions board (sidebar, status bar, Control Center Sessions tab), the Claude plan usage
 status bar item, and a plugin API. Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins`
 that the core loads on startup. Plain TypeScript compiled with `tsc`; see [DEVELOPING.md](DEVELOPING.md) for the architecture map
 and [README.md](README.md) for user-facing behaviour.
@@ -34,7 +34,7 @@ and [README.md](README.md) for user-facing behaviour.
   throw. Changes need the user to re-run "Argus: Set Up Session Tracking".
 - Every core setting and every command uses the `argus.` prefix. A plugin's settings are bare keys under
   `argus.plugins.config.<plugin-id>`; its commands still carry the `argus.` prefix.
-- Control Centre webview code (core's `media/host.js`, `media/styles.css`, and each plugin's tab script) is plain
+- Control Center webview code (core's `media/host.js`, `media/styles.css`, and each plugin's tab script) is plain
   JS with a strict CSP (no inline scripts). Escape interpolated text with `ctx.esc()`.
 - Do not log, store or transmit the Claude OAuth token; only `src/services/UsageService.ts` reads it.
 - Use `Edit`-style small changes. Update the relevant README and CHANGELOG when behaviour changes.

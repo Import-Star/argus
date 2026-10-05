@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { createApi, SessionChipsRegistry } from "./api";
 import { AttentionNotifier } from "./providers/AttentionNotifier";
 import { AttentionStatusBar } from "./providers/AttentionStatusBar";
-import { ControlCentre } from "./providers/ControlCentre";
+import { ControlCenter } from "./providers/ControlCenter";
 import { SessionTreeProvider } from "./providers/SessionTreeProvider";
 import { createSessionsTab } from "./providers/SessionsTab";
 import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSession";
@@ -31,12 +31,12 @@ function cardOf(arg: unknown): SessionCard | undefined {
 export function activate(context: vscode.ExtensionContext): ArgusApi {
   const prSync = new GhPrSyncService();
   const sessions = new SessionStore(prSync);
-  const controlCentre = new ControlCentre(context);
-  context.subscriptions.push(controlCentre.registerSerializer());
+  const controlCenter = new ControlCenter(context);
+  context.subscriptions.push(controlCenter.registerSerializer());
   const chips = new SessionChipsRegistry();
   const archiveCleanup = new ArchiveCleanupRegistry();
 
-  const api = createApi({ sessions, prSync, controlCentre, chips, archiveCleanup });
+  const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup });
 
   const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup);
   const sessionsTabHandle = api.registerTab(sessionsTab.tab);
@@ -48,7 +48,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const status = new AttentionStatusBar(sessions);
   context.subscriptions.push(new AttentionNotifier(sessions));
 
-  context.subscriptions.push(sessions, controlCentre, treeView, tree, status, sessionsTabHandle, ...sessionsTab.disposables);
+  context.subscriptions.push(sessions, controlCenter, treeView, tree, status, sessionsTabHandle, ...sessionsTab.disposables);
 
   const register = (command: string, handler: (...args: unknown[]) => unknown) =>
     context.subscriptions.push(vscode.commands.registerCommand(command, handler));
