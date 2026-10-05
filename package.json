@@ -38,7 +38,7 @@
   "main": "./out/extension.js",
   "activationEvents": [
     "onStartupFinished",
-    "onWebviewPanel:argusControlCentre"
+    "onWebviewPanel:argusControlCenter"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -53,7 +53,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "argus.openControlCentre",
+        "command": "argus.openControlCenter",
         "title": "Argus: Open Control Center"
       },
       {
@@ -248,7 +248,7 @@
           "group": "navigation"
         },
         {
-          "command": "argus.openControlCentre",
+          "command": "argus.openControlCenter",
           "when": "view == argusSessions"
         },
         {

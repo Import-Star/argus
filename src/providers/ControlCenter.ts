@@ -2,7 +2,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { ArgusTab, TabHandle } from "../types";
 
-const ACTIVE_TAB_KEY = "argus.controlCentre.activeTab";
+const ACTIVE_TAB_KEY = "argus.controlCenter.activeTab";
 
 // media/logo-mono.svg inlined (an <img> can't take currentColor), so the header mark picks up the coral accent.
 const MARK_SVG =
@@ -74,7 +74,7 @@ export class ControlCenter implements vscode.Disposable {
     return handle;
   }
 
-  public async openControlCentre(tabId?: string): Promise<void> {
+  public async openControlCenter(tabId?: string): Promise<void> {
     const target = tabId && this.tabs.has(tabId) ? tabId : this.activeTabId && this.tabs.has(this.activeTabId) ? this.activeTabId : this.defaultTabId();
     this.setActiveTab(target);
 
@@ -87,7 +87,7 @@ export class ControlCenter implements vscode.Disposable {
 
     this.attachPanel(
       vscode.window.createWebviewPanel(
-        "argusControlCentre",
+        "argusControlCenter",
         "Control Center",
         { viewColumn: vscode.ViewColumn.One, preserveFocus: false },
         { retainContextWhenHidden: true, ...this.webviewOptions() }
@@ -96,7 +96,7 @@ export class ControlCenter implements vscode.Disposable {
   }
 
   public registerSerializer(): vscode.Disposable {
-    return vscode.window.registerWebviewPanelSerializer("argusControlCentre", {
+    return vscode.window.registerWebviewPanelSerializer("argusControlCenter", {
       deserializeWebviewPanel: async (panel) => {
         panel.webview.options = this.webviewOptions();
         this.attachPanel(panel);
