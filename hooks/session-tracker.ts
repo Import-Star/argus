@@ -131,7 +131,7 @@ function worktreeRoot(dir: string): string | undefined {
       stdio: ["ignore", "pipe", "ignore"]
     });
     const [top, gitDir, commonDir] = out.trim().split("\n");
-    return path.resolve(dir, gitDir) === path.resolve(dir, commonDir) ? undefined : top;
+    return path.resolve(dir, gitDir) === path.resolve(dir, commonDir) ? undefined : path.resolve(top);
   } catch {
     return undefined;
   }
