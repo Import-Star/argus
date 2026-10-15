@@ -1,6 +1,6 @@
 # Changelog
 
-Nothing has been published yet. This is the plan for the first public release.
+First public release.
 
 ## 0.1.0
 

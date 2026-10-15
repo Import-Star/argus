@@ -10,3 +10,6 @@ DEVELOPING.md
 **/*.vsix
 .claude/**
 test/**
+assets/**
+.github/**
+plugins/**
