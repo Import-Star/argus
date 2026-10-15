@@ -25,6 +25,8 @@ A sidebar view (Argus icon in the activity bar) groups your Claude Code sessions
   session.
 - Sessions archive themselves when every PR they created is merged or closed, or when a closed session made no
   PR. Archiving can also run cleanup offered by an installed plugin (you are asked first).
+- Cards show open PRs. A `+ 2 merged · 1 closed` chip shows the session's merged and closed PRs too; click it
+  again to hide them.
 - A card's title is the session's first prompt until you name it with Claude Code's `/rename`, which also sets
   the name other sessions use to message it. Search with `/`, move with `j`/`k`, open with `Enter`, archive with
   `e`, new chat with `n`.
@@ -147,7 +149,6 @@ A plugin may make its own network calls; see its own README.
 | Setting | Default | Description |
 | --- | --- | --- |
 | `argus.sessions.scope` | `window` | `window` shows this window's sessions only; `all` shows every session on this machine. |
-| `argus.sessions.staleAfterHours` | `24` | Closed sessions with no open PR are archived after this many hours without activity. |
 | `argus.sessions.prRefreshMinutes` | `5` | How often PR states refresh in the background, for session cards. |
 | `argus.sessions.retentionDays` | `30` | Session record files are deleted this many days after the session is no longer open. |
 | `argus.notifications` | `all` | Show notifications when a session needs attention: `all` (permission, question or finished), `input` (permission and questions only), or `off`. |

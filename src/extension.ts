@@ -7,7 +7,7 @@ import { SessionTreeProvider } from "./providers/SessionTreeProvider";
 import { createSessionsTab } from "./providers/SessionsTab";
 import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
-import { checkNode, installHooks, removeHooks } from "./services/HookInstaller";
+import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
 import { newChat, openSession, openWorktree } from "./services/openSession";
 import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
 import { renameSessionPrompt, SessionStore } from "./services/SessionStore";
@@ -134,9 +134,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   register("argus.sessions.installHooks", () => {
     try {
       const result = installHooks(context.extensionPath);
-      const nodeProblem = checkNode();
-      if (nodeProblem) {
-        void vscode.window.showWarningMessage(`Argus: hooks installed, but ${nodeProblem} Install Node 24+ so sessions can report in.`);
+      if (!findNode()) {
+        void vscode.window.showWarningMessage("Argus: hooks installed, but Node 24 or newer wasn't found. Install Node 24+ so sessions can report in.");
         return;
       }
       void vscode.window.showInformationMessage(

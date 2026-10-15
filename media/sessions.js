@@ -21,6 +21,8 @@
         selected: undefined,
         showArchived: Boolean(saved.showArchived),
         groupByRepo: Boolean(saved.groupByRepo),
+        // Sessions whose merged and closed PRs are shown.
+        showDonePrs: new Set(),
         // Sessions whose transcript matches the query, with a snippet. Filled by the extension.
         deep: {}
       };
@@ -189,8 +191,11 @@
       const usage = u && u.usedTokens
         ? `<div class="usage mono" title="${esc(`Context: size of the latest prompt. Used: new input, cache writes and output across the session and its sub-agents. Cache reads: ${tokens(u.cacheReadTokens)}.`)}">${u.contextTokens ? `ctx ${esc(tokens(u.contextTokens))} · ` : ""}${esc(tokens(u.usedTokens))} used${u.compactions ? ` · compacted ×${esc(u.compactions)}` : ""}</div>`
         : "";
+      const done = card.prs.filter((pr) => pr.state === "MERGED" || pr.state === "CLOSED");
+      const showDone = this.state.showDonePrs.has(r.sessionId);
       const chips = [
-        ...card.prs.map((pr) => this.prChip(pr)),
+        ...card.prs.filter((pr) => showDone || !done.includes(pr)).map((pr) => this.prChip(pr)),
+        done.length ? `<button class="chip" data-action="toggle-done-prs" data-session-id="${id}" title="Show or hide merged and closed PRs">${showDone ? "hide" : "+"} ${esc(doneLabel(done))}</button>` : "",
         ...(r.worktrees || []).map((folder) => `<button class="chip wt" data-action="open-worktree" data-folder="${esc(folder)}" title="Open ${esc(folder)}">⎇ ${esc(folder.split("/").pop())}</button>`),
         ...card.chips.map((chip, index) => `<button class="chip" data-action="chip" data-session-id="${id}" data-index="${index}" title="${esc(chip.tooltip || chip.text)}">${esc(chip.text)}</button>`)
       ].join("");
@@ -203,8 +208,8 @@
       ].join("");
       return `
         <article class="row col-${esc(card.column)}${working ? " working" : ""}${this.state.selected === r.sessionId ? " selected" : ""}" data-session-id="${id}">
-          <div class="l1">${this.glyphFor(card)}<span class="title">${esc(r.title || "New chat")}</span><span class="t mono" data-since="${r.stateSince}" data-precise="${working}">${esc(working ? this.ctx.elapsedPrecise(r.stateSince) : this.ctx.elapsed(r.stateSince))}</span><div class="actions mono">${actions}</div></div>
-          <div class="l2 mono"><span class="state">${esc(this.stateLabel(card))}</span> · ${esc(where)}${card.name && card.open && card.name !== r.title ? ` · ${esc(card.name)}` : ""}</div>
+          <div class="l1">${this.glyphFor(card)}<span class="title" data-action="rename-session" data-session-id="${id}" title="Double-click to rename">${esc(r.title || "New chat")}</span><span class="t mono" data-since="${r.stateSince}" data-precise="${working}">${esc(working ? this.ctx.elapsedPrecise(r.stateSince) : this.ctx.elapsed(r.stateSince))}</span></div>
+          <div class="l2 mono"><span class="where"><span class="state">${esc(this.stateLabel(card))}</span> · ${esc(where)}${card.name && card.open && card.name !== r.title ? ` · ${esc(card.name)}` : ""}</span><div class="actions">${actions}</div></div>
           ${prompt}${activity}${agentLine}${last}
           ${chips ? `<div class="chips mono">${chips}</div>` : ""}
           ${usage}
@@ -276,6 +281,8 @@
       const focused = document.activeElement && document.activeElement.id && this.root.contains(document.activeElement)
         ? { id: document.activeElement.id, start: document.activeElement.selectionStart, end: document.activeElement.selectionEnd }
         : undefined;
+      const scrolls = [...this.root.querySelectorAll(".rows")].map((el) => el.scrollTop);
+      const pageScroll = document.scrollingElement?.scrollTop ?? 0;
 
       this.root.innerHTML = `
         <div class="sessions-toolbar">
@@ -290,6 +297,8 @@
       `;
 
       this.applyGrid();
+      this.root.querySelectorAll(".rows").forEach((el, i) => { el.scrollTop = scrolls[i] ?? 0; });
+      if (document.scrollingElement) document.scrollingElement.scrollTop = pageScroll;
       this.bindEvents();
       this.masonry.disconnect();
       this.root.querySelectorAll(".rows > .row").forEach((row) => this.masonry.observe(row));
@@ -325,10 +334,24 @@
           });
         }
       }
+      for (const el of this.root.querySelectorAll("[data-action='rename-session']")) {
+        el.addEventListener("dblclick", (event) => {
+          event.stopPropagation();
+          this.ctx.post({ type: "renameSession", sessionId: el.getAttribute("data-session-id") });
+        });
+      }
       for (const el of this.root.querySelectorAll("[data-action='open-pr']")) {
         el.addEventListener("click", (event) => {
           event.stopPropagation();
           this.ctx.openExternal(el.getAttribute("data-url"));
+        });
+      }
+      for (const el of this.root.querySelectorAll("[data-action='toggle-done-prs']")) {
+        el.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const id = el.getAttribute("data-session-id");
+          if (!this.state.showDonePrs.delete(id)) this.state.showDonePrs.add(id);
+          this.render();
         });
       }
       for (const el of this.root.querySelectorAll("[data-action='open-worktree']")) {
@@ -384,6 +407,12 @@
       lanes.set(card.repo, lane);
     }
     return [...lanes.values()].sort((a, b) => a.rank - b.rank || b.latest - a.latest);
+  }
+
+  function doneLabel(prs) {
+    const merged = prs.filter((pr) => pr.state === "MERGED").length;
+    const closed = prs.length - merged;
+    return [merged ? `${merged} merged` : "", closed ? `${closed} closed` : ""].filter(Boolean).join(" · ");
   }
 
   function countByType(types) {

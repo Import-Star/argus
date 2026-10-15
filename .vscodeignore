@@ -9,3 +9,4 @@ DEVELOPING.md
 **/*.map
 **/*.vsix
 .claude/**
+test/**

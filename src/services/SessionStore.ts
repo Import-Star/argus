@@ -6,21 +6,13 @@ import { PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord
 import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
+import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, RegistryEntry } from "./sessionColumn";
 import { windowFilter } from "./windowScope";
 
 const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
 const SESSIONS_DIR = path.join(ARGUS_DIR, "sessions");
 const REGISTRY_DIR = path.join(os.homedir(), ".claude", "sessions");
 const BOARD_STATE_FILE = path.join(ARGUS_DIR, "board.json");
-
-interface RegistryEntry {
-  pid: number;
-  sessionId: string;
-  name?: string;
-  nameSource?: string;
-  status?: string;
-  statusUpdatedAt?: number;
-}
 
 export const COLUMN_ORDER: SessionColumn[] = ["needs-you", "working", "idle", "pr-open", "archived"];
 export const COLUMN_LABEL: Record<SessionColumn, string> = {
@@ -36,6 +28,7 @@ export class SessionStore implements vscode.Disposable {
   public readonly onDidChange = this.emitter.event;
   private cards: SessionCard[] = [];
   private prByUrl = new Map<string, PrSummary>();
+  private readonly prsLookedUp = new Set<string>();
   public prsRefreshedAt?: number;
   private watchers: fs.FSWatcher[] = [];
   private debounce?: NodeJS.Timeout;
@@ -90,6 +83,7 @@ export class SessionStore implements vscode.Disposable {
     const registry = this.readRegistry();
     const records = this.readRecords();
     for (const record of records) {
+      record.worktrees = existingWorktrees(record.worktrees);
       const entry = registry.get(record.sessionId);
       // A /rename name lives only in Claude Code's registry, which drops it when the session closes.
       const name = entry?.nameSource === "user" ? entry.name?.slice(0, 120) : undefined;
@@ -99,12 +93,10 @@ export class SessionStore implements vscode.Disposable {
       }
     }
     const inWindow = windowFilter();
-    const now = Date.now();
-    const staleMs = this.staleHours() * 3_600_000;
 
     this.cards = records
       .filter(inWindow)
-      .map((record) => this.toCard(record, registry.get(record.sessionId), state, now, staleMs))
+      .map((record) => this.toCard(record, registry.get(record.sessionId), state))
       .filter((card): card is SessionCard => card !== undefined)
       .sort((a, b) => {
         const byColumn = COLUMN_ORDER.indexOf(a.column) - COLUMN_ORDER.indexOf(b.column);
@@ -113,6 +105,22 @@ export class SessionStore implements vscode.Disposable {
 
     this.emitter.fire(this.cards);
     this.scanUsage();
+    this.lookUpNewPrs(records);
+  }
+
+  // A PR linked since the last timed refresh gets its chip now, not on the next tick.
+  private lookUpNewPrs(records: SessionRecord[]): void {
+    const urls = records.flatMap((record) => record.prs).filter((url) => !this.prByUrl.has(url) && !this.prsLookedUp.has(url));
+    if (urls.length === 0) {
+      return;
+    }
+    urls.forEach((url) => this.prsLookedUp.add(url));
+    void this.prSync.summarize(urls).then((fresh) => {
+      for (const [url, summary] of fresh) {
+        this.prByUrl.set(url, summary);
+      }
+      this.refresh();
+    });
   }
 
   // Every session in this window's scope, archived ones included.
@@ -224,17 +232,15 @@ export class SessionStore implements vscode.Disposable {
   private toCard(
     record: SessionRecord,
     registry: RegistryEntry | undefined,
-    state: SessionBoardState,
-    now: number,
-    staleMs: number
+    state: SessionBoardState
   ): SessionCard | undefined {
     const prs = record.prs.map((url) => this.prByUrl.get(url)).filter((pr): pr is PrSummary => Boolean(pr));
     const open = Boolean(registry);
     const read = (state.readAt[record.sessionId] ?? 0) >= record.stateSince;
-    const archivedManually = state.archived[record.sessionId] !== undefined;
+    const archivedManually = isArchivedManually(record, state.archived[record.sessionId]);
     const { repo, worktree } = describeCwd(record.cwd);
     const interrupted = isInterrupted(record, registry);
-    const column = this.columnFor(record, registry, prs, read, archivedManually, interrupted, now, staleMs);
+    const column = columnFor(record, registry, prs, read, archivedManually, interrupted);
     if (!column) {
       return undefined;
     }
@@ -252,45 +258,6 @@ export class SessionStore implements vscode.Disposable {
       column,
       usage: record.transcriptPath ? this.transcripts.usage({ sessionId: record.sessionId, transcriptPath: record.transcriptPath }) : undefined
     };
-  }
-
-  private columnFor(
-    record: SessionRecord,
-    registry: RegistryEntry | undefined,
-    prs: PrSummary[],
-    read: boolean,
-    archivedManually: boolean,
-    interrupted: boolean,
-    now: number,
-    staleMs: number
-  ): SessionColumn | undefined {
-    const allPrsSettled = prs.length > 0 && prs.length === record.prs.length && prs.every((pr) => pr.state === "MERGED" || pr.state === "CLOSED");
-    const anyPrOpen = prs.some((pr) => pr.state === "OPEN");
-    const closed = !registry;
-    const stale = closed && now - record.updatedAt > staleMs;
-
-    if (closed && !record.lastPrompt && !record.title) {
-      return undefined;
-    }
-    const busy = registry?.status === "busy" || (!closed && record.state === "working" && !interrupted);
-    if (archivedManually || (!busy && (allPrsSettled || (stale && record.prs.length === 0)))) {
-      return "archived";
-    }
-    if (interrupted || record.state === "permission" || record.state === "question") {
-      return "needs-you";
-    }
-    // The main agent can Stop while background sub-agents keep the session busy, and Claude Code's own registry
-    // stays "busy" throughout. Only call it done once the registry says the session is no longer busy.
-    if (record.state === "done" && !read && registry?.status !== "busy") {
-      return "needs-you";
-    }
-    if (registry?.status === "busy" || record.state === "working") {
-      return "working";
-    }
-    if (anyPrOpen) {
-      return "pr-open";
-    }
-    return "idle";
   }
 
   private readRecords(): SessionRecord[] {
@@ -372,12 +339,8 @@ export class SessionStore implements vscode.Disposable {
     this.debounce = setTimeout(() => this.refresh(), 300);
   }
 
-  private staleHours(): number {
-    return vscode.workspace.getConfiguration("argus").get<number>("sessions.staleAfterHours", 24);
-  }
-
   private prRefreshMs(): number {
-    return Math.max(1, vscode.workspace.getConfiguration("argus").get<number>("sessions.prRefreshMinutes", 5)) * 60_000;
+    return Math.max(1, vscode.workspace.getConfiguration("argus").get<number>("sessions.prRefreshMinutes", 1)) * 60_000;
   }
 }
 
@@ -401,18 +364,6 @@ function readJsonDir<T>(dir: string): T[] {
     }
   }
   return items;
-}
-
-// Claude Code fires no hook on Esc, so a turn that never reached Stop shows as "working" in our record. Once the
-// registry has gone idle after our last update, or the process is gone, that turn was cut short.
-function isInterrupted(record: SessionRecord, registry: RegistryEntry | undefined): boolean {
-  if (record.state !== "working") {
-    return false;
-  }
-  if (!registry) {
-    return true;
-  }
-  return registry.status !== "busy" && (registry.statusUpdatedAt ?? 0) > record.updatedAt;
 }
 
 function isAlive(pid: number): boolean {

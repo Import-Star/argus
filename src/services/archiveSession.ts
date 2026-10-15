@@ -33,12 +33,21 @@ export class ArchiveCleanupRegistry {
   }
 }
 
-async function removeWorktree(folder: string): Promise<string | undefined> {
+async function uncommittedFiles(folder: string): Promise<number> {
+  try {
+    const { stdout } = await execFileAsync("git", ["-C", folder, "status", "--porcelain"]);
+    return stdout.split("\n").filter(Boolean).length;
+  } catch {
+    return 0;
+  }
+}
+
+async function removeWorktree(folder: string, force: boolean): Promise<string | undefined> {
   try {
     const { stdout } = await execFileAsync("git", ["-C", folder, "rev-parse", "--path-format=absolute", "--git-common-dir"]);
     const repo = path.dirname(stdout.trim());
-    // No --force: a worktree with uncommitted changes is kept and reported.
-    await execFileAsync("git", ["-C", repo, "worktree", "remove", folder]);
+    // Double --force also removes worktrees with uncommitted changes or a lock.
+    await execFileAsync("git", ["-C", repo, "worktree", "remove", ...(force ? ["--force", "--force"] : []), folder]);
     return undefined;
   } catch (error) {
     return `${path.basename(folder)}: ${(error as { stderr?: string }).stderr?.trim() || String(error)}`;
@@ -61,17 +70,23 @@ export async function archiveWithCleanup(sessions: SessionStore, cleanup: Archiv
   const worktrees = (card.record.worktrees ?? []).filter((folder) => !sharedWith.has(folder));
 
   if (cleanupItems.length > 0 || worktrees.length > 0) {
-    const lines = [...cleanupItems.map((item) => item.label), ...worktrees.map((folder) => `Remove worktree: ${folder}`)];
+    const dirty = await Promise.all(worktrees.map(uncommittedFiles));
+    const lines = [
+      ...cleanupItems.map((item) => item.label),
+      ...worktrees.map((folder, i) => `Remove worktree: ${folder}${dirty[i] ? ` (${dirty[i]} uncommitted file${dirty[i] === 1 ? "" : "s"})` : ""}`)
+    ];
+    const forceLabel = "Archive and delete uncommitted files";
     const choice = await vscode.window.showWarningMessage(
       `Archive "${card.record.title ?? "chat"}"?`,
       { modal: true, detail: lines.join("\n") },
       "Archive and clean up",
+      ...(dirty.some(Boolean) ? [forceLabel] : []),
       "Archive only"
     );
     if (!choice) {
       return;
     }
-    if (choice === "Archive and clean up") {
+    if (choice !== "Archive only") {
       for (const item of cleanupItems) {
         try {
           await item.run();
@@ -79,7 +94,7 @@ export async function archiveWithCleanup(sessions: SessionStore, cleanup: Archiv
           void vscode.window.showWarningMessage(`Argus: ${item.label} failed: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
-      const failures = (await Promise.all(worktrees.map(removeWorktree))).filter((failure): failure is string => Boolean(failure));
+      const failures = (await Promise.all(worktrees.map((folder) => removeWorktree(folder, choice === forceLabel)))).filter((failure): failure is string => Boolean(failure));
       if (failures.length > 0) {
         void vscode.window.showWarningMessage(`Argus: worktree not removed. ${failures.join(" | ")}`);
       }

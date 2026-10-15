@@ -22,6 +22,7 @@ From the repo root:
 ```bash
 npm install
 npm run compile      # tsc -p ./ plus the hook's type-check
+npm test             # node --test over test/*.test.ts
 npm run package:vsix  # npx @vscode/vsce package --no-dependencies
 ```
 
@@ -58,8 +59,7 @@ Point your Claude Code session at the repo and it will pick up [CLAUDE.md](CLAUD
 layout and the rules. A good loop:
 
 1. Ask the agent for a change ("add a session chip for X", "write a plugin that shows Y").
-2. It edits, then runs `npm run compile` (or `npm run build` in a plugin folder). Compile errors are the main
-   check; there are no tests yet.
+2. It edits, then runs `npm run compile` and `npm test` (or `npm run build` in a plugin folder).
 3. You press `F5` or run the install script and try it. For a plugin change, **Argus: Reload Plugins** is enough.
 
 Ask it to keep changes small and to update the README and CHANGELOG when behaviour changes.

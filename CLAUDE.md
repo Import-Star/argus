@@ -7,8 +7,8 @@ and [README.md](README.md) for user-facing behaviour.
 
 ## Commands
 
-- `npm run compile` compiles the core (`src` to `out`) and type-checks the hook. Run it after every core change;
-  there are no tests, so a clean compile is the check.
+- `npm run compile` compiles the core (`src` to `out`) and type-checks the hook. `npm test` runs `test/*.test.ts`
+  with `node --test`. Run both after every core change. Tests can't import `vscode`, so keep testable logic out of it.
 - `./install-local.ps1` or `./install-local.sh` build and install the extension. Then reload the window.
 - `npm run package:vsix` builds the `.vsix` without installing it.
 - `F5` in VS Code launches an Extension Development Host running the core, which loads the plugins already in
