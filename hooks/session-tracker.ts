@@ -13,6 +13,7 @@ interface SessionRecord {
   updatedAt: number;
   stateSince: number;
   lastMessageAt?: number;
+  lastPromptAt?: number;
   state: SessionState;
   title?: string;
   titleSource?: "user";
@@ -225,6 +226,7 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       }
       record.pending = undefined;
       record.lastMessageAt = now;
+      record.lastPromptAt = now;
       setState(record, "working", now);
       return;
     }

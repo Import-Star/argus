@@ -136,15 +136,9 @@
     "configuration": {
       "title": "Argus",
       "properties": {
-        "argus.sessions.staleAfterHours": {
-          "type": "number",
-          "default": 24,
-          "minimum": 1,
-          "description": "Closed sessions with no open PR are archived after this many hours without activity."
-        },
         "argus.sessions.prRefreshMinutes": {
           "type": "number",
-          "default": 5,
+          "default": 1,
           "minimum": 1,
           "description": "How often PR states refresh in the background, for session cards."
         },
@@ -307,7 +301,7 @@
     "vscode:uninstall": "node ./out/uninstall.js",
     "package:vsix": "npx @vscode/vsce package --no-dependencies",
     "publish:store": "npx @vscode/vsce publish --no-dependencies",
-    "test": "echo \"No tests yet\""
+    "test": "tsc -p tsconfig.test.json && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",

@@ -38,6 +38,53 @@ function isArgusCommand(command: string): boolean {
   return normalized.includes("argus") && normalized.includes("session-tracker");
 }
 
+// VS Code started from the Dock doesn't get the shell PATH, so nvm and Homebrew installs aren't found by name.
+function nodeCandidates(): string[] {
+  const nvmDirs = [process.env.NVM_DIR, path.join(os.homedir(), ".nvm"), "/opt/homebrew/opt/nvm", "/usr/local/opt/nvm"];
+  const nvmNodes = nvmDirs.flatMap((dir) => {
+    const versions = dir ? path.join(dir, "versions", "node") : "";
+    if (!versions || !fs.existsSync(versions)) {
+      return [];
+    }
+    return fs
+      .readdirSync(versions)
+      .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+      .map((version) => path.join(versions, version, "bin", "node"));
+  });
+  return ["node", "/opt/homebrew/bin/node", "/usr/local/bin/node", ...nvmNodes];
+}
+
+function nodeVersion(candidate: string): number | undefined {
+  try {
+    return Number.parseInt(execFileSync(candidate, ["--version"], { encoding: "utf8", timeout: 5000 }).trim().replace(/^v/, ""), 10);
+  } catch {
+    return undefined;
+  }
+}
+
+// Full path, so hooks work whatever PATH Claude Code is started with.
+export function findNode(): string | undefined {
+  for (const candidate of nodeCandidates()) {
+    if ((nodeVersion(candidate) ?? 0) >= 24) {
+      return candidate === "node" ? execFileSync("node", ["-p", "process.execPath"], { encoding: "utf8" }).trim() : candidate;
+    }
+  }
+  return fromLoginShell();
+}
+
+// Last resort: the user's own shell knows about fnm, volta, asdf, mise and the rest.
+function fromLoginShell(): string | undefined {
+  if (process.platform === "win32" || !process.env.SHELL) {
+    return undefined;
+  }
+  try {
+    const found = execFileSync(process.env.SHELL, ["-ilc", "command -v node"], { encoding: "utf8", timeout: 10000 }).trim().split("\n").pop();
+    return found && (nodeVersion(found) ?? 0) >= 24 ? found : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // Copied out of the extension folder so version bumps don't break the path in settings.json.
 function installScript(extensionPath: string): string {
   fs.mkdirSync(ARGUS_DIR, { recursive: true });
@@ -47,7 +94,7 @@ function installScript(extensionPath: string): string {
   // Marks the hook as an ES module so Node skips the slow "detect module syntax" reparse and its warning.
   fs.writeFileSync(path.join(ARGUS_DIR, "package.json"), `${JSON.stringify({ private: true, type: "module" }, null, 2)}\n`);
   // Node 24+ runs TypeScript natively, so the hook ships as source.
-  return `node --no-warnings "${INSTALLED_SCRIPT}"`;
+  return `"${findNode() ?? "node"}" --no-warnings "${INSTALLED_SCRIPT}"`;
 }
 
 // Writes the argus-link-prs skill into ~/.claude/skills, with {{SCRIPT}} replaced by the command that runs the
@@ -55,17 +102,7 @@ function installScript(extensionPath: string): string {
 function installLinkSkill(extensionPath: string): void {
   const template = fs.readFileSync(path.join(extensionPath, "skills", LINK_SKILL_NAME, "SKILL.md"), "utf8");
   fs.mkdirSync(LINK_SKILL_DIR, { recursive: true });
-  fs.writeFileSync(path.join(LINK_SKILL_DIR, "SKILL.md"), template.split("{{SCRIPT}}").join(`node "${INSTALLED_SCRIPT}"`));
-}
-
-// Returns a problem description when node is missing or older than 24, else undefined.
-export function checkNode(): string | undefined {
-  try {
-    const version = execFileSync("node", ["--version"], { encoding: "utf8", timeout: 5000 }).trim();
-    return Number.parseInt(version.replace(/^v/, ""), 10) >= 24 ? undefined : `node ${version} found on PATH, but the hook needs Node 24 or newer.`;
-  } catch {
-    return "node was not found on PATH, but the hook needs Node 24 or newer.";
-  }
+  fs.writeFileSync(path.join(LINK_SKILL_DIR, "SKILL.md"), template.split("{{SCRIPT}}").join(`"${findNode() ?? "node"}" "${INSTALLED_SCRIPT}"`));
 }
 
 export function installHooks(extensionPath: string): { added: number; updated: number; settingsPath: string } {

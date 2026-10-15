@@ -21,6 +21,7 @@ export interface SessionRecord {
   updatedAt: number;
   stateSince: number;
   lastMessageAt?: number;
+  lastPromptAt?: number;
   state: SessionState;
   title?: string;
   // "user" once set by /rename or a board rename, so the hook stops replacing it with Claude's title.
