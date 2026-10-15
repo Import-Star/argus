@@ -1,8 +1,9 @@
-// Public API of the Argus core extension (importstar.argus). Plugins are ordinary VS Code extensions that declare
-// "extensionDependencies": ["importstar.argus"] and get this object from the core extension's exports:
+// Public API of the Argus core extension (importstar.argus-control-center). A plugin is a folder in
+// ~/.claude/argus/plugins with an argus-plugin.json manifest; its main module exports activate(), and Argus passes
+// this object in:
 //
-//   const argus = await vscode.extensions.getExtension<ArgusApi>("importstar.argus")!.activate();
-//   if (argus.version < 1) { return; }
+//   export async function activate(argus: ArgusApi, context: ArgusPluginContext) {
+//     if (argus.version < 1) { return; }
 //
 // Types only: import with `import type`. The webview side of a tab is described in ./webview.d.ts.
 

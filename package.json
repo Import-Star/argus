@@ -1,7 +1,7 @@
 {
-  "name": "argus",
+  "name": "argus-control-center",
   "displayName": "Argus",
-  "description": "Mission control for Claude Code: a live agent view of your sessions, Claude plan usage in the status bar, and a plugin API for extra tabs such as a kanban board and GitHub Actions.",
+  "description": "Mission control for Claude Code: a live board of your sessions, notifications when one needs you, PR and worktree tracking, diff review, Claude plan usage in the status bar, and plugins.",
   "version": "0.1.0",
   "publisher": "importstar",
   "license": "MIT",
@@ -211,7 +211,7 @@
           "additionalProperties": {
             "type": "object"
           },
-          "markdownDescription": "Settings for locally installed Argus plugins, keyed by plugin id: `\"argus.plugins.config\": { \"kanban\": { \"boardFile\": \"active-work.json\" } }`. Each plugin's README lists its keys. User and workspace scopes are merged key by key."
+          "markdownDescription": "Settings for locally installed Argus plugins, keyed by plugin id: `\"argus.plugins.config\": { \"my-plugin\": { \"someSetting\": \"value\" } }`. A plugin's README should list its keys. User and workspace scopes are merged key by key."
         },
         "argus.diffReview.baseRef": {
           "type": "string",

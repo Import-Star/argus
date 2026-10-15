@@ -18,7 +18,7 @@ and [README.md](README.md) for user-facing behaviour.
 ## Layout
 
 - `src/`, `api/`, `hooks/`, `skills/`, `media/`, `package.json` at the repo root — the core extension
-  (`importstar.argus`).
+  (`importstar.argus-control-center`).
 - `api/index.d.ts` and `api/webview.d.ts` — the plugin API, extension side and webview side.
 - `src/services/PluginHost.ts` — finds, loads and reloads plugin folders. `src/services/PluginConfig.ts` — a
   plugin's slice of `argus.plugins.config`.
