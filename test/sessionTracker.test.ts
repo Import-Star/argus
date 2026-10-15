@@ -9,7 +9,7 @@ const HOOK = path.join(import.meta.dirname, "..", "hooks", "session-tracker.ts")
 let home: string;
 
 function fire(event: Record<string, unknown>): void {
-  const result = spawnSync(process.execPath, [HOOK], { input: JSON.stringify({ session_id: "s1", cwd: home, ...event }), env: { ...process.env, HOME: home }, encoding: "utf8" });
+  const result = spawnSync(process.execPath, [HOOK], { input: JSON.stringify({ session_id: "s1", cwd: home, ...event }), env: { ...process.env, HOME: home, USERPROFILE: home }, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
 }
 
