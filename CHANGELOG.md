@@ -32,5 +32,7 @@ Nothing has been published yet. This is the plan for the first public release.
   type-checked against the Argus it runs on.
 - Work (kanban), GitHub Actions and PR Reviews moved out of this repo into their own repositories, each built on
   the plugin API.
+- Diff review built in (was the diff-review plugin): worktree and PR diffs with line comments copied back to the
+  session. Syntax colours from vendored highlight.js 11.12.0 (`media/diff-review/vendor`, BSD-3-Clause).
 - Argus logo (a watching eye ringed by twelve more, after Argus Panoptes) as the Marketplace icon, the activity bar
   icon and the Control Center header mark.

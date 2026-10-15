@@ -131,6 +131,10 @@
       {
         "command": "argus.plugins.resetTrust",
         "title": "Argus: Reset Plugin Trust"
+      },
+      {
+        "command": "argus.diffReview.pick",
+        "title": "Argus: Review Worktree Diff"
       }
     ],
     "configuration": {
@@ -208,6 +212,17 @@
             "type": "object"
           },
           "markdownDescription": "Settings for locally installed Argus plugins, keyed by plugin id: `\"argus.plugins.config\": { \"kanban\": { \"boardFile\": \"active-work.json\" } }`. Each plugin's README lists its keys. User and workspace scopes are merged key by key."
+        },
+        "argus.diffReview.baseRef": {
+          "type": "string",
+          "default": "",
+          "description": "Base to diff against. Empty uses origin/HEAD, then origin/main, origin/master, main, master."
+        },
+        "argus.diffReview.contextLines": {
+          "type": "number",
+          "default": 3,
+          "minimum": 0,
+          "description": "Unchanged lines shown around each change in the diff review."
         }
       }
     },

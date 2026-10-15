@@ -49,6 +49,17 @@ plugin adds its tab alongside it. The Sessions tab adds to the sidebar:
 - Sub-agents running in a session, by type. Needs **Argus: Set Up Session Tracking** re-run once to add the
   SubagentStart and SubagentStop hooks.
 
+### Diff review
+
+Review a worktree's changes against its base branch and send line comments back to the session.
+
+- A card with a worktree gets a `± <worktree>` chip; a card with an open PR gets `± #<number>`. Click either to
+  open the diff in an editor tab. **Argus: Review Worktree Diff** picks any linked worktree or workspace folder.
+- Scopes: **All** (merge base to working tree, plus untracked files), **Committed**, **Staged**, **Unstaged**.
+  The **PR # or URL** field opens any PR through `gh pr diff`, without checking it out.
+- Click a line number to comment, shift-click to extend the range. **Send to agent** copies the review as
+  markdown and opens the session; paste it in.
+
 ### Claude plan usage
 
 A status bar item showing your Claude plan usage as a percentage (amber at 75%, red at 90%). It is on by default;
@@ -149,10 +160,12 @@ A plugin may make its own network calls; see its own README.
 | Setting | Default | Description |
 | --- | --- | --- |
 | `argus.sessions.scope` | `window` | `window` shows this window's sessions only; `all` shows every session on this machine. |
-| `argus.sessions.prRefreshMinutes` | `5` | How often PR states refresh in the background, for session cards. |
+| `argus.sessions.prRefreshMinutes` | `1` | How often PR states refresh in the background, for session cards. |
 | `argus.sessions.retentionDays` | `30` | Session record files are deleted this many days after the session is no longer open. |
 | `argus.notifications` | `all` | Show notifications when a session needs attention: `all` (permission, question or finished), `input` (permission and questions only), or `off`. |
 | `argus.prs.cacheSeconds` | `300` | How long a fetched PR state is reused before `gh` is called again. |
+| `argus.diffReview.baseRef` | `""` | Base to diff against. Empty uses `origin/HEAD`, then `origin/main`, `origin/master`, `main`, `master`. |
+| `argus.diffReview.contextLines` | `3` | Unchanged lines shown around each change. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
 | `argus.plugins.config` | `{}` | Settings for locally installed plugins, keyed by plugin id. See [Plugins](#plugins). |
@@ -164,6 +177,7 @@ A plugin may make its own network calls; see its own README.
 - **Argus: Sessions Needing You** (`argus.sessions.showAttention`)
 - **Argus: Set Up Session Tracking** (`argus.sessions.installHooks`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
+- **Argus: Review Worktree Diff** (`argus.diffReview.pick`)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)
 - **Argus: Refresh Claude Plan Usage** (`argus.usage.refresh`)
 
