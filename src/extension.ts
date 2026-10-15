@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { createApi, SessionChipsRegistry } from "./api";
+import { registerDiffReview } from "./diffReview";
 import { AttentionNotifier } from "./providers/AttentionNotifier";
 import { AttentionStatusBar } from "./providers/AttentionStatusBar";
 import { ControlCenter } from "./providers/ControlCenter";
@@ -37,6 +38,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const archiveCleanup = new ArchiveCleanupRegistry();
 
   const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup });
+
+  registerDiffReview(context, sessions, chips);
 
   const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup);
   const sessionsTabHandle = api.registerTab(sessionsTab.tab);
