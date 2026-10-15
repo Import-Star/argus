@@ -7,7 +7,7 @@ another CI provider, a different status bar item.
 ## Repo layout
 
 ```
-package.json, src/, hooks/, skills/, media/      the core extension (importstar.argus)
+package.json, src/, hooks/, skills/, media/      the core extension (importstar.argus-control-center)
 api/index.d.ts                                    the plugin API (extension side)
 api/webview.d.ts                                   the plugin API (webview side)
 ```
@@ -45,7 +45,7 @@ reload the host window (`Ctrl+R`) to pick up changes.
 ```
 
 These run `npm install`, `npm run compile` and `npm run package:vsix`, then
-`code --install-extension argus-<version>.vsix --force`. Plugins are separate: clone them into
+`code --install-extension argus-control-center-<version>.vsix --force`. Plugins are separate: clone them into
 `~/.claude/argus/plugins` and build each one there.
 
 After either script, run `Developer: Reload Window`. If you also installed Argus from the Marketplace, disable
@@ -273,10 +273,6 @@ second as elapsed time; add `data-precise="true"` for seconds.
 **The rule**: `handle.post()` is dropped while the Control Center panel is closed, so a tab script must post
 `{ type: "ready" }` on mount and the extension side must answer with full state — never assume your first `post`
 from the extension arrives.
-
-[argus-kanban](https://github.com/Import-Star/argus-kanban) is the fullest example: a board webview,
-`registerSessionChips`, `registerArchiveCleanup` and `sessions.start` with `link`, wired together in
-`src/extension.ts` and `src/kanbanController.ts`.
 
 ## Conventions
 

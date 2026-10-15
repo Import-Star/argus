@@ -7,9 +7,9 @@ First public release.
 - Sessions board: a sidebar view of Claude Code sessions grouped into Needs you, Working, PR open, Idle and
   Archived, a status bar item, and the Sessions tab in the Control Center. Sessions stopped mid-turn show as
   interrupted in Needs you.
-- Control Center Sessions tab: columns side by side (the inline grid style was blocked by the webview CSP, so
-  they used to stack), an optional row per repo (`g`), token use and compaction count per card, search through
-  transcript prompts and replies including archived sessions, and running sub-agents per session.
+- Control Center Sessions tab: columns side by side, an optional row per repo (`g`), token use and
+  compaction count per card, search through transcript prompts and replies including archived sessions, and
+  running sub-agents per session.
 - **Argus: Set Up Session Tracking** installs the hooks; **Argus: Remove Session Tracking** removes them.
   Uninstalling the extension does the same automatically.
 - Session titles come from the first prompt, or from Claude Code's `/rename` once you use it, so Argus, `/resume`
@@ -30,8 +30,6 @@ First public release.
 - Plugin settings live under `argus.plugins.config`, keyed by plugin id, with defaults from the plugin's manifest.
 - The core writes `argus.d.ts` and `argus-webview.d.ts` into the plugins folder on every start, so a plugin can be
   type-checked against the Argus it runs on.
-- Work (kanban), GitHub Actions and PR Reviews moved out of this repo into their own repositories, each built on
-  the plugin API.
 - Diff review built in (was the diff-review plugin): worktree and PR diffs with line comments copied back to the
   session. Syntax colours from vendored highlight.js 11.12.0 (`media/diff-review/vendor`, BSD-3-Clause).
 - Argus logo (a watching eye ringed by twelve more, after Argus Panoptes) as the Marketplace icon, the activity bar
