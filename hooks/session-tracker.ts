@@ -22,6 +22,8 @@ interface SessionRecord {
   lastMessage?: string;
   prs: string[];
   worktrees?: string[];
+  // `git worktree add` paths that were not a worktree yet when the hook saw them, e.g. a background command
+  pendingWorktrees?: { path: string; since: number }[];
   links?: Record<string, string>;
   lastTool?: string;
   endReason?: string;
@@ -51,6 +53,10 @@ const DIR = path.join(os.homedir(), ".claude", "argus", "sessions");
 // `[a-z0-9-]+`, item ids `[A-Za-z0-9_.-]+`. The legacy `[argus-card:<id>]` marker maps to `links.kanban`.
 const MARKER_RE = /\[argus:([a-z0-9-]+):([A-Za-z0-9_.-]+)\]/g;
 const LEGACY_CARD_MARKER = /\[argus-card:([A-Za-z0-9_]+)\]/g;
+
+// `git worktree add` flags that take a value; every other flag stands alone
+const WORKTREE_ADD_VALUE_FLAGS = new Set(["-b", "-B", "--reason"]);
+const PENDING_WORKTREE_MS = 10 * 60_000;
 
 const PR_URL = /https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/\d+/g;
 
@@ -137,19 +143,33 @@ function worktreeRoot(dir: string): string | undefined {
   }
 }
 
-function linkWorktree(record: SessionRecord, dir: string | undefined): void {
+function linkWorktree(record: SessionRecord, dir: string | undefined): boolean {
   const root = dir ? worktreeRoot(dir) : undefined;
   if (root && !(record.worktrees ?? []).includes(root)) {
     record.worktrees = [...(record.worktrees ?? []), root];
   }
+  return Boolean(root);
+}
+
+function linkPendingWorktrees(record: SessionRecord, now: number): void {
+  const pending = (record.pendingWorktrees ?? []).filter((item) => !linkWorktree(record, item.path) && now - item.since < PENDING_WORKTREE_MS);
+  record.pendingWorktrees = pending.length > 0 ? pending : undefined;
 }
 
 function worktreeAddPath(command: string, cwd: string): string | undefined {
-  const match = command.match(/\bgit\s+(?:-C\s+(\S+)\s+)?worktree\s+add\s+(?:-{1,2}\S+\s+(?:\S+\s+)?)*?([^\s-][^\s;&|]*)/);
+  const match = command.match(/\bgit\s+(?:-C\s+(\S+)\s+)?worktree\s+add\s+([^;&|]*)/);
   if (!match) {
     return undefined;
   }
-  return path.resolve(match[1] ? path.resolve(cwd, match[1]) : cwd, match[2].replace(/^["']|["']$/g, ""));
+  const words = match[2].trim().split(/\s+/);
+  for (let i = 0; i < words.length; i++) {
+    if (WORKTREE_ADD_VALUE_FLAGS.has(words[i])) {
+      i++;
+    } else if (!words[i].startsWith("-")) {
+      return path.resolve(match[1] ? path.resolve(cwd, match[1]) : cwd, words[i].replace(/^["']|["']$/g, ""));
+    }
+  }
+  return undefined;
 }
 
 function toolSummary(name: string, input: Record<string, unknown> | undefined): string {
@@ -257,13 +277,15 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
         collectPrs(record, input.tool_response?.stdout ?? "");
       }
       linkWorktree(record, input.cwd);
+      linkPendingWorktrees(record, now);
       const added = worktreeAddPath(command, input.cwd ?? record.cwd);
-      if (added) {
-        linkWorktree(record, added);
+      if (added && !linkWorktree(record, added)) {
+        record.pendingWorktrees = [...(record.pendingWorktrees ?? []).filter((item) => item.path !== added), { path: added, since: now }];
       }
       return;
     }
     case "Stop":
+      linkPendingWorktrees(record, now);
       record.pending = undefined;
       record.lastTool = undefined;
       if (input.last_assistant_message) {
