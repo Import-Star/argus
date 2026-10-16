@@ -42,14 +42,48 @@ describe("session-tracker hook", () => {
     assert.equal(record.lastPromptAt, promptAt);
   });
   it("links a worktree created by git worktree add", () => {
-    const repo = path.join(home, "repo");
-    fs.mkdirSync(repo);
-    const git = (...args: string[]) => spawnSync("git", ["-C", repo, ...args], { encoding: "utf8" });
-    git("init", "-q");
-    git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "init");
+    const { repo, git } = makeRepo();
     const wt = path.join(home, "wt");
     git("worktree", "add", "-q", wt);
     fire({ hook_event_name: "PostToolUse", cwd: repo, tool_name: "Bash", tool_input: { command: `git worktree add ${wt}` } });
     assert.deepEqual(saved().worktrees, [fs.realpathSync(wt)]);
   });
+  it("reads the path after flags that take no value", () => {
+    const { repo, git } = makeRepo();
+    const wt = path.join(home, "wt");
+    git("worktree", "add", "-q", "-b", "fix/x", wt, "HEAD");
+    const command = `cd ${repo} && git worktree add -q -b fix/x ${wt} HEAD && ln -s a b`;
+    fire({ hook_event_name: "PostToolUse", cwd: home, tool_name: "Bash", tool_input: { command } });
+    assert.deepEqual(saved().worktrees, [fs.realpathSync(wt)]);
+  });
+  it("links a worktree that only exists by a later hook, as when the command ran in the background", () => {
+    const { repo, git } = makeRepo();
+    const wt = path.join(home, "wt");
+    fire({ hook_event_name: "PostToolUse", cwd: repo, tool_name: "Bash", tool_input: { command: `git worktree add ${wt}` } });
+    assert.equal(saved().worktrees, undefined);
+    git("worktree", "add", "-q", wt);
+    fire({ hook_event_name: "Stop", last_assistant_message: "done" });
+    const record = saved();
+    assert.deepEqual(record.worktrees, [fs.realpathSync(wt)]);
+    assert.equal(record.pendingWorktrees, undefined);
+  });
+  it("stops retrying a pending worktree after ten minutes", () => {
+    fire({ hook_event_name: "PostToolUse", cwd: home, tool_name: "Bash", tool_input: { command: `git worktree add ${path.join(home, "never")}` } });
+    const file = path.join(home, ".claude", "argus", "sessions", "s1.json");
+    const record = saved();
+    fs.writeFileSync(file, JSON.stringify({ ...record, pendingWorktrees: [{ path: path.join(home, "never"), since: Date.now() - 11 * 60_000 }] }));
+    fire({ hook_event_name: "Stop", last_assistant_message: "done" });
+    assert.equal(saved().pendingWorktrees, undefined);
+  });
 });
+
+function makeRepo(): { repo: string; git: (...args: string[]) => void } {
+  const repo = path.join(home, "repo");
+  fs.mkdirSync(repo);
+  const git = (...args: string[]) => {
+    spawnSync("git", ["-C", repo, ...args], { encoding: "utf8" });
+  };
+  git("init", "-q");
+  git("-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "init");
+  return { repo, git };
+}
