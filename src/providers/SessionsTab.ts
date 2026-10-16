@@ -35,6 +35,7 @@ export function createSessionsTab(
   archiveCleanup: ArchiveCleanupRegistry
 ): { tab: ArgusTab; attach(handle: TabHandle): void; disposables: vscode.Disposable[] } {
   let handle: TabHandle | undefined;
+  const archiving = new Set<string>();
 
   const push = () => {
     if (!handle) {
@@ -45,7 +46,7 @@ export function createSessionsTab(
       ...card,
       chips: chips.chipsFor(card).map((chip) => ({ text: chip.text, tooltip: chip.tooltip }))
     }));
-    handle.post({ type: "sessions", cards: wire, refreshedAt: sessions.prsRefreshedAt });
+    handle.post({ type: "sessions", cards: wire, refreshedAt: sessions.prsRefreshedAt, archiving: [...archiving] });
     handle.setBadge(sessions.needsYou().length || undefined);
   };
 
@@ -77,7 +78,17 @@ export function createSessionsTab(
           await renameSessionPrompt(sessions, msg.sessionId);
           return;
         case "archiveSession":
-          await archiveWithCleanup(sessions, archiveCleanup, msg.sessionId);
+          if (archiving.has(msg.sessionId)) {
+            return;
+          }
+          archiving.add(msg.sessionId);
+          push();
+          try {
+            await archiveWithCleanup(sessions, archiveCleanup, msg.sessionId);
+          } finally {
+            archiving.delete(msg.sessionId);
+            push();
+          }
           return;
         case "unarchiveSession":
           sessions.setArchived(msg.sessionId, false);
