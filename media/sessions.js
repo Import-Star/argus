@@ -16,6 +16,7 @@
       const saved = ctx.getState() || {};
       this.state = {
         cards: [],
+        archiving: new Set(),
         refreshedAt: undefined,
         query: saved.query || "",
         selected: undefined,
@@ -41,6 +42,7 @@
       if (message.type === "sessions") {
         this.state.cards = Array.isArray(message.cards) ? message.cards : [];
         this.state.refreshedAt = message.refreshedAt;
+        this.state.archiving = new Set(message.archiving || []);
         this.render();
       } else if (message.type === "searchResults" && message.query === this.state.query.trim()) {
         this.state.deep = message.matches || {};
@@ -90,7 +92,7 @@
         this.selectRow(rows[Math.max(0, index - 1)].getAttribute("data-session-id"));
       } else if (event.key === "Enter" && selected) {
         this.ctx.openSession(selected);
-      } else if (event.key === "e" && selected) {
+      } else if (event.key === "e" && selected && !this.state.archiving.has(selected)) {
         this.ctx.post({ type: "archiveSession", sessionId: selected });
       }
     },
@@ -204,10 +206,12 @@
         card.column === "needs-you" && r.state === "done" ? `<button data-action="read-session" data-session-id="${id}">read</button>` : "",
         card.column === "archived"
           ? `<button data-action="unarchive-session" data-session-id="${id}">unarchive</button>`
-          : `<button data-action="archive-session" data-session-id="${id}">archive e</button>`
+          : this.state.archiving.has(r.sessionId)
+            ? `<button disabled><span class="spinner"></span>archiving…</button>`
+            : `<button data-action="archive-session" data-session-id="${id}">archive e</button>`
       ].join("");
       return `
-        <article class="row col-${esc(card.column)}${working ? " working" : ""}${this.state.selected === r.sessionId ? " selected" : ""}" data-session-id="${id}">
+        <article class="row col-${esc(card.column)}${working ? " working" : ""}${this.state.archiving.has(r.sessionId) ? " archiving" : ""}${this.state.selected === r.sessionId ? " selected" : ""}" data-session-id="${id}">
           <div class="l1">${this.glyphFor(card)}<span class="title" data-action="rename-session" data-session-id="${id}" title="Double-click to rename">${esc(r.title || "New chat")}</span><span class="t mono" data-since="${r.stateSince}" data-precise="${working}">${esc(working ? this.ctx.elapsedPrecise(r.stateSince) : this.ctx.elapsed(r.stateSince))}</span></div>
           <div class="l2 mono"><span class="where"><span class="state">${esc(this.stateLabel(card))}</span> · ${esc(where)}${card.name && card.open && card.name !== r.title ? ` · ${esc(card.name)}` : ""}</span><div class="actions">${actions}</div></div>
           ${prompt}${activity}${agentLine}${last}
