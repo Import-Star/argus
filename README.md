@@ -18,10 +18,13 @@ glance, and know which ones are waiting on you.
 ## Getting started
 
 1. Install Argus, and make sure you have the [requirements](#requirements), in particular Node.js 24 or newer.
-2. Run **Argus: Set Up Session Tracking** from the command palette (or click the link in the empty Sessions
-   view). This installs the Claude Code hooks Argus needs; no sessions appear without it.
+2. On first install Argus opens its Welcome page, which shows whether session tracking is set up and how to add
+   plugins. Click **Set Up Session Tracking** there, or run **Argus: Set Up Session Tracking** from the command
+   palette (or click the link in the empty Sessions view). This installs the Claude Code hooks Argus needs; no sessions appear without it.
 3. Start or resume a Claude Code session. It appears in the Argus sidebar after its first prompt. Sessions that
-   were already open show up once they next fire a hook.
+   were already open show up once they next fire a hook. To add earlier chats now, run **Argus: Import Existing
+   Claude Chats**: it reads Claude Code's transcripts from the last `argus.sessions.retentionDays` days and adds
+   any chat Argus has no record of, as idle or archived.
 
 ## Features
 
@@ -43,7 +46,8 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
   Argus. Claude Code's `/rename` also works, and changes the name in `/resume` and for other sessions too.
 - Cards show open PRs. A `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to
   hide them.
-- Keyboard: `/` to search, `j`/`k` to move, `Enter` to open, `e` to archive, `n` for a new chat.
+- Keyboard: `/` to search, `j`/`k` to move, `Enter` to open, `e` to archive, `x` to select for bulk actions, `Esc`
+  to clear the selection, `n` for a new chat.
 
 **Archiving.** A session archives itself when every PR it created is merged or closed, or when it closes without
 making a PR. You can also archive by hand. When the session has worktrees, archiving offers to remove them, shows
@@ -66,6 +70,9 @@ installed plugin. On top of the sidebar, the Sessions tab has:
 - Search through every prompt and reply in each session's transcript, archived sessions included, with the
   matching text shown on the card. It starts at three characters.
 - The sub-agents running in each session, by type.
+- Multi-select for bulk archiving: ctrl/⌘-click cards, shift-click for a range, or press `x` on the selected card.
+  A bar shows how many are picked with **Archive** (or `e`), **Unarchive**, **Select all shown** and **Clear**
+  (`Esc`). Worktree and plugin cleanup for the whole batch is offered in one prompt.
 
 ### Diff review
 
@@ -167,8 +174,10 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 ## Commands
 
 - **Argus: Open Control Center** (`argus.openControlCenter`)
+- **Argus: Welcome** (`argus.welcome`)
 - **Argus: Sessions Needing You** (`argus.sessions.showAttention`)
 - **Argus: Set Up Session Tracking** (`argus.sessions.installHooks`)
+- **Argus: Import Existing Claude Chats** (`argus.sessions.importChats`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
 - **Argus: Review Worktree Diff** (`argus.diffReview.pick`)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)

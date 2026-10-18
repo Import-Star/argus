@@ -2,7 +2,7 @@
   "name": "argus-control-center",
   "displayName": "Argus Control Center",
   "description": "Mission control for Claude Code: a live board of your sessions, notifications when one needs you, PR and worktree tracking, diff review, Claude plan usage in the status bar, and plugins.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "importstar",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -57,6 +57,10 @@
         "title": "Argus: Open Control Center"
       },
       {
+        "command": "argus.welcome",
+        "title": "Argus: Welcome"
+      },
+      {
         "command": "argus.sessions.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
@@ -93,6 +97,10 @@
       {
         "command": "argus.sessions.installHooks",
         "title": "Argus: Set Up Session Tracking"
+      },
+      {
+        "command": "argus.sessions.importChats",
+        "title": "Argus: Import Existing Claude Chats"
       },
       {
         "command": "argus.sessions.removeHooks",

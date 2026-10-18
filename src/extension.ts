@@ -9,12 +9,16 @@ import { createSessionsTab } from "./providers/SessionsTab";
 import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
+import { findChats, readChat, writeChats } from "./services/importChats";
 import { newChat, openSession, openWorktree } from "./services/openSession";
 import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
-import { renameSessionPrompt, SessionStore } from "./services/SessionStore";
+import { renameSessionPrompt, SessionStore, SESSIONS_DIR } from "./services/SessionStore";
 import { UsageStatusBar } from "./providers/UsageStatusBar";
+import { WelcomePanel } from "./providers/WelcomePanel";
 import { UsageService } from "./services/UsageService";
-import { ArgusApi, SessionCard } from "./types";
+import { ArgusApi, SessionCard, SessionRecord } from "./types";
+import * as os from "os";
+import * as path from "path";
 
 type TreeNode = { kind: "session"; card: SessionCard } | { kind: "group" } | SessionCard;
 
@@ -133,6 +137,42 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
       await openWorktree(node.folder);
     }
   });
+  register("argus.sessions.importChats", async () => {
+    // Older records would be deleted by the retention cleanup straight away, so only look back that far.
+    const days = sessions.retentionDays();
+    const records = await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: "Argus: looking for Claude Code chats…" },
+      async () => {
+        // Let the progress notification show before the synchronous scan.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        return findChats(path.join(os.homedir(), ".claude", "projects"), SESSIONS_DIR, Date.now() - days * 86_400_000)
+          .map(readChat)
+          .filter((record): record is SessionRecord => Boolean(record));
+      }
+    );
+    if (records.length === 0) {
+      void vscode.window.showInformationMessage(`Argus: no Claude Code chats from the last ${days} days that aren't already on the board.`);
+      return;
+    }
+    const archive = "Import as Archived";
+    const choice = await vscode.window.showInformationMessage(
+      `Import ${records.length} Claude Code chat${records.length === 1 ? "" : "s"} from the last ${days} days?`,
+      {
+        modal: true,
+        detail: "They appear on the board as idle (or archived), with their titles and last prompts. Each window shows only chats from its own folders unless argus.sessions.scope is \"all\". Older chats are left out because argus.sessions.retentionDays would remove them."
+      },
+      "Import",
+      archive
+    );
+    if (!choice) {
+      return;
+    }
+    const written = writeChats(records, SESSIONS_DIR);
+    if (choice === archive) {
+      sessions.setArchivedMany(written, true);
+    }
+    void vscode.window.showInformationMessage(`Argus: imported ${written.length} chat${written.length === 1 ? "" : "s"}.`);
+  });
   register("argus.sessions.showAttention", () => status.showPicker(openSession));
   register("argus.sessions.installHooks", () => {
     try {
@@ -153,6 +193,11 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const plugins = new PluginHost(context, api);
   context.subscriptions.push(plugins);
   void plugins.load();
+
+  const welcome = new WelcomePanel(context, () => plugins.names());
+  context.subscriptions.push(welcome);
+  register("argus.welcome", () => welcome.show());
+  welcome.showOnFirstRun();
 
   register("argus.plugins.reload", () => plugins.reload());
   register("argus.plugins.resetTrust", () => plugins.resetTrust());

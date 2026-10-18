@@ -10,7 +10,7 @@ import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, Regist
 import { windowFilter } from "./windowScope";
 
 const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
-const SESSIONS_DIR = path.join(ARGUS_DIR, "sessions");
+export const SESSIONS_DIR = path.join(ARGUS_DIR, "sessions");
 const REGISTRY_DIR = path.join(os.homedir(), ".claude", "sessions");
 const BOARD_STATE_FILE = path.join(ARGUS_DIR, "board.json");
 
@@ -199,12 +199,18 @@ export class SessionStore implements vscode.Disposable {
   }
 
   public setArchived(sessionId: string, archived: boolean): void {
+    this.setArchivedMany([sessionId], archived);
+  }
+
+  public setArchivedMany(sessionIds: readonly string[], archived: boolean): void {
     this.mutateBoardState((state) => {
-      if (archived) {
-        state.archived[sessionId] = Date.now();
-      } else {
-        delete state.archived[sessionId];
-        state.readAt[sessionId] = Date.now();
+      for (const sessionId of sessionIds) {
+        if (archived) {
+          state.archived[sessionId] = Date.now();
+        } else {
+          delete state.archived[sessionId];
+          state.readAt[sessionId] = Date.now();
+        }
       }
     });
   }
@@ -273,7 +279,7 @@ export class SessionStore implements vscode.Disposable {
       });
   }
 
-  private retentionDays(): number {
+  public retentionDays(): number {
     return Math.max(1, vscode.workspace.getConfiguration("argus").get<number>("sessions.retentionDays", 30));
   }
 

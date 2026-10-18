@@ -73,6 +73,9 @@ button.link { border: 0; background: none; padding: 0; color: var(--dim); font-s
 .row { position: relative; padding: 8px 10px 8px 11px; background: var(--row); border: 1px solid var(--border); border-left: 3px solid var(--dim); border-radius: 6px; cursor: pointer; }
 .row:hover { background: var(--row-hover); }
 .row.selected { outline: 1px solid var(--coral); outline-offset: -1px; }
+.row.picked { background: var(--coral-soft); border-color: var(--coral); }
+.bulk-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 18px; border-bottom: 1px solid var(--border); background: var(--coral-soft); }
+.bulk-bar kbd { margin-left: 4px; }
 .l1 { display: flex; align-items: baseline; gap: 8px; }
 .l2 { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 0 20px; color: var(--muted); white-space: nowrap; }
 .l2 .where { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -148,3 +151,22 @@ button.icon.on { border-color: var(--coral); color: var(--coral); }
   .rows { max-height: none; }
   .search { width: 180px; }
 }
+
+/* ── Welcome page ────────────────────────────────────────────────────────── */
+
+body.welcome { max-width: 760px; margin: 0 auto; padding: 24px 24px 40px; line-height: 1.55; }
+.welcome-head h1 { font-size: 20px; margin: 14px 0 6px; }
+.welcome-head p { color: var(--muted); margin: 0; }
+.welcome-step { margin-top: 22px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
+.welcome-step h2 { display: flex; align-items: center; gap: 8px; font-size: 14px; margin: 0 0 8px; }
+.welcome-step p { margin: 6px 0; }
+.step-no { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--coral-soft); color: var(--coral); font-size: 11px; }
+.pill { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px; border: 1px solid currentColor; }
+.pill.on { color: var(--green); }
+.pill.warn { color: var(--amber); }
+.pill.off { color: var(--danger); }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 4px; }
+.welcome-actions button:disabled { opacity: 0.6; cursor: progress; }
+.welcome-meta { color: var(--muted); font-size: 12px; }
+.welcome-warn { color: var(--amber); }
+.welcome-foot { margin-top: 20px; text-align: center; }

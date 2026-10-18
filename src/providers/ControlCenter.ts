@@ -5,7 +5,7 @@ import { ArgusTab, TabHandle } from "../types";
 const ACTIVE_TAB_KEY = "argus.controlCenter.activeTab";
 
 // media/logo-mono.svg inlined (an <img> can't take currentColor), so the header mark picks up the coral accent.
-const MARK_SVG =
+export const MARK_SVG =
   `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">` +
   `<defs><path id="argus-mark-eye" d="M-2.3 0C-1.3-1.7 1.3-1.7 2.3 0C1.3 1.7-1.3 1.7-2.3 0Z"/></defs>` +
   `<g transform="translate(12 12)">` +
@@ -259,7 +259,7 @@ export class ControlCenter implements vscode.Disposable {
   }
 }
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -267,7 +267,7 @@ function escapeHtml(value: string): string {
     .replaceAll('"', "&quot;");
 }
 
-function getNonce(): string {
+export function getNonce(): string {
   const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let value = "";
   for (let i = 0; i < 32; i += 1) {

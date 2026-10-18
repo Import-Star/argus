@@ -76,6 +76,7 @@ src/providers/
   SessionTreeProvider.ts          sidebar tree of sessions
   AttentionStatusBar.ts           "N need you" status bar item
   ControlCenter.ts                Control Center webview panel: hosts every registered tab
+  WelcomePanel.ts                 Welcome page: session tracking status and setup, how plugins work
   SessionsTab.ts                  the core's own tab (Sessions, larger), built on registerTab
   UsageStatusBar.ts               Claude plan usage status bar item
 src/services/
@@ -84,13 +85,16 @@ src/services/
   HookInstaller.ts                edits ~/.claude/settings.json, copies the hook script
   GhPrSyncService.ts              PR state through the gh CLI, exposed to plugins as api.prs
   openSession.ts                  opens Claude Code tabs via claude-vscode.editor.open
-  archiveSession.ts               archive plus plugin-supplied cleanup (registerArchiveCleanup)
+  archiveSession.ts               archive (one session or a batch) plus plugin-supplied cleanup (registerArchiveCleanup)
+  importChats.ts                  builds session records from existing Claude Code transcripts (Import Existing Claude Chats)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse
   UsageService.ts                 Claude plan usage, reads from Anthropic's OAuth endpoint
   PluginHost.ts                   finds, loads and reloads plugin folders; owns their lifetime
   PluginConfig.ts                 a plugin's slice of argus.plugins.config
 hooks/session-tracker.ts         runs inside Claude Code hooks, writes session JSON
 media/host.js, styles.css        Control Center webview shell: tab switching, shared CSS classes, timers
+media/sessions.js                the Sessions tab: board, search, keyboard shortcuts, multi-select
+media/welcome.js                 Welcome page buttons
 ```
 
 Data flow: Claude Code fires a hook, `session-tracker` writes `~/.claude/argus/sessions/<id>.json`,

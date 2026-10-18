@@ -128,6 +128,10 @@ export class PluginHost implements vscode.Disposable {
     );
   }
 
+  public names(): string[] {
+    return [...this.loaded.values()].map((plugin) => plugin.manifest.name ?? plugin.manifest.id);
+  }
+
   public commands(): { command: string; title: string; plugin: string }[] {
     const all: { command: string; title: string; plugin: string }[] = [];
     for (const plugin of this.loaded.values()) {
