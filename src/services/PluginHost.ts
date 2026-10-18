@@ -67,6 +67,21 @@ function prefixed(memento: vscode.Memento, pluginId: string): vscode.Memento {
   } as vscode.Memento;
 }
 
+function prefixedSecrets(secrets: vscode.SecretStorage, pluginId: string, disposables: vscode.Disposable[]): vscode.SecretStorage {
+  const prefix = `plugin.${pluginId}.`;
+  const emitter = new vscode.EventEmitter<vscode.SecretStorageChangeEvent>();
+  disposables.push(
+    emitter,
+    secrets.onDidChange((e) => e.key.startsWith(prefix) && emitter.fire({ key: e.key.slice(prefix.length) }))
+  );
+  return {
+    get: (key: string) => secrets.get(prefix + key),
+    store: (key: string, value: string) => secrets.store(prefix + key, value),
+    delete: (key: string) => secrets.delete(prefix + key),
+    onDidChange: emitter.event
+  } as vscode.SecretStorage;
+}
+
 function readManifest(root: string): PluginManifest {
   const raw = JSON.parse(fs.readFileSync(path.join(root, MANIFEST), "utf8")) as Partial<PluginManifest>;
   if (typeof raw.id !== "string" || !ID.test(raw.id)) {
@@ -223,7 +238,8 @@ export class PluginHost implements vscode.Disposable {
       globalStorageUri: storage,
       globalState: prefixed(this.context.globalState, manifest.id),
       workspaceState: prefixed(this.context.workspaceState, manifest.id),
-      config
+      config,
+      secrets: prefixedSecrets(this.context.secrets, manifest.id, disposables)
     };
   }
 

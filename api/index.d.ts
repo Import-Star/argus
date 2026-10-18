@@ -186,6 +186,9 @@ export interface ArgusPluginContext {
   readonly globalState: vscode.Memento;
   readonly workspaceState: vscode.Memento;
   readonly config: PluginConfig;
+  // VS Code's SecretStorage (OS keychain), with keys scoped to this plugin. For tokens and passwords: never put
+  // those in config. Optional so plugins can run on older Argus versions that don't provide it.
+  readonly secrets?: vscode.SecretStorage;
 }
 
 // The shape of a plugin's main module (argus-plugin.json "main"). Argus requires the file and calls activate().
