@@ -50,4 +50,4 @@ else
 fi
 
 echo "Installed $vsix_file locally."
-echo "Next: run 'Developer: Reload Window' in VS Code, then 'Argus: Install Session Tracker Hooks' (re-run it after hook changes)."
+echo "Next: run 'Developer: Reload Window' in VS Code, then 'Argus: Set Up Session Tracking' (re-run it after hook changes)."

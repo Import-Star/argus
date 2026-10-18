@@ -39,7 +39,7 @@ try {
   Invoke-Checked $codeCmd @('--install-extension', $vsixFile, '--force')
 
   Write-Host "Installed $vsixFile locally."
-  Write-Host "Next: run 'Developer: Reload Window' in VS Code, then 'Argus: Install Session Tracker Hooks' (re-run it after hook changes)."
+  Write-Host "Next: run 'Developer: Reload Window' in VS Code, then 'Argus: Set Up Session Tracking' (re-run it after hook changes)."
 } finally {
   Pop-Location
 }
