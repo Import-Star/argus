@@ -2,6 +2,10 @@
 
 First public release.
 
+## Unreleased
+
+- Plugin API: `context.secrets`, VS Code's SecretStorage with keys scoped to the plugin (optional field).
+
 ## 0.1.0
 
 - Sessions board: a sidebar view of Claude Code sessions grouped into Needs you, Working, PR open, Idle and
