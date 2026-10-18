@@ -9,6 +9,8 @@
     ["archived", "Archived"]
   ];
 
+  const isMac = /Mac/.test(navigator.platform || navigator.userAgent);
+
   window.argus.registerTab("sessions", {
     mount(root, ctx) {
       this.root = root;
@@ -20,6 +22,9 @@
         refreshedAt: undefined,
         query: saved.query || "",
         selected: undefined,
+        // Sessions picked for a bulk action (ctrl/cmd-click, shift-click or x), and the last one picked.
+        picked: new Set(),
+        anchor: undefined,
         showArchived: Boolean(saved.showArchived),
         groupByRepo: Boolean(saved.groupByRepo),
         // Sessions whose merged and closed PRs are shown.
@@ -43,6 +48,8 @@
         this.state.cards = Array.isArray(message.cards) ? message.cards : [];
         this.state.refreshedAt = message.refreshedAt;
         this.state.archiving = new Set(message.archiving || []);
+        const ids = new Set(this.state.cards.map((card) => card.record.sessionId));
+        for (const id of this.state.picked) if (!ids.has(id)) this.state.picked.delete(id);
         this.render();
       } else if (message.type === "searchResults" && message.query === this.state.query.trim()) {
         this.state.deep = message.matches || {};
@@ -70,6 +77,10 @@
 
     onKeydown(event) {
       if (!this.active || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === "Escape" && this.state.picked.size && !event.target.closest("input, textarea")) {
+        this.clearPicked();
+        return;
+      }
       if (event.target.closest("input, textarea")) {
         if (event.key === "Escape") event.target.blur();
         return;
@@ -92,6 +103,10 @@
         this.selectRow(rows[Math.max(0, index - 1)].getAttribute("data-session-id"));
       } else if (event.key === "Enter" && selected) {
         this.ctx.openSession(selected);
+      } else if (event.key === "x" && selected) {
+        this.pick(selected, false);
+      } else if (event.key === "e" && this.state.picked.size) {
+        this.archivePicked();
       } else if (event.key === "e" && selected && !this.state.archiving.has(selected)) {
         this.ctx.post({ type: "archiveSession", sessionId: selected });
       }
@@ -105,6 +120,58 @@
       this.state.selected = sessionId;
       for (const row of this.visibleRows()) row.classList.toggle("selected", row.getAttribute("data-session-id") === sessionId);
       this.root.querySelector(`.row[data-session-id="${cssEscape(sessionId)}"]`)?.scrollIntoView({ block: "nearest" });
+    },
+
+    // Toggles one session, or with range picks every visible row between the last pick and this one.
+    pick(sessionId, range) {
+      const ids = this.visibleRows().map((row) => row.getAttribute("data-session-id"));
+      const from = ids.indexOf(this.state.anchor);
+      const to = ids.indexOf(sessionId);
+      if (range && from >= 0 && to >= 0) {
+        for (const id of ids.slice(Math.min(from, to), Math.max(from, to) + 1)) this.state.picked.add(id);
+      } else if (!this.state.picked.delete(sessionId)) {
+        this.state.picked.add(sessionId);
+      }
+      this.state.anchor = sessionId;
+      this.render();
+    },
+
+    clearPicked() {
+      this.state.picked.clear();
+      this.state.anchor = undefined;
+      this.render();
+    },
+
+    pickedCards() {
+      return this.state.cards.filter((card) => this.state.picked.has(card.record.sessionId));
+    },
+
+    archivePicked() {
+      const sessionIds = this.pickedCards()
+        .filter((card) => card.column !== "archived" && !this.state.archiving.has(card.record.sessionId))
+        .map((card) => card.record.sessionId);
+      if (sessionIds.length === 0) return;
+      this.ctx.post({ type: "archiveSessions", sessionIds });
+      this.clearPicked();
+    },
+
+    unarchivePicked() {
+      const sessionIds = this.pickedCards().filter((card) => card.column === "archived").map((card) => card.record.sessionId);
+      if (sessionIds.length === 0) return;
+      this.ctx.post({ type: "unarchiveSessions", sessionIds });
+      this.clearPicked();
+    },
+
+    bulkBar() {
+      const picked = this.pickedCards();
+      if (picked.length === 0) return "";
+      const toArchive = picked.filter((card) => card.column !== "archived").length;
+      const toUnarchive = picked.length - toArchive;
+      return `<div class="bulk-bar"><span class="mono">${picked.length} selected</span>
+        ${toArchive ? `<button id="bulk-archive" class="primary">Archive ${toArchive} <kbd>e</kbd></button>` : ""}
+        ${toUnarchive ? `<button id="bulk-unarchive">Unarchive ${toUnarchive}</button>` : ""}
+        <button id="bulk-all">Select all shown</button>
+        <button id="bulk-clear">Clear <kbd>esc</kbd></button></div>`;
     },
 
     persist() {
@@ -211,7 +278,7 @@
             : `<button data-action="archive-session" data-session-id="${id}">archive e</button>`
       ].join("");
       return `
-        <article class="row col-${esc(card.column)}${working ? " working" : ""}${this.state.archiving.has(r.sessionId) ? " archiving" : ""}${this.state.selected === r.sessionId ? " selected" : ""}" data-session-id="${id}">
+        <article class="row col-${esc(card.column)}${working ? " working" : ""}${this.state.archiving.has(r.sessionId) ? " archiving" : ""}${this.state.selected === r.sessionId ? " selected" : ""}${this.state.picked.has(r.sessionId) ? " picked" : ""}" data-session-id="${id}">
           <div class="l1">${this.glyphFor(card)}<span class="title" data-action="rename-session" data-session-id="${id}" title="Double-click to rename">${esc(r.title || "New chat")}</span><span class="t mono" data-since="${r.stateSince}" data-precise="${working}">${esc(working ? this.ctx.elapsedPrecise(r.stateSince) : this.ctx.elapsed(r.stateSince))}</span></div>
           <div class="l2 mono"><span class="where"><span class="state">${esc(this.stateLabel(card))}</span> · ${esc(where)}${card.name && card.open && card.name !== r.title ? ` · ${esc(card.name)}` : ""}</span><div class="actions">${actions}</div></div>
           ${prompt}${activity}${agentLine}${last}
@@ -295,9 +362,10 @@
           <button id="group-repo" class="icon${this.state.groupByRepo ? " on" : ""}" title="Group by repo (g)">⊞ by repo</button>
           <button id="refresh-sessions" class="icon" title="Refresh PR states">↻</button>
         </div>
+        ${this.bulkBar()}
         ${this.statusLine()}
         ${this.renderBoard()}
-        <footer class="keys"><kbd>/</kbd>search <kbd>j</kbd><kbd>k</kbd>move <kbd>↵</kbd>open <kbd>e</kbd>archive <kbd>n</kbd>new chat <kbd>g</kbd>group by repo</footer>
+        <footer class="keys"><kbd>/</kbd>search <kbd>j</kbd><kbd>k</kbd>move <kbd>↵</kbd>open <kbd>e</kbd>archive <kbd>x</kbd>select <kbd>${isMac ? "⌘" : "ctrl"}</kbd>+click multi-select <kbd>shift</kbd>+click range <kbd>esc</kbd>clear selection <kbd>n</kbd>new chat <kbd>g</kbd>group by repo</footer>
       `;
 
       this.applyGrid();
@@ -373,8 +441,15 @@
       for (const row of this.root.querySelectorAll(".row[data-session-id]")) {
         row.addEventListener("click", (event) => {
           const id = row.getAttribute("data-session-id");
+          if (event.target.closest("button, .chip")) return;
+          if (event.metaKey || event.ctrlKey || event.shiftKey || this.state.picked.size) {
+            if (event.shiftKey) window.getSelection()?.removeAllRanges();
+            this.state.selected = id;
+            this.pick(id, event.shiftKey);
+            return;
+          }
           this.selectRow(id);
-          if (event.target.closest("button, .title, .chip")) return;
+          if (event.target.closest(".title")) return;
           this.ctx.openSession(id);
         });
       }
@@ -396,6 +471,13 @@
       }
       this.root.querySelector("#new-chat")?.addEventListener("click", () => this.ctx.post({ type: "newChat" }));
       this.root.querySelector("#group-repo")?.addEventListener("click", () => this.toggleGroupByRepo());
+      this.root.querySelector("#bulk-archive")?.addEventListener("click", () => this.archivePicked());
+      this.root.querySelector("#bulk-unarchive")?.addEventListener("click", () => this.unarchivePicked());
+      this.root.querySelector("#bulk-clear")?.addEventListener("click", () => this.clearPicked());
+      this.root.querySelector("#bulk-all")?.addEventListener("click", () => {
+        for (const row of this.visibleRows()) this.state.picked.add(row.getAttribute("data-session-id"));
+        this.render();
+      });
       this.root.querySelector("#refresh-sessions")?.addEventListener("click", () => this.ctx.post({ type: "refreshSessions" }));
     }
   });

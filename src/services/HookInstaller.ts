@@ -198,3 +198,36 @@ export function removeHooks(): { removed: number; settingsPath: string; skillRem
 
   return { removed, settingsPath: SETTINGS, skillRemoved };
 }
+
+export interface TrackingStatus {
+  // Events from EVENTS that have an Argus hook in ~/.claude/settings.json.
+  hooked: number;
+  events: number;
+  // The installed hook script matches the one this build ships.
+  scriptCurrent: boolean;
+  node?: string;
+  settingsPath: string;
+}
+
+// Which of our events have an Argus hook in a parsed settings.json.
+export function hookedEvents(settings: { hooks?: Record<string, HookEntry[]> }): string[] {
+  return EVENTS.map(({ event }) => event).filter((event) =>
+    (settings.hooks?.[event] ?? []).some((entry) => entry.hooks?.some((hook) => typeof hook.command === "string" && isArgusCommand(hook.command)))
+  );
+}
+
+export function trackingStatus(extensionPath: string): TrackingStatus {
+  let settings: { hooks?: Record<string, HookEntry[]> } = {};
+  try {
+    settings = JSON.parse(fs.readFileSync(SETTINGS, "utf8"));
+  } catch {
+    // Missing or unreadable settings: nothing is hooked.
+  }
+  let scriptCurrent = false;
+  try {
+    scriptCurrent = fs.readFileSync(INSTALLED_SCRIPT, "utf8") === fs.readFileSync(path.join(extensionPath, "hooks", SCRIPT), "utf8");
+  } catch {
+    scriptCurrent = false;
+  }
+  return { hooked: hookedEvents(settings).length, events: EVENTS.length, scriptCurrent, node: findNode(), settingsPath: SETTINGS };
+}

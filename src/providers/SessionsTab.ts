@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { ArgusTab, SessionCard, SessionChip, TabHandle } from "../types";
-import { ArchiveCleanupRegistry, archiveWithCleanup } from "../services/archiveSession";
+import { ArchiveCleanupRegistry, archiveManyWithCleanup } from "../services/archiveSession";
 import { SessionChipsRegistry } from "../api";
 import { newChat, openWorktree } from "../services/openSession";
 import { renameSessionPrompt, SessionStore } from "../services/SessionStore";
@@ -22,6 +22,8 @@ type FromWebview =
   | { type: "renameSession"; sessionId: string }
   | { type: "archiveSession"; sessionId: string }
   | { type: "unarchiveSession"; sessionId: string }
+  | { type: "archiveSessions"; sessionIds: string[] }
+  | { type: "unarchiveSessions"; sessionIds: string[] }
   | { type: "openWorktree"; folder: string }
   | { type: "chipClick"; sessionId: string; index: number }
   | { type: "search"; query: string };
@@ -78,17 +80,24 @@ export function createSessionsTab(
           await renameSessionPrompt(sessions, msg.sessionId);
           return;
         case "archiveSession":
-          if (archiving.has(msg.sessionId)) {
+        case "archiveSessions": {
+          const ids = (msg.type === "archiveSession" ? [msg.sessionId] : Array.isArray(msg.sessionIds) ? msg.sessionIds : [])
+            .filter((id): id is string => typeof id === "string" && !archiving.has(id));
+          if (ids.length === 0) {
             return;
           }
-          archiving.add(msg.sessionId);
+          ids.forEach((id) => archiving.add(id));
           push();
           try {
-            await archiveWithCleanup(sessions, archiveCleanup, msg.sessionId);
+            await archiveManyWithCleanup(sessions, archiveCleanup, ids);
           } finally {
-            archiving.delete(msg.sessionId);
+            ids.forEach((id) => archiving.delete(id));
             push();
           }
+          return;
+        }
+        case "unarchiveSessions":
+          sessions.setArchivedMany(Array.isArray(msg.sessionIds) ? msg.sessionIds.filter((id) => typeof id === "string") : [], false);
           return;
         case "unarchiveSession":
           sessions.setArchived(msg.sessionId, false);

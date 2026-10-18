@@ -55,19 +55,26 @@ async function removeWorktree(folder: string, force: boolean): Promise<string | 
 }
 
 export async function archiveWithCleanup(sessions: SessionStore, cleanup: ArchiveCleanupRegistry, sessionId: string): Promise<void> {
-  const card = sessions.getCards().find((candidate) => candidate.record.sessionId === sessionId);
-  if (!card) {
+  await archiveManyWithCleanup(sessions, cleanup, [sessionId]);
+}
+
+// Archives several sessions with one confirmation covering all their cleanup (plugin items and worktrees no other
+// active session uses). Sessions with nothing to clean up are archived without asking.
+export async function archiveManyWithCleanup(sessions: SessionStore, cleanup: ArchiveCleanupRegistry, sessionIds: readonly string[]): Promise<void> {
+  const ids = new Set(sessionIds);
+  const cards = sessions.getCards().filter((candidate) => ids.has(candidate.record.sessionId) && candidate.column !== "archived");
+  if (cards.length === 0) {
     return;
   }
 
-  const cleanupItems = await cleanup.collect(card);
+  const cleanupItems = (await Promise.all(cards.map((card) => cleanup.collect(card)))).flat();
   const sharedWith = new Set(
     sessions
       .getCards()
-      .filter((other) => other.record.sessionId !== sessionId && other.column !== "archived")
+      .filter((other) => !ids.has(other.record.sessionId) && other.column !== "archived")
       .flatMap((other) => other.record.worktrees ?? [])
   );
-  const worktrees = (card.record.worktrees ?? []).filter((folder) => !sharedWith.has(folder));
+  const worktrees = [...new Set(cards.flatMap((card) => card.record.worktrees ?? []))].filter((folder) => !sharedWith.has(folder));
 
   if (cleanupItems.length > 0 || worktrees.length > 0) {
     const dirty = await Promise.all(worktrees.map(uncommittedFiles));
@@ -77,7 +84,7 @@ export async function archiveWithCleanup(sessions: SessionStore, cleanup: Archiv
     ];
     const forceLabel = "Archive and delete uncommitted files";
     const choice = await vscode.window.showWarningMessage(
-      `Archive "${card.record.title ?? "chat"}"?`,
+      cards.length === 1 ? `Archive "${cards[0].record.title ?? "chat"}"?` : `Archive ${cards.length} chats?`,
       { modal: true, detail: lines.join("\n") },
       "Archive and clean up",
       ...(dirty.some(Boolean) ? [forceLabel] : []),
@@ -100,5 +107,5 @@ export async function archiveWithCleanup(sessions: SessionStore, cleanup: Archiv
       }
     }
   }
-  sessions.setArchived(sessionId, true);
+  sessions.setArchivedMany(cards.map((card) => card.record.sessionId), true);
 }

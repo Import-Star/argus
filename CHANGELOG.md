@@ -2,8 +2,14 @@
 
 First public release.
 
-## Unreleased
+## 0.2.0
 
+- **Argus: Import Existing Claude Chats** adds chats from Claude Code's transcripts that Argus has no record of
+  (from within `argus.sessions.retentionDays`), as idle or archived. Also on the Welcome page.
+- Control Center Sessions tab: multi-select cards (ctrl/⌘-click, shift-click, `x`) to archive or unarchive them in
+  bulk, with one cleanup prompt for the batch.
+- Welcome page, opened once after the first install and from **Argus: Welcome**: shows whether session tracking
+  is set up (with a button to set it up or update it), and how to add or write plugins.
 - Plugin API: `context.secrets`, VS Code's SecretStorage with keys scoped to the plugin (optional field).
 
 ## 0.1.0
