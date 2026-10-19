@@ -2,6 +2,17 @@
 
 First public release.
 
+## 0.2.1
+
+Run **Argus: Set Up Session Tracking** again after updating: the first two fixes are in the session tracking hook.
+
+- Card titles stay in step with Claude Code, including forks and `/rename`: Argus follows whichever title Claude
+  Code wrote last. Only renaming the card itself locks its title.
+- Worktrees added with flags before the path (`git worktree add -q -b <branch> <path>`), or by a command running
+  in the background, are now linked to their session.
+- Archiving a session closes its chat's VS Code tab.
+- The Control Center board keeps each column's scroll position when it redraws.
+
 ## 0.2.0
 
 - **Argus: Import Existing Claude Chats** adds chats from Claude Code's transcripts that Argus has no record of
