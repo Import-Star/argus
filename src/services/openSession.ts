@@ -5,7 +5,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Args: sessionId, initialPrompt, viewColumn, group, fullEditor, options.
 // A programmatic value other than "honor-preferred-location" always opens an editor tab, never the sidebar.
-async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
+export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
   const target = column ?? vscode.window.tabGroups.activeTabGroup.viewColumn;
   try {
     await vscode.commands.executeCommand("claude-vscode.editor.open", sessionId, prompt, target, undefined, undefined, {
