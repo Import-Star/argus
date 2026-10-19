@@ -87,7 +87,7 @@ export class SessionStore implements vscode.Disposable {
       const entry = registry.get(record.sessionId);
       // A /rename name lives only in Claude Code's registry, which drops it when the session closes.
       const name = entry?.nameSource === "user" ? entry.name?.slice(0, 120) : undefined;
-      if (name && name !== record.title) {
+      if (name && name !== record.title && record.titleSource !== "user") {
         record.title = name;
         this.saveTitle(record.sessionId, name);
       }
@@ -173,12 +173,12 @@ export class SessionStore implements vscode.Disposable {
     this.refresh();
   }
 
-  private saveTitle(sessionId: string, title: string): void {
+  private saveTitle(sessionId: string, title: string, titleSource?: "user"): void {
     const file = path.join(SESSIONS_DIR, `${sessionId}.json`);
     try {
       const record = JSON.parse(fs.readFileSync(file, "utf8")) as SessionRecord;
       record.title = title;
-      record.titleSource = "user";
+      record.titleSource ??= titleSource;
       const tmp = `${file}.${process.pid}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(record, null, 2));
       fs.renameSync(tmp, file);
@@ -188,7 +188,7 @@ export class SessionStore implements vscode.Disposable {
   }
 
   public rename(sessionId: string, title: string): void {
-    this.saveTitle(sessionId, title.slice(0, 120));
+    this.saveTitle(sessionId, title.slice(0, 120), "user");
     this.refresh();
   }
 

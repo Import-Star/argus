@@ -101,8 +101,8 @@ function clip(text: string, max: number): string {
   return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
 }
 
-// Claude Code appends an `ai-title` line to the transcript every turn, so the tail always holds the latest one.
-function aiTitle(transcriptPath: string | undefined): string | undefined {
+// Claude Code appends its current title every turn: `ai-title`, or `custom-title` once the chat is renamed or forked.
+function chatTitle(transcriptPath: string | undefined): string | undefined {
   if (!transcriptPath) {
     return undefined;
   }
@@ -113,9 +113,17 @@ function aiTitle(transcriptPath: string | undefined): string | undefined {
       const length = Math.min(size, 1_048_576);
       const buffer = Buffer.alloc(length);
       fs.readSync(fd, buffer, 0, length, size - length);
-      const matches = [...buffer.toString("utf8").matchAll(/"type":"ai-title","aiTitle":("(?:[^"\\]|\\.)*")/g)];
-      const last = matches.at(-1);
-      return last ? clip(JSON.parse(last[1]) as string, 120) : undefined;
+      const line = buffer
+        .toString("utf8")
+        .split("\n")
+        .filter((text) => text.startsWith('{"type":"ai-title"') || text.startsWith('{"type":"custom-title"'))
+        .at(-1);
+      if (!line) {
+        return undefined;
+      }
+      const entry = JSON.parse(line) as { aiTitle?: string; customTitle?: string };
+      const title = entry.customTitle ?? entry.aiTitle;
+      return title ? clip(title, 120) : undefined;
     } finally {
       fs.closeSync(fd);
     }
@@ -293,7 +301,7 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       }
       record.lastMessageAt = now;
       if (record.titleSource !== "user") {
-        record.title = aiTitle(input.transcript_path ?? record.transcriptPath) ?? record.title;
+        record.title = chatTitle(input.transcript_path ?? record.transcriptPath) ?? record.title;
       }
       setState(record, "done", now);
       return;

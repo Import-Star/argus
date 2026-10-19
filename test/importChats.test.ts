@@ -38,10 +38,11 @@ describe("recordFromTranscript", () => {
     assert.equal(record?.startedAt, Date.parse("2026-10-01T10:00:00.000Z"));
     assert.equal(record?.updatedAt, 5000);
   });
-  it("prefers a /rename title and marks it as the user's", () => {
+  it("follows Claude Code's latest title without locking it", () => {
     const record = recordFromTranscript(transcript, lines({ type: "custom-title", customTitle: "Mine" }), candidate);
     assert.equal(record?.title, "Mine");
-    assert.equal(record?.titleSource, "user");
+    assert.equal(record?.titleSource, undefined);
+    assert.equal(recordFromTranscript(transcript, lines({ type: "custom-title", customTitle: "Mine" }, { type: "ai-title", aiTitle: "Newer" }), candidate)?.title, "Newer");
   });
   it("skips a transcript without a typed prompt", () => {
     assert.equal(recordFromTranscript(lines({ type: "user", cwd: "/repo", message: { content: "<command-name>/help</command-name>" } }), "", candidate), undefined);
