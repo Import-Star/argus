@@ -41,6 +41,26 @@ describe("session-tracker hook", () => {
     assert.equal(record.state, "done");
     assert.equal(record.lastPromptAt, promptAt);
   });
+  it("takes the last title Claude Code wrote, as a fork writes only custom-title", () => {
+    const transcript = path.join(home, "t.jsonl");
+    const write = (...entries: object[]) => fs.writeFileSync(transcript, entries.map((entry) => JSON.stringify(entry)).join("\n"));
+    fire({ hook_event_name: "UserPromptSubmit", prompt: "hi" });
+    write({ type: "ai-title", aiTitle: "Parent" }, { type: "custom-title", sessionId: "s1", customTitle: "Parent (fork)" });
+    fire({ hook_event_name: "Stop", transcript_path: transcript });
+    assert.equal(saved().title, "Parent (fork)");
+    write({ type: "custom-title", customTitle: "Parent (fork)" }, { type: "ai-title", aiTitle: "Newer" });
+    fire({ hook_event_name: "Stop", transcript_path: transcript });
+    assert.equal(saved().title, "Newer");
+  });
+  it("keeps a title renamed on the card", () => {
+    const transcript = path.join(home, "t.jsonl");
+    fs.writeFileSync(transcript, JSON.stringify({ type: "ai-title", aiTitle: "Claude's" }));
+    fire({ hook_event_name: "UserPromptSubmit", prompt: "hi" });
+    const file = path.join(home, ".claude", "argus", "sessions", "s1.json");
+    fs.writeFileSync(file, JSON.stringify({ ...saved(), title: "Mine", titleSource: "user" }));
+    fire({ hook_event_name: "Stop", transcript_path: transcript });
+    assert.equal(saved().title, "Mine");
+  });
   it("links a worktree created by git worktree add", () => {
     const { repo, git } = makeRepo();
     const wt = path.join(home, "wt");
