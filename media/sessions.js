@@ -35,7 +35,7 @@
       this.active = false;
       this.keydown = (event) => this.onKeydown(event);
       this.masonry = new ResizeObserver((entries) => {
-        for (const { target } of entries) target.style.gridRowEnd = `span ${Math.ceil(target.offsetHeight) + 6}`;
+        for (const { target } of entries) fitRow(target);
       });
       this.render();
       ctx.post({ type: "ready" });
@@ -369,6 +369,8 @@
       `;
 
       this.applyGrid();
+      // Size cards before restoring scroll, or the still-collapsed columns cap scrollTop near 0.
+      this.root.querySelectorAll(".rows > .row").forEach(fitRow);
       this.root.querySelectorAll(".rows").forEach((el, i) => { el.scrollTop = scrolls[i] ?? 0; });
       if (document.scrollingElement) document.scrollingElement.scrollTop = pageScroll;
       this.bindEvents();
@@ -512,6 +514,10 @@
     if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
     if (n >= 1e3) return `${Math.round(n / 1e3)}k`;
     return String(n);
+  }
+
+  function fitRow(row) {
+    row.style.gridRowEnd = `span ${Math.ceil(row.offsetHeight) + 6}`;
   }
 
   function cssEscape(value) {
