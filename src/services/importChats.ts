@@ -79,8 +79,7 @@ export function recordFromTranscript(head: string, tail: string, candidate: Chat
   if (!cwd || !lastPrompt) {
     return undefined;
   }
-  const customTitle = all.filter((entry) => entry.type === "custom-title" && entry.customTitle).at(-1)?.customTitle;
-  const aiTitle = all.filter((entry) => entry.type === "ai-title" && entry.aiTitle).at(-1)?.aiTitle;
+  const titleEntry = all.filter((entry) => (entry.type === "custom-title" && entry.customTitle) || (entry.type === "ai-title" && entry.aiTitle)).at(-1);
   const reply = (last.length > 0 ? last : first).filter((entry) => entry.type === "assistant" && !entry.isSidechain && textOf(entry)).at(-1);
   const startedAt = time(first.find((entry) => time(entry))) ?? candidate.mtimeMs;
 
@@ -95,8 +94,7 @@ export function recordFromTranscript(head: string, tail: string, candidate: Chat
     lastMessageAt: time(reply),
     state: "ended",
     endReason: "imported",
-    title: clip(customTitle ?? aiTitle ?? (promptOf(prompts[0]) as string), 120),
-    ...(customTitle ? { titleSource: "user" as const } : {}),
+    title: clip(titleEntry?.customTitle ?? titleEntry?.aiTitle ?? (promptOf(prompts[0]) as string), 120),
     lastPrompt: clip(promptOf(lastPrompt) as string, 200),
     ...(reply ? { lastMessage: clip(textOf(reply) as string, 300) } : {}),
     prs: []
