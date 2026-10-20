@@ -7,6 +7,7 @@ export type {
   PrSummary,
   SessionCard,
   SessionUsage,
+  SessionTimer,
   SessionChip,
   CleanupItem,
   ArgusTab,

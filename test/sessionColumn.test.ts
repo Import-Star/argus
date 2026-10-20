@@ -14,9 +14,9 @@ function record(overrides: Partial<SessionRecord> = {}): SessionRecord {
 
 const open: RegistryEntry = { pid: 1, sessionId: "s1", status: "idle" };
 
-function column(r: SessionRecord, opts: { registry?: RegistryEntry; prs?: PrSummary[]; read?: boolean; archivedAt?: number } = {}) {
+function column(r: SessionRecord, opts: { registry?: RegistryEntry; prs?: PrSummary[]; read?: boolean; archivedAt?: number; scheduled?: boolean } = {}) {
   const registry = "registry" in opts ? opts.registry : open;
-  return columnFor(r, registry, opts.prs ?? [], opts.read ?? false, isArchivedManually(r, opts.archivedAt), isInterrupted(r, registry));
+  return columnFor(r, registry, opts.prs ?? [], opts.read ?? false, isArchivedManually(r, opts.archivedAt), isInterrupted(r, registry), opts.scheduled);
 }
 
 describe("isArchivedManually", () => {
@@ -63,6 +63,13 @@ describe("columnFor", () => {
   it("shows pr-open when a linked PR is open", () => {
     const pr = { url: "u", state: "OPEN" } as PrSummary;
     assert.equal(column(record({ prs: ["u"] }), { prs: [pr], read: true }), "pr-open");
+  });
+  it("puts an idle session with a timer in scheduled, ahead of pr-open", () => {
+    const pr = { url: "u", state: "OPEN" } as PrSummary;
+    assert.equal(column(record({ prs: ["u"] }), { prs: [pr], read: true, scheduled: true }), "scheduled");
+  });
+  it("keeps a finished, unread session with a timer in needs-you", () => {
+    assert.equal(column(record({ state: "done" }), { scheduled: true }), "needs-you");
   });
   it("keeps a session with every linked PR merged out of archived", () => {
     const pr = { url: "u", state: "MERGED" } as PrSummary;
