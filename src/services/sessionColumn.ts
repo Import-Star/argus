@@ -8,6 +8,7 @@ export interface RegistryEntry {
   nameSource?: string;
   status?: string;
   statusUpdatedAt?: number;
+  startedAt?: number;
 }
 
 // A prompt sent after archiving brings the session back.
@@ -38,7 +39,8 @@ export function columnFor(
   prs: PrSummary[],
   read: boolean,
   archivedManually: boolean,
-  interrupted: boolean
+  interrupted: boolean,
+  scheduled = false
 ): SessionColumn | undefined {
   const anyPrOpen = prs.some((pr) => pr.state === "OPEN");
   const closed = !registry;
@@ -57,6 +59,9 @@ export function columnFor(
   }
   if (registry?.status === "busy" || record.state === "working") {
     return "working";
+  }
+  if (scheduled) {
+    return "scheduled";
   }
   if (anyPrOpen) {
     return "pr-open";

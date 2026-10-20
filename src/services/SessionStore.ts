@@ -14,10 +14,11 @@ export const SESSIONS_DIR = path.join(ARGUS_DIR, "sessions");
 const REGISTRY_DIR = path.join(os.homedir(), ".claude", "sessions");
 const BOARD_STATE_FILE = path.join(ARGUS_DIR, "board.json");
 
-export const COLUMN_ORDER: SessionColumn[] = ["needs-you", "working", "idle", "pr-open", "archived"];
+export const COLUMN_ORDER: SessionColumn[] = ["needs-you", "working", "scheduled", "idle", "pr-open", "archived"];
 export const COLUMN_LABEL: Record<SessionColumn, string> = {
   "needs-you": "Needs you",
   working: "Working",
+  scheduled: "Scheduled",
   "pr-open": "PR open",
   idle: "Idle",
   archived: "Archived"
@@ -246,7 +247,8 @@ export class SessionStore implements vscode.Disposable {
     const archivedManually = isArchivedManually(record, state.archived[record.sessionId]);
     const { repo, worktree } = describeCwd(record.cwd);
     const interrupted = isInterrupted(record, registry);
-    const column = columnFor(record, registry, prs, read, archivedManually, interrupted);
+    const timers = registry && record.transcriptPath ? this.transcripts.timers(record.transcriptPath, registry.startedAt ?? 0) : [];
+    const column = columnFor(record, registry, prs, read, archivedManually, interrupted, timers.length > 0);
     if (!column) {
       return undefined;
     }
@@ -262,7 +264,8 @@ export class SessionStore implements vscode.Disposable {
       archivedManually,
       prs,
       column,
-      usage: record.transcriptPath ? this.transcripts.usage({ sessionId: record.sessionId, transcriptPath: record.transcriptPath }) : undefined
+      usage: record.transcriptPath ? this.transcripts.usage({ sessionId: record.sessionId, transcriptPath: record.transcriptPath }) : undefined,
+      timers
     };
   }
 
