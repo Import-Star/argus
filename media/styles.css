@@ -123,6 +123,8 @@ button.link { border: 0; background: none; padding: 0; color: var(--dim); font-s
 .row.col-needs-you { border-left-color: var(--coral); }
 .row.working { border-left-color: var(--blue); }
 .row.col-pr-open { border-left-color: var(--green); }
+.row.col-scheduled { border-left-color: var(--blue); }
+.chip.timer { cursor: default; color: var(--blue); }
 .row.col-archived { opacity: 0.7; }
 .l2 .state { color: var(--text); }
 .col-needs-you .l2 .state { color: var(--coral); }

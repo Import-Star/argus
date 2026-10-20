@@ -8,6 +8,7 @@ type Node = { kind: "group"; column: SessionColumn } | { kind: "session"; card: 
 const ICON: Record<SessionColumn, vscode.ThemeIcon> = {
   "needs-you": new vscode.ThemeIcon("bell-dot", new vscode.ThemeColor("notificationsWarningIcon.foreground")),
   working: new vscode.ThemeIcon("sync~spin", new vscode.ThemeColor("charts.blue")),
+  scheduled: new vscode.ThemeIcon("watch", new vscode.ThemeColor("charts.blue")),
   "pr-open": new vscode.ThemeIcon("git-pull-request", new vscode.ThemeColor("charts.green")),
   idle: new vscode.ThemeIcon("circle-outline"),
   archived: new vscode.ThemeIcon("archive")
@@ -49,7 +50,7 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
       const count = this.store.getCards().filter((card) => card.column === node.column).length;
       const item = new vscode.TreeItem(
         COLUMN_LABEL[node.column],
-        node.column === "archived" ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.Expanded
+        node.column === "archived" || node.column === "scheduled" ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.Expanded
       );
       item.description = String(count);
       item.iconPath = ICON[node.column];

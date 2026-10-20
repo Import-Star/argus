@@ -26,7 +26,15 @@
   }
 
   function elapsed(sinceMs) {
-    const seconds = Math.max(0, Math.floor((Date.now() - sinceMs) / 1000));
+    return duration(Date.now() - sinceMs);
+  }
+
+  function remaining(untilMs) {
+    return `in ${duration(untilMs - Date.now())}`;
+  }
+
+  function duration(ms) {
+    const seconds = Math.max(0, Math.floor(ms / 1000));
     if (seconds < 60) return `${seconds}s`;
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m`;
@@ -50,6 +58,7 @@
       esc,
       elapsed,
       elapsedPrecise,
+      remaining,
       openExternal(url) {
         if (typeof url === "string" && url.startsWith("https:")) {
           vscode.postMessage({ type: "openExternal", url });
@@ -183,6 +192,7 @@
       const since = Number(el.getAttribute("data-since"));
       el.textContent = el.getAttribute("data-precise") === "true" ? elapsedPrecise(since) : elapsed(since);
     }
+    for (const el of document.querySelectorAll(".t[data-until]")) el.textContent = remaining(Number(el.getAttribute("data-until")));
   }, 1000);
 
   const SPINNER = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];

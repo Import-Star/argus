@@ -4,10 +4,15 @@
   const SESSION_COLUMNS = [
     ["needs-you", "Needs you"],
     ["working", "Working"],
+    ["scheduled", "Scheduled"],
     ["idle", "Idle"],
     ["pr-open", "PR open"],
     ["archived", "Archived"]
   ];
+
+  // Columns shown as a strip until clicked open, with the state key that remembers it.
+  const FOLDED = { scheduled: "showScheduled", archived: "showArchived" };
+  const TIMER_GLYPH = { wakeup: "⏰", cron: "⏰", command: "⧗", monitor: "⧗", agent: "⑂" };
 
   const isMac = /Mac/.test(navigator.platform || navigator.userAgent);
 
@@ -26,6 +31,7 @@
         picked: new Set(),
         anchor: undefined,
         showArchived: Boolean(saved.showArchived),
+        showScheduled: Boolean(saved.showScheduled),
         groupByRepo: Boolean(saved.groupByRepo),
         // Sessions whose merged and closed PRs are shown.
         showDonePrs: new Set(),
@@ -175,7 +181,7 @@
     },
 
     persist() {
-      this.ctx.setState({ query: this.state.query, showArchived: this.state.showArchived, groupByRepo: this.state.groupByRepo });
+      this.ctx.setState({ query: this.state.query, showArchived: this.state.showArchived, showScheduled: this.state.showScheduled, groupByRepo: this.state.groupByRepo });
     },
 
     toggleGroupByRepo() {
@@ -228,6 +234,15 @@
       return `<span class="glyph">○</span>`;
     },
 
+    timerChip(timer) {
+      const { esc } = this.ctx;
+      const when = timer.at && timer.at > Date.now()
+        ? ` <span class="t" data-until="${esc(timer.at)}">${esc(this.ctx.remaining(timer.at))}</span>`
+        : timer.schedule ? ` ${esc(timer.schedule)}` : "";
+      const title = `${timer.kind}${timer.schedule ? ` (${timer.schedule})` : ""}: ${timer.label}`;
+      return `<span class="chip timer" title="${esc(title)}">${TIMER_GLYPH[timer.kind] || "⧗"}${when} · ${esc(timer.label || timer.kind)}</span>`;
+    },
+
     prChip(pr) {
       const { esc } = this.ctx;
       const state = pr.isDraft ? "draft" : String(pr.state || "").toLowerCase();
@@ -266,6 +281,7 @@
         ...card.prs.filter((pr) => showDone || !done.includes(pr)).map((pr) => this.prChip(pr)),
         done.length ? `<button class="chip" data-action="toggle-done-prs" data-session-id="${id}" title="Show or hide merged and closed PRs">${showDone ? "hide" : "+"} ${esc(doneLabel(done))}</button>` : "",
         ...(r.worktrees || []).map((folder) => `<button class="chip wt" data-action="open-worktree" data-folder="${esc(folder)}" title="Open ${esc(folder)}">⎇ ${esc(folder.split("/").pop())}</button>`),
+        ...(card.timers || []).map((timer) => this.timerChip(timer)),
         ...card.chips.map((chip, index) => `<button class="chip" data-action="chip" data-session-id="${id}" data-index="${index}" title="${esc(chip.tooltip || chip.text)}">${esc(chip.text)}</button>`)
       ].join("");
       const actions = [
@@ -293,13 +309,13 @@
       const searching = this.state.query.trim() !== "";
       const columns = SESSION_COLUMNS.map(([id, name]) => {
         const cards = this.state.cards.filter((card) => card.column === id && this.isVisible(card));
-        const hidden = id === "archived" && !this.state.showArchived && !(searching && cards.length > 0);
+        const hidden = id in FOLDED && !this.state[FOLDED[id]] && !(searching && cards.length > 0);
         return { id, name, cards, collapsed: cards.length === 0 || hidden };
       });
-      const tracks = columns.map((col) => (col.collapsed ? "36px" : `minmax(0, ${1 + Math.min(2, Math.floor(col.cards.length / 5))}fr)`));
-      const rail = (col) => `<div class="rail${col.id === "archived" ? " clickable" : ""}" data-rail="${esc(col.id)}">${esc(col.name)} · ${col.cards.length}</div>`;
+      const tracks = columns.map((col) => (col.collapsed ? "36px" : "minmax(0, 1fr)"));
+      const rail = (col) => `<div class="rail${col.id in FOLDED ? " clickable" : ""}" data-rail="${esc(col.id)}">${esc(col.name)} · ${col.cards.length}</div>`;
       const heading = (col) =>
-        `<h2>${esc(col.name)}${col.id === "archived" && this.state.showArchived ? ' <button class="link" data-rail="archived">hide</button>' : ""}<span class="c mono">${col.cards.length}</span></h2>`;
+        `<h2>${esc(col.name)}${col.id in FOLDED && this.state[FOLDED[col.id]] ? ` <button class="link" data-rail="${esc(col.id)}">hide</button>` : ""}<span class="c mono">${col.cards.length}</span></h2>`;
       const rows = (cards, extra = "") => `<div class="rows${extra}">${cards.map((card) => this.renderCard(card)).join("")}</div>`;
 
       if (!this.state.groupByRepo) {
@@ -455,9 +471,11 @@
           this.ctx.openSession(id);
         });
       }
-      for (const el of this.root.querySelectorAll("[data-rail='archived']")) {
+      for (const el of this.root.querySelectorAll("[data-rail]")) {
+        const key = FOLDED[el.getAttribute("data-rail")];
+        if (!key) continue;
         el.addEventListener("click", () => {
-          this.state.showArchived = !this.state.showArchived;
+          this.state[key] = !this.state[key];
           this.persist();
           this.render();
         });

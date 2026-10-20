@@ -11,7 +11,7 @@ import type * as vscode from "vscode";
 
 export type SessionState = "idle" | "working" | "permission" | "question" | "done" | "ended";
 
-export type SessionColumn = "needs-you" | "working" | "pr-open" | "idle" | "archived";
+export type SessionColumn = "needs-you" | "working" | "scheduled" | "pr-open" | "idle" | "archived";
 
 // One Claude Code session as written by the session tracker hook to ~/.claude/argus/sessions/<id>.json.
 export interface SessionRecord {
@@ -48,6 +48,17 @@ export interface SessionUsage {
   usedTokens: number;
   cacheReadTokens: number;
   compactions: number;
+}
+
+// Something that will start the session again without a prompt: a wakeup, a cron job or background work.
+export interface SessionTimer {
+  kind: "wakeup" | "cron" | "command" | "monitor" | "agent";
+  label: string;
+  since: number;
+  // When it fires. Unset for background work, which wakes the session when it finishes.
+  at?: number;
+  // Cron schedule of a recurring job.
+  schedule?: string;
 }
 
 export interface PrCheck {
@@ -88,6 +99,8 @@ export interface SessionCard {
   prs: PrSummary[];
   // Undefined until the transcript has been read; archived sessions are only read when searched.
   usage?: SessionUsage;
+  // Only for open sessions, since every timer dies with the Claude process.
+  timers: SessionTimer[];
 }
 
 // A small label a plugin adds to session cards in the Sessions tab, e.g. the kanban ticket a session works on.

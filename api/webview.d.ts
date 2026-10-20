@@ -16,7 +16,7 @@
 //   (.spin .ok .bad .dot) .chips .chip (.pr-open .pr-merged .pr-closed) .empty-line .sync-error .muted .badge.
 //   Anything else goes in the tab's own stylesheet, scoped under [data-tab-root="<id>"].
 // - Live timers: any element with class "t" and data-since="<epoch ms>" is re-rendered every second as elapsed time
-//   ("5m", "2h 3m"); add data-precise="true" for "4m 07s".
+//   ("5m", "2h 3m"); add data-precise="true" for "4m 07s". data-until="<epoch ms>" counts down instead ("in 5m").
 // - Spinner: elements with class "glyph spin" animate.
 
 interface ArgusWebviewContext {
@@ -24,6 +24,7 @@ interface ArgusWebviewContext {
   esc(value: unknown): string; // HTML-escapes String(value); null and undefined become ""
   elapsed(sinceMs: number): string;
   elapsedPrecise(sinceMs: number): string;
+  remaining(untilMs: number): string; // "in 5m"
   openExternal(url: string): void; // https URLs only
   openSession(sessionId: string): void;
   getState<T>(): T | undefined; // per-tab UI state that survives panel reloads
