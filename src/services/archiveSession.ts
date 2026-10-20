@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 import { CleanupItem, SessionCard } from "../types";
 import { output } from "./log";
 import { openClaudeTab } from "./openSession";
-import { SessionStore } from "./SessionStore";
+import { isClaudeTab, SessionStore } from "./SessionStore";
 
 const execFileAsync = promisify(execFile);
 
@@ -53,10 +53,6 @@ async function removeWorktree(folder: string, force: boolean): Promise<string | 
   } catch (error) {
     return `${path.basename(folder)}: ${(error as { stderr?: string }).stderr?.trim() || String(error)}`;
   }
-}
-
-function isClaudeTab(tab: vscode.Tab | undefined): tab is vscode.Tab {
-  return tab?.input instanceof vscode.TabInputWebview && tab.input.viewType.endsWith("claudeVSCodePanel");
 }
 
 function activeClaudeTabTitled(title: string): Promise<vscode.Tab | undefined> {

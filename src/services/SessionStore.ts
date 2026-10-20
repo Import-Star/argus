@@ -24,6 +24,10 @@ export const COLUMN_LABEL: Record<SessionColumn, string> = {
   archived: "Archived"
 };
 
+export function isClaudeTab(tab: vscode.Tab | undefined): tab is vscode.Tab {
+  return tab?.input instanceof vscode.TabInputWebview && tab.input.viewType.endsWith("claudeVSCodePanel");
+}
+
 export class SessionStore implements vscode.Disposable {
   private readonly emitter = new vscode.EventEmitter<SessionCard[]>();
   public readonly onDidChange = this.emitter.event;
@@ -59,6 +63,12 @@ export class SessionStore implements vscode.Disposable {
     });
     // Each VS Code window only shows sessions for its own folders.
     this.scopeListeners.push(
+      vscode.window.tabGroups.onDidChangeTabs(({ changed, opened }) => {
+        const tab = [...changed, ...opened].find((candidate) => isClaudeTab(candidate) && candidate.isActive);
+        if (tab) {
+          this.markReadByTitle(tab.label);
+        }
+      }),
       vscode.workspace.onDidChangeWorkspaceFolders(() => this.refresh()),
       vscode.workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("argus.sessions.scope")) {
@@ -197,6 +207,18 @@ export class SessionStore implements vscode.Disposable {
     this.mutateBoardState((state) => {
       state.readAt[sessionId] = Date.now();
     });
+  }
+
+  // Tabs carry no session id, so match the chat by its title.
+  private markReadByTitle(title: string): void {
+    const ids = this.cards.filter((card) => card.column === "needs-you" && card.record.title === title).map((card) => card.record.sessionId);
+    if (ids.length) {
+      this.mutateBoardState((state) => {
+        for (const sessionId of ids) {
+          state.readAt[sessionId] = Date.now();
+        }
+      });
+    }
   }
 
   public setArchived(sessionId: string, archived: boolean): void {
