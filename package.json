@@ -2,7 +2,7 @@
   "name": "argus-control-center",
   "displayName": "Argus Control Center",
   "description": "Mission control for Claude Code: a live board of your sessions, notifications when one needs you, PR and worktree tracking, diff review, Claude plan usage in the status bar, and plugins.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "publisher": "importstar",
   "license": "MIT",
   "icon": "media/icon.png",

@@ -2,6 +2,13 @@
 
 First public release.
 
+## 0.3.0
+
+- A **Scheduled** column and timer badges for sessions waiting on a wakeup, a cron job, or a background command,
+  Monitor or agent. Timers come from the transcript and count only for open sessions, from when the Claude process
+  started. Open columns now share the board's width evenly.
+- Opening a chat's tab directly, not through Argus, marks a needs-you session as read.
+
 ## 0.2.1
 
 Run **Argus: Set Up Session Tracking** again after updating: the first two fixes are in the session tracking hook.
