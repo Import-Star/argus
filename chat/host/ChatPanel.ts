@@ -211,17 +211,21 @@ export class ChatPanel implements vscode.Disposable {
           this.post({ type: "fileSuggestions", sessionId: session.sessionId, query: message.query, files: await this.manager.findFiles(cwd, message.query) });
           return;
         case "openFile": {
-          const document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.resolve(cwd, message.path)));
+          const document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.resolve(this.manager.worktreePath(session.sessionId, message.worktree) ?? cwd, message.path)));
           const line = Math.max(0, (message.line ?? 1) - 1);
           await vscode.window.showTextDocument(document, { preview: true, selection: new vscode.Range(line, 0, line, 0) });
           return;
         }
-        case "changes":
-          this.post({ type: "changes", sessionId: session.sessionId, scope: message.scope, ...(await listChanges(session, message.scope, message.files, message.prUrl)), prUrl: message.prUrl });
+        case "changes": {
+          const worktree = this.manager.worktreePath(session.sessionId, message.worktree);
+          this.post({ type: "changes", sessionId: session.sessionId, scope: message.scope, ...(await listChanges(session, message.scope, message.files, message.prUrl, worktree)), prUrl: message.prUrl, worktree });
           return;
-        case "fileDiff":
-          this.post({ type: "fileDiff", sessionId: session.sessionId, scope: message.scope, prUrl: message.prUrl, diff: await fileDiff(session, message.scope, message.path, message.files, message.prUrl) });
+        }
+        case "fileDiff": {
+          const worktree = this.manager.worktreePath(session.sessionId, message.worktree);
+          this.post({ type: "fileDiff", sessionId: session.sessionId, scope: message.scope, prUrl: message.prUrl, worktree, diff: await fileDiff(session, message.scope, message.path, message.files, message.prUrl, worktree) });
           return;
+        }
         case "sendComments":
           session.send(commentsPrompt(message.comments, session.meta.cwd));
           return;

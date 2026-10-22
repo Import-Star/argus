@@ -269,12 +269,12 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
   const status = meta?.status;
   const tabs = ui.prUrl ? [...SCOPES, { scope: "pr" as ChangeScope, label: `PR ${prLabel({ key: "", url: ui.prUrl })}` }] : SCOPES;
   const edited = useMemo(() => sessionFiles(messages, meta?.cwd), [messages, meta?.cwd]);
-  const scopeFiles = scope === "session" ? { files: edited } : scope === "pr" ? { prUrl: ui.prUrl } : {};
+  const scopeFiles = { worktree: ui.worktree, ...(scope === "session" ? { files: edited } : scope === "pr" ? { prUrl: ui.prUrl } : {}) };
   const close = () => setUi(sessionId, { side: "details" });
 
-  useEffect(() => post({ type: "changes", sessionId, scope, ...scopeFiles }), [sessionId, scope, ui.prUrl, status]);
+  useEffect(() => post({ type: "changes", sessionId, scope, ...scopeFiles }), [sessionId, scope, ui.prUrl, ui.worktree, status]);
 
-  const loaded = changes?.scope === scope && (scope !== "pr" || changes.prUrl === ui.prUrl) ? changes : undefined;
+  const loaded = changes?.scope === scope && changes.worktree === ui.worktree && (scope !== "pr" || changes.prUrl === ui.prUrl) ? changes : undefined;
   const files = loaded?.files ?? [];
   if (changes?.base) {
     lastBase.current = changes.base.replace(/^origin\//, "");
@@ -357,7 +357,7 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
   const openInEditor = () => {
     if (!current) return;
     const firstAdd = shown?.lines.find((line) => line.kind === "add")?.newNo;
-    post({ type: "openFile", sessionId, path: current, line: focusLine ?? firstAdd });
+    post({ type: "openFile", sessionId, path: current, line: focusLine ?? firstAdd, worktree: ui.worktree });
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
@@ -400,7 +400,7 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
       <section class="review" role="dialog" aria-modal="true" aria-label="Review changes" tabIndex={-1} ref={dialog}>
         <div class="review-head">
           <span class="review-title">Review changes</span>
-          {meta?.branch && <span class="mono muted">{meta.branch}</span>}
+          {ui.worktree ? <span class="mono muted" title={ui.worktree}>{ui.worktree.split("/").pop()}</span> : meta?.branch && <span class="mono muted">{meta.branch}</span>}
           <div class="review-tabs" role="tablist" aria-label="Which changes">
             {tabs.map((item) => (
               <button type="button" key={item.scope} role="tab" aria-selected={item.scope === scope} onClick={() => setUi(sessionId, { reviewScope: item.scope })}>

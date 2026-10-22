@@ -9,7 +9,8 @@ import type { ChatSession } from "./ChatSession";
 type PrRef = NonNullable<Awaited<ReturnType<typeof loadPrDiff>>["pr"]>;
 const posix = (file: string) => file.split(path.sep).join("/");
 
-async function loadScope(session: ChatSession, scope: ChangeScope, edited: string[] = [], prUrl?: string): Promise<{ base?: string; files: DiffFile[]; pr?: PrRef }> {
+async function loadScope(session: ChatSession, scope: ChangeScope, edited: string[] = [], prUrl?: string, worktree?: string): Promise<{ base?: string; files: DiffFile[]; pr?: PrRef }> {
+  const cwd = worktree ?? session.meta.cwd;
   if (scope === "pr") {
     const result = await loadPrDiff(session.meta.cwd, prUrl ?? "");
     return { base: result.base, files: result.files, pr: result.pr };
@@ -17,18 +18,18 @@ async function loadScope(session: ChatSession, scope: ChangeScope, edited: strin
   const config = vscode.workspace.getConfiguration("argus.diffReview");
   const contextLines = config.get<number>("contextLines", 3);
   const baseRef = scope === "base" || scope === "session" ? config.get<string>("baseRef", "") : "HEAD";
-  const result = await loadDiff(session.meta.cwd, "all", baseRef, contextLines);
+  const result = await loadDiff(cwd, "all", baseRef, contextLines);
   const base = scope === "base" || scope === "session" ? result.base : undefined;
   if (scope === "base" || scope === "uncommitted") {
     return { base, files: result.files };
   }
-  const touched = (scope === "turn" ? session.lastTurnFiles() : edited.map((file) => path.resolve(session.meta.cwd, file))).map(posix);
+  const touched = (scope === "turn" ? session.lastTurnFiles() : edited.map((file) => path.resolve(cwd, file))).map(posix);
   return { base, files: result.files.filter((file) => touched.some((abs) => abs.endsWith(`/${file.path}`))) };
 }
 
-export async function listChanges(session: ChatSession, scope: ChangeScope, edited?: string[], prUrl?: string): Promise<{ base?: string; files: FileChange[]; error?: string }> {
+export async function listChanges(session: ChatSession, scope: ChangeScope, edited?: string[], prUrl?: string, worktree?: string): Promise<{ base?: string; files: FileChange[]; error?: string }> {
   try {
-    const { base, files } = await loadScope(session, scope, edited, prUrl);
+    const { base, files } = await loadScope(session, scope, edited, prUrl, worktree);
     const changes = files.map((file) => ({
       path: file.path,
       added: file.additions,
@@ -52,8 +53,8 @@ function hunkRange(header: string): { start: number; end: number } {
   return { start, end: start + count - 1 };
 }
 
-export async function fileDiff(session: ChatSession, scope: ChangeScope, file: string, edited?: string[], prUrl?: string): Promise<FileDiff> {
-  const { files, pr } = await loadScope(session, scope, edited, prUrl);
+export async function fileDiff(session: ChatSession, scope: ChangeScope, file: string, edited?: string[], prUrl?: string, worktree?: string): Promise<FileDiff> {
+  const { files, pr } = await loadScope(session, scope, edited, prUrl, worktree);
   const found = files.find((candidate) => candidate.path === file);
   if (!found) {
     return { path: file, lines: [] };
@@ -66,7 +67,7 @@ export async function fileDiff(session: ChatSession, scope: ChangeScope, file: s
     lines.push(...hunk.lines.map((line) => ({ kind: line.type, oldNo: line.old, newNo: line.new, text: line.text })));
     previousEnd = range.end;
   }
-  const source = pr ? prFileLines(session.meta.cwd, pr.repo, pr.headSha, found.path) : fileLines(session.meta.cwd, "unstaged", found.path);
+  const source = pr ? prFileLines(session.meta.cwd, pr.repo, pr.headSha, found.path) : fileLines(worktree ?? session.meta.cwd, "unstaged", found.path);
   const total = found.status === "deleted" ? 0 : await source.then((content) => content.length, () => 0);
   lines.push(...gap(total - previousEnd));
   return { path: file, lines };

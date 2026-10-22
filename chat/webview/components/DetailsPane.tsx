@@ -3,7 +3,7 @@ import type { CardInfo, ChangeScope, SDKMessage } from "../../../src/chat/protoc
 import { sessionArtifacts } from "../sessionArtifacts";
 import { sessionFiles } from "../sessionFiles";
 import { post, setUi, useSession } from "../store";
-import { basename, CacheCountdown, formatTokens, prLabel } from "./Header";
+import { CacheCountdown, formatTokens, prLabel } from "./Header";
 import "./details.css";
 
 interface AgentRun {
@@ -57,6 +57,10 @@ function Section({ title, children }: { title: string; children: preact.Componen
   );
 }
 
+function isFinishedPr(pr: { state: string }): boolean {
+  return pr.state === "MERGED" || pr.state === "CLOSED";
+}
+
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div class="det-row">
@@ -67,7 +71,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function openReview(sessionId: string, scope: ChangeScope, file?: string): void {
-  setUi(sessionId, { side: "review", reviewScope: scope, reviewFile: file });
+  setUi(sessionId, { side: "review", reviewScope: scope, reviewFile: file, worktree: undefined });
 }
 
 function DiffButton({ label, onClick }: { label: string; onClick(): void }) {
@@ -82,12 +86,15 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
   const { meta, card, messages, changes, ui } = useSession(sessionId);
   const agents = useMemo(() => agentRuns(messages), [messages]);
   const [showDone, setShowDone] = useState(false);
+  const [showClosedPrs, setShowClosedPrs] = useState(false);
   const doneCount = agents.filter((agent) => agent.state === "done").length;
   const edited = useMemo(() => sessionFiles(messages, meta?.cwd), [messages, meta?.cwd]);
   const artifacts = useMemo(() => sessionArtifacts(messages), [messages]);
   const stats = changes?.scope === "session" ? changes.files : [];
   const status = meta?.status;
   const prs = card?.prs ?? [];
+  const finishedPrs = prs.filter(isFinishedPr).length;
+  const worktrees = card?.worktrees ?? [];
   const cacheExpiresAt = meta?.lastResponseAt !== undefined && meta.cacheTtlMs ? meta.lastResponseAt + meta.cacheTtlMs : undefined;
   const hasUsage = card?.usedTokens !== undefined || card?.compactions !== undefined || meta?.contextTokens !== undefined || cacheExpiresAt !== undefined;
 
@@ -124,20 +131,25 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
           ))}
         </Section>
       )}
-      {card?.worktree && (
-        <Section title="Worktree">
-          <div class="det-head">
-            <div class="mono det-grow" title={card.worktree}>
-              {basename(card.worktree)}
+      {worktrees.length > 0 && (
+        <Section title={worktrees.length > 1 ? `Worktrees · ${worktrees.length}` : "Worktree"}>
+          {worktrees.map((tree) => (
+            <div key={tree.path}>
+              <div class="det-head">
+                <div class="mono det-grow" title={tree.path}>
+                  {tree.name}
+                  {tree.branch && <span class="muted"> · {tree.branch}</span>}
+                </div>
+                <DiffButton label={`Diff of worktree ${tree.name} against main`} onClick={() => setUi(sessionId, { side: "review", reviewScope: "base", worktree: tree.path, prUrl: undefined, reviewFile: undefined })} />
+              </div>
+              <div class="muted det-note det-wrap">{tree.path}</div>
             </div>
-            <DiffButton label="Diff of worktree against main" onClick={() => openReview(sessionId, "base")} />
-          </div>
-          <div class="muted det-note det-wrap">{card.worktree}</div>
+          ))}
         </Section>
       )}
       {prs.length > 0 && (
         <Section title="Pull requests">
-          {prs.map((pr) => (
+          {prs.filter((pr) => showClosedPrs || !isFinishedPr(pr)).map((pr) => (
             <div class="det-pr" key={pr.key}>
               <div class="det-head">
                 <button type="button" class="ghost det-link det-grow" onClick={() => post({ type: "openUrl", url: pr.url })}>
@@ -147,11 +159,16 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
                     {pr.title ? ` ${pr.title}` : ""}
                   </span>
                 </button>
-                <DiffButton label={`Diff of ${prLabel(pr)}`} onClick={() => setUi(sessionId, { side: "review", reviewScope: "pr", prUrl: pr.url, reviewFile: undefined })} />
+                <DiffButton label={`Diff of ${prLabel(pr)}`} onClick={() => setUi(sessionId, { side: "review", reviewScope: "pr", prUrl: pr.url, worktree: undefined, reviewFile: undefined })} />
               </div>
               <div class="muted det-note">{checksSummary(pr)}</div>
             </div>
           ))}
+          {finishedPrs > 0 && (
+            <button type="button" class="det-done-toggle" aria-expanded={showClosedPrs} onClick={() => setShowClosedPrs(!showClosedPrs)}>
+              {showClosedPrs ? "Hide" : "Show"} {finishedPrs} merged / closed
+            </button>
+          )}
         </Section>
       )}
       {agents.length > 0 && (
