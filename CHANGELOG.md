@@ -2,6 +2,23 @@
 
 First public release.
 
+## Unreleased
+
+- A **Settings** tab in the Control Center for every Argus setting, including the chat ones, with a toggle,
+  dropdown or field for each, **Reset**, and a note when a workspace setting overrides the value. New command:
+  **Argus: Settings**.
+- **Argus chat (beta, off by default).** Turn on `argus.chat.enabled` to open Claude Code sessions in Argus's own
+  chat panel instead of the Claude Code extension's tab. It runs your installed `claude` through the Claude Agent
+  SDK, so sessions, settings and hooks are the same ones Claude Code uses. Permission prompts, questions and plan
+  approvals show in the chat. New commands: **Argus: New Chat** and **Argus: Open Chats Side by Side**. New
+  setting `argus.chat.claudePath`. New chats take model, effort and permission mode from Claude Code's own settings.
+- With chat on, Control Center Sessions cards waiting on a permission or question from an Argus chat can be
+  answered in place (**Allow once**, **Deny**, or pick an option and **Send answer**), and **add to grid** puts a
+  card's chat in the side-by-side view.
+- **Agents.** **+ Agent** in a chat header starts another chat in the same folder and opens the group side by
+  side. The group shares one Sessions card: it sits in its most urgent member's column, lists each agent, and a
+  click opens them all in the grid. Archiving the card archives every agent. The header shows an "N agents" chip.
+
 ## 0.3.0
 
 - A **Scheduled** column and timer badges for sessions waiting on a wakeup, a cron job, or a background command,

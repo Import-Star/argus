@@ -1,0 +1,1155 @@
+{
+  "messages": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "11111111-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "groups",
+      "groups": [
+        {
+          "id": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "members": [
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000001",
+              "title": "Add subtract to math.ts",
+              "status": "working"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000002",
+              "title": "Fix flaky MFA test",
+              "status": "needs-you"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000003",
+              "title": "Charts ECS dev rollout",
+              "status": "working"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rail",
+      "sessions": [
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "column": "working",
+          "activity": "Editing src/math.ts",
+          "since": "@now-134000",
+          "repo": "orders"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000002",
+          "title": "Fix flaky MFA test",
+          "column": "needs-you",
+          "activity": "Waiting on permission: Bash",
+          "since": "@now-540000",
+          "repo": "swyftx"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000003",
+          "title": "Charts ECS dev rollout",
+          "column": "working",
+          "activity": "Running tests",
+          "since": "@now-840000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r4",
+          "title": "Review PR 11215",
+          "column": "needs-you",
+          "activity": "Question for you",
+          "since": "@now-1860000",
+          "repo": "swyftx"
+        },
+        {
+          "sessionId": "r5",
+          "title": "Update Redis alerts runbook",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-7200000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r6",
+          "title": "Orders leader election notes",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-36000000",
+          "repo": "orders"
+        }
+      ]
+    },
+    {
+      "type": "card",
+      "card": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "worktree": "/work/orders",
+        "prs": [
+          {
+            "key": "acme/orders#412",
+            "title": "Add subtract helper",
+            "url": "https://github.com/acme/orders/pull/412",
+            "state": "OPEN",
+            "isDraft": false,
+            "reviewDecision": "REVIEW_REQUIRED",
+            "checks": [
+              {
+                "name": "build",
+                "status": "COMPLETED",
+                "conclusion": "SUCCESS"
+              },
+              {
+                "name": "lint",
+                "status": "IN_PROGRESS"
+              }
+            ]
+          }
+        ],
+        "usedTokens": 48210,
+        "compactions": 0
+      }
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/subtract-fn",
+        "status": "idle",
+        "statusSince": -1000,
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "default",
+            "displayName": "Default (recommended)",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "opus",
+            "displayName": "Opus 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "fable",
+            "displayName": "Fable 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "sonnet",
+            "displayName": "Sonnet 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "haiku",
+            "displayName": "Haiku 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-haiku-4-5-20251001",
+            "displayName": "Haiku 4.5",
+            "efforts": []
+          },
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-5",
+            "displayName": "Opus 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-fable-5",
+            "displayName": "Fable 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-8",
+            "displayName": "Opus 4.8",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-7",
+            "displayName": "Opus 4.7",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-6",
+            "displayName": "Opus 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-sonnet-4-6",
+            "displayName": "Sonnet 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-mythos-5-1",
+            "displayName": "Mythos 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "lastResponseAt": "@now-150000",
+        "cacheTtlMs": 300000,
+        "title": "Add subtract to math.ts"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000101",
+        "message": {
+          "role": "user",
+          "content": "Rename the old subtract helper everywhere and tell me what you changed."
+        },
+        "origin": {
+          "kind": "human"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000102",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "m1",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "I'll find every use of the old name first, then update each file."
+            },
+            {
+              "type": "tool_use",
+              "id": "t1",
+              "name": "Grep",
+              "input": {
+                "pattern": "subtractOld"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "t2",
+              "name": "Read",
+              "input": {
+                "file_path": "/work/orders/src/math.ts"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "t3",
+              "name": "Read",
+              "input": {
+                "file_path": "/work/orders/src/totals.ts"
+              }
+            }
+          ],
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 50
+          }
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000103",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t1",
+              "content": "src/math.ts\nsrc/totals.ts",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000104",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t2",
+              "content": "1\texport const subtractOld = 1",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000105",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t3",
+              "content": "1\timport { subtractOld }",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000106",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "m2",
+          "type": "message",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "t4",
+              "name": "Edit",
+              "input": {
+                "file_path": "/work/orders/src/math.ts",
+                "old_string": "subtractOld",
+                "new_string": "subtract"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "t5",
+              "name": "Edit",
+              "input": {
+                "file_path": "/work/orders/src/totals.ts",
+                "old_string": "subtractOld",
+                "new_string": "subtract"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "t6",
+              "name": "Bash",
+              "input": {
+                "command": "yarn tsc --noEmit",
+                "description": "Type-check"
+              }
+            }
+          ],
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 50
+          }
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000107",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t4",
+              "content": "ok",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000108",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t5",
+              "content": "ok",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000109",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t6",
+              "content": "Found 0 errors.",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000110",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "m3",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Renamed in `math.ts` and `totals.ts`; the type-check passes. I'm going to look at the tests next."
+            }
+          ],
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 50
+          }
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000111",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "m4",
+          "type": "message",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "t7",
+              "name": "Glob",
+              "input": {
+                "pattern": "test/**/*.test.ts"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "t8",
+              "name": "Read",
+              "input": {
+                "file_path": "/work/orders/test/math.test.ts"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "t9",
+              "name": "Edit",
+              "input": {
+                "file_path": "/work/orders/test/math.test.ts",
+                "old_string": "subtractOld",
+                "new_string": "subtract"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "t10",
+              "name": "Bash",
+              "input": {
+                "command": "yarn test",
+                "description": "Run tests"
+              }
+            }
+          ],
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 50
+          }
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000112",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t7",
+              "content": "test/math.test.ts",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000113",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t8",
+              "content": "1\tsubtractOld",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000114",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t9",
+              "content": "ok",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000115",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "t10",
+              "content": "12 passed",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000116",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "m5",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Tests updated and passing (12 of 12). Two files changed in `src/`, one in `test/`.\n\nNothing else referenced the old name."
+            }
+          ],
+          "usage": {
+            "input_tokens": 10,
+            "output_tokens": 50
+          }
+        }
+      }
+    },
+    {
+      "type": "changes",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "session",
+      "base": "origin/main",
+      "files": [
+        {
+          "path": "src/math.ts",
+          "added": 4,
+          "removed": 0,
+          "status": "modified"
+        },
+        {
+          "path": "src/math.test.ts",
+          "added": 6,
+          "removed": 0,
+          "status": "added"
+        }
+      ]
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "session",
+      "diff": {
+        "path": "src/math.ts",
+        "lines": [
+          {
+            "kind": "ctx",
+            "oldNo": 1,
+            "newNo": 1,
+            "text": "export function add(a: number, b: number): number {"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 2,
+            "newNo": 2,
+            "text": "  return a + b;"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 3,
+            "newNo": 3,
+            "text": "}"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "export function subtract(a: number, b: number): number {"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "  return a - b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 7,
+            "text": "}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "session",
+      "diff": {
+        "path": "src/math.test.ts",
+        "lines": [
+          {
+            "kind": "add",
+            "newNo": 1,
+            "text": "import { add, subtract } from \"./math\";"
+          },
+          {
+            "kind": "add",
+            "newNo": 2,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 3,
+            "text": "test(\"subtract\", () => {"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": "  expect(subtract(5, 3)).toBe(2);"
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "  expect(subtract(add(1, 2), 3)).toBe(0);"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "});"
+          }
+        ]
+      }
+    },
+    {
+      "type": "changes",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "base",
+      "base": "origin/main",
+      "files": [
+        {
+          "path": "src/math.ts",
+          "added": 4,
+          "removed": 0,
+          "status": "modified"
+        },
+        {
+          "path": "src/math.test.ts",
+          "added": 6,
+          "removed": 0,
+          "status": "added"
+        }
+      ]
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "base",
+      "diff": {
+        "path": "src/math.ts",
+        "lines": [
+          {
+            "kind": "ctx",
+            "oldNo": 1,
+            "newNo": 1,
+            "text": "export function add(a: number, b: number): number {"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 2,
+            "newNo": 2,
+            "text": "  return a + b;"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 3,
+            "newNo": 3,
+            "text": "}"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "export function subtract(a: number, b: number): number {"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "  return a - b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 7,
+            "text": "}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "base",
+      "diff": {
+        "path": "src/math.test.ts",
+        "lines": [
+          {
+            "kind": "add",
+            "newNo": 1,
+            "text": "import { add, subtract } from \"./math\";"
+          },
+          {
+            "kind": "add",
+            "newNo": 2,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 3,
+            "text": "test(\"subtract\", () => {"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": "  expect(subtract(5, 3)).toBe(2);"
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "  expect(subtract(add(1, 2), 3)).toBe(0);"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "});"
+          }
+        ]
+      }
+    },
+    {
+      "type": "changes",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "uncommitted",
+      "base": "origin/main",
+      "files": [
+        {
+          "path": "src/math.ts",
+          "added": 4,
+          "removed": 0,
+          "status": "modified"
+        },
+        {
+          "path": "src/math.test.ts",
+          "added": 6,
+          "removed": 0,
+          "status": "added"
+        }
+      ]
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "uncommitted",
+      "diff": {
+        "path": "src/math.ts",
+        "lines": [
+          {
+            "kind": "ctx",
+            "oldNo": 1,
+            "newNo": 1,
+            "text": "export function add(a: number, b: number): number {"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 2,
+            "newNo": 2,
+            "text": "  return a + b;"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 3,
+            "newNo": 3,
+            "text": "}"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "export function subtract(a: number, b: number): number {"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "  return a - b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 7,
+            "text": "}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "uncommitted",
+      "diff": {
+        "path": "src/math.test.ts",
+        "lines": [
+          {
+            "kind": "add",
+            "newNo": 1,
+            "text": "import { add, subtract } from \"./math\";"
+          },
+          {
+            "kind": "add",
+            "newNo": 2,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 3,
+            "text": "test(\"subtract\", () => {"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": "  expect(subtract(5, 3)).toBe(2);"
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "  expect(subtract(add(1, 2), 3)).toBe(0);"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "});"
+          }
+        ]
+      }
+    },
+    {
+      "type": "changes",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "turn",
+      "base": "origin/main",
+      "files": [
+        {
+          "path": "src/math.ts",
+          "added": 4,
+          "removed": 0,
+          "status": "modified"
+        },
+        {
+          "path": "src/math.test.ts",
+          "added": 6,
+          "removed": 0,
+          "status": "added"
+        }
+      ]
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "turn",
+      "diff": {
+        "path": "src/math.ts",
+        "lines": [
+          {
+            "kind": "ctx",
+            "oldNo": 1,
+            "newNo": 1,
+            "text": "export function add(a: number, b: number): number {"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 2,
+            "newNo": 2,
+            "text": "  return a + b;"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 3,
+            "newNo": 3,
+            "text": "}"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "export function subtract(a: number, b: number): number {"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "  return a - b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 7,
+            "text": "}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "scope": "turn",
+      "diff": {
+        "path": "src/math.test.ts",
+        "lines": [
+          {
+            "kind": "add",
+            "newNo": 1,
+            "text": "import { add, subtract } from \"./math\";"
+          },
+          {
+            "kind": "add",
+            "newNo": 2,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 3,
+            "text": "test(\"subtract\", () => {"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": "  expect(subtract(5, 3)).toBe(2);"
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "  expect(subtract(add(1, 2), 3)).toBe(0);"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "});"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "messages": [
+    {
+      "type": "tab",
+      "tab": "sessions",
+      "message": {
+        "type": "sessions",
+        "cards": [
+          {
+            "record": {
+              "sessionId": "g1",
+              "cwd": "/work/platform",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-134000",
+              "state": "working",
+              "prs": [],
+              "title": "Migrate billing to ECS",
+              "lastTool": "Edit infra/billing.tf"
+            },
+            "column": "working",
+            "repo": "platform",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": [],
+            "usage": {
+              "contextTokens": 45000,
+              "usedTokens": 48000,
+              "cacheReadTokens": 111000,
+              "compactions": 0
+            }
+          },
+          {
+            "record": {
+              "sessionId": "g2",
+              "cwd": "/work/platform",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-540000",
+              "state": "permission",
+              "prs": [],
+              "title": "Billing: rollback runbook",
+              "pending": "Bash terraform plan -target=module.billing"
+            },
+            "column": "needs-you",
+            "repo": "platform",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": [],
+            "pending": [
+              {
+                "id": "req-g2",
+                "toolName": "Bash",
+                "summary": "terraform plan -target=module.billing",
+                "alwaysLabel": "Bash(terraform plan:*)"
+              }
+            ],
+            "usage": {
+              "contextTokens": 88000,
+              "usedTokens": 61000,
+              "cacheReadTokens": 410000,
+              "compactions": 0
+            }
+          },
+          {
+            "record": {
+              "sessionId": "g3",
+              "cwd": "/work/platform",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-36000000",
+              "state": "done",
+              "prs": [],
+              "title": "Billing: review PR 482",
+              "lastMessage": "Moved rounding into src/money.ts and updated both call sites."
+            },
+            "column": "idle",
+            "repo": "platform",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": []
+          },
+          {
+            "record": {
+              "sessionId": "b1",
+              "cwd": "/work/auth",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-540000",
+              "state": "permission",
+              "prs": [],
+              "title": "Fix flaky MFA test",
+              "pending": "Bash yarn workspace @acme/auth test mfa --runInBand"
+            },
+            "column": "needs-you",
+            "repo": "swyftx",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": [],
+            "worktree": "mfa-flake",
+            "pending": [
+              {
+                "id": "req-b1",
+                "toolName": "Bash",
+                "summary": "yarn workspace @acme/auth test mfa --runInBand",
+                "alwaysLabel": "Bash(yarn workspace:*)"
+              }
+            ],
+            "usage": {
+              "contextTokens": 88000,
+              "usedTokens": 61000,
+              "cacheReadTokens": 410000,
+              "compactions": 0
+            }
+          },
+          {
+            "record": {
+              "sessionId": "b2",
+              "cwd": "/work/swyftx",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-1860000",
+              "state": "question",
+              "prs": [],
+              "title": "Review PR 11215",
+              "pending": "Which migration strategy should I use?"
+            },
+            "column": "needs-you",
+            "repo": "swyftx",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": [],
+            "pending": [
+              {
+                "id": "req-b2",
+                "toolName": "AskUserQuestion",
+                "summary": "Which migration strategy should I use?",
+                "questions": [
+                  {
+                    "question": "Which migration strategy should I use?",
+                    "header": "Strategy",
+                    "multiSelect": false,
+                    "options": [
+                      {
+                        "label": "Expand then contract",
+                        "description": "Add the new column first, backfill, and drop the old one in a later release."
+                      },
+                      {
+                        "label": "Single migration",
+                        "description": "Rename in one step during a short maintenance window."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "record": {
+              "sessionId": "b3",
+              "cwd": "/work/platform",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-7200000",
+              "state": "done",
+              "prs": [],
+              "title": "Update Redis alerts runbook",
+              "lastMessage": "The runbook now lists the eviction alert, its threshold and the first three checks."
+            },
+            "column": "needs-you",
+            "repo": "platform",
+            "open": true,
+            "read": false,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": []
+          },
+          {
+            "record": {
+              "sessionId": "b4",
+              "cwd": "/work/platform",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-840000",
+              "state": "working",
+              "prs": [],
+              "title": "Charts ECS dev rollout",
+              "lastTool": "Bash: terraform plan",
+              "subagents": {
+                "a1": "Explore",
+                "a2": "Explore"
+              }
+            },
+            "column": "working",
+            "repo": "platform",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [
+              {
+                "key": "acme/orders#20231",
+                "title": "Add subtract helper",
+                "url": "https://github.com/acme/orders/pull/20231",
+                "state": "OPEN",
+                "isDraft": false,
+                "reviewDecision": "REVIEW_REQUIRED",
+                "reviewers": [],
+                "checks": [
+                  {
+                    "name": "build",
+                    "status": "COMPLETED",
+                    "conclusion": "SUCCESS"
+                  }
+                ],
+                "syncedAt": "2026-10-21T09:58:00Z"
+              }
+            ],
+            "timers": [],
+            "chips": [],
+            "worktree": "charts-ecs",
+            "usage": {
+              "contextTokens": 212000,
+              "usedTokens": 330000,
+              "cacheReadTokens": 2100000,
+              "compactions": 1
+            }
+          },
+          {
+            "record": {
+              "sessionId": "b5",
+              "cwd": "/work/orders",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-134000",
+              "state": "working",
+              "prs": [],
+              "title": "Add subtract to math.ts",
+              "lastTool": "Edit src/math.ts"
+            },
+            "column": "working",
+            "repo": "orders",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": [],
+            "usage": {
+              "contextTokens": 45000,
+              "usedTokens": 48000,
+              "cacheReadTokens": 111000,
+              "compactions": 0
+            }
+          },
+          {
+            "record": {
+              "sessionId": "b6",
+              "cwd": "/work/orders",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-14400000",
+              "state": "done",
+              "prs": [],
+              "title": "Orders leader election",
+              "lastMessage": "Opened the PR and linked it to the ticket."
+            },
+            "column": "pr-open",
+            "repo": "orders",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [
+              {
+                "key": "acme/orders#10797",
+                "title": "Add subtract helper",
+                "url": "https://github.com/acme/orders/pull/10797",
+                "state": "OPEN",
+                "isDraft": false,
+                "reviewDecision": "APPROVED",
+                "reviewers": [],
+                "checks": [
+                  {
+                    "name": "build",
+                    "status": "COMPLETED",
+                    "conclusion": "SUCCESS"
+                  }
+                ],
+                "syncedAt": "2026-10-21T09:58:00Z"
+              }
+            ],
+            "timers": [],
+            "chips": [],
+            "worktree": "leader-lease"
+          },
+          {
+            "record": {
+              "sessionId": "b7",
+              "cwd": "/work/orders",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-36000000",
+              "state": "done",
+              "prs": [],
+              "title": "Orders rounding helper",
+              "lastMessage": "Moved rounding into src/money.ts and updated both call sites."
+            },
+            "column": "idle",
+            "repo": "orders",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": []
+          },
+          {
+            "record": {
+              "sessionId": "b8",
+              "cwd": "/work/supportal",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-90000000",
+              "state": "ended",
+              "prs": [],
+              "title": "Supportal error triage",
+              "lastMessage": "Found the Intercom burst; one ECS task was handling all of it."
+            },
+            "column": "idle",
+            "repo": "supportal",
+            "open": false,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": []
+          },
+          {
+            "record": {
+              "sessionId": "b9",
+              "cwd": "/work/orders",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-3600000",
+              "state": "idle",
+              "prs": [],
+              "title": "Weekly cost report"
+            },
+            "column": "scheduled",
+            "repo": "orders",
+            "open": true,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [
+              {
+                "kind": "cron",
+                "label": "cost report",
+                "since": "@now-3600000",
+                "at": "@now+86400000",
+                "schedule": "0 9 * * 1"
+              }
+            ],
+            "chips": []
+          },
+          {
+            "record": {
+              "sessionId": "b10",
+              "cwd": "/work/orders",
+              "startedAt": "@now-86400000",
+              "updatedAt": "@now-60000",
+              "stateSince": "@now-864000000",
+              "state": "ended",
+              "prs": [],
+              "title": "Old spike: gRPC gateway"
+            },
+            "column": "archived",
+            "repo": "orders",
+            "open": false,
+            "read": true,
+            "interrupted": false,
+            "archivedManually": false,
+            "prs": [],
+            "timers": [],
+            "chips": []
+          }
+        ],
+        "refreshedAt": "@now-60000",
+        "archiving": [],
+        "chat": true,
+        "groups": [
+          {
+            "id": "g1",
+            "members": [
+              "g1",
+              "g2",
+              "g3"
+            ],
+            "column": "needs-you",
+            "summary": "1 needs you \u00b7 1 working \u00b7 1 idle"
+          }
+        ]
+      }
+    }
+  ]
+}

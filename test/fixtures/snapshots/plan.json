@@ -1,0 +1,300 @@
+{
+  "messages": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "33333333-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "rail",
+      "sessions": [
+        {
+          "sessionId": "33333333-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "column": "working",
+          "activity": "Editing src/math.ts",
+          "since": "@now-134000",
+          "repo": "orders"
+        },
+        {
+          "sessionId": "33333333-0000-4000-8000-000000000002",
+          "title": "Fix flaky MFA test",
+          "column": "needs-you",
+          "activity": "Waiting on permission: Bash",
+          "since": "@now-540000",
+          "repo": "swyftx"
+        },
+        {
+          "sessionId": "33333333-0000-4000-8000-000000000003",
+          "title": "Charts ECS dev rollout",
+          "column": "working",
+          "activity": "Running tests",
+          "since": "@now-840000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r4",
+          "title": "Review PR 11215",
+          "column": "needs-you",
+          "activity": "Question for you",
+          "since": "@now-1860000",
+          "repo": "swyftx"
+        },
+        {
+          "sessionId": "r5",
+          "title": "Update Redis alerts runbook",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-7200000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r6",
+          "title": "Orders leader election notes",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-36000000",
+          "repo": "orders"
+        }
+      ]
+    },
+    {
+      "type": "card",
+      "card": {
+        "sessionId": "33333333-0000-4000-8000-000000000001",
+        "worktree": "/work/orders",
+        "prs": [],
+        "usedTokens": 48210,
+        "compactions": 0
+      }
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "33333333-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/money-rounding",
+        "status": "needs-you",
+        "statusSince": "@now-120000",
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "plan",
+        "models": [
+          {
+            "value": "default",
+            "displayName": "Default (recommended)",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "opus",
+            "displayName": "Opus 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "fable",
+            "displayName": "Fable 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "sonnet",
+            "displayName": "Sonnet 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "haiku",
+            "displayName": "Haiku 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-haiku-4-5-20251001",
+            "displayName": "Haiku 4.5",
+            "efforts": []
+          },
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-5",
+            "displayName": "Opus 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-fable-5",
+            "displayName": "Fable 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-8",
+            "displayName": "Opus 4.8",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-7",
+            "displayName": "Opus 4.7",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-6",
+            "displayName": "Opus 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-sonnet-4-6",
+            "displayName": "Sonnet 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-mythos-5-1",
+            "displayName": "Mythos 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "lastResponseAt": "@now-40000",
+        "cacheTtlMs": 300000,
+        "title": "Shared money rounding helper"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "33333333-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "33333333-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000001",
+        "message": {
+          "role": "user",
+          "content": "Plan how to move the order rounding logic into a shared money helper."
+        },
+        "origin": {
+          "kind": "human"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "33333333-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "33333333-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000002",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_2",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "I read the three call sites. Here is the plan."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_plan1",
+              "name": "ExitPlanMode",
+              "input": {
+                "plan": "# Move order rounding into a shared money helper\n\nRounding lives in three places today. This plan moves it behind one helper so totals agree everywhere.\n\n## Steps\n\n1. Add `roundMoney(amount, currency)` to `src/money.ts`, using banker's rounding for AUD and JPY.\n2. Replace the inline `Math.round` calls in `src/orders/totals.ts` and `src/orders/fees.ts`.\n3. Add table-driven tests in `src/money.test.ts` for half-cent and zero-decimal cases.\n4. Run the orders test suite and compare totals on the fixture orders.\n\n## Risks\n\n- Totals can shift by one cent on orders priced at exactly half a cent.\n- Fee rows are stored rounded, so existing rows are not recalculated.\n\n```ts\nexport function roundMoney(amount: number, currency: string): number {\n  const digits = currency === \"JPY\" ? 0 : 2;\n  return bankersRound(amount, digits);\n}\n```"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "permission",
+      "sessionId": "33333333-0000-4000-8000-000000000001",
+      "request": {
+        "id": "perm-plan-1",
+        "toolName": "ExitPlanMode",
+        "toolUseId": "toolu_plan1",
+        "input": {
+          "plan": "# Move order rounding into a shared money helper\n\nRounding lives in three places today. This plan moves it behind one helper so totals agree everywhere.\n\n## Steps\n\n1. Add `roundMoney(amount, currency)` to `src/money.ts`, using banker's rounding for AUD and JPY.\n2. Replace the inline `Math.round` calls in `src/orders/totals.ts` and `src/orders/fees.ts`.\n3. Add table-driven tests in `src/money.test.ts` for half-cent and zero-decimal cases.\n4. Run the orders test suite and compare totals on the fixture orders.\n\n## Risks\n\n- Totals can shift by one cent on orders priced at exactly half a cent.\n- Fee rows are stored rounded, so existing rows are not recalculated.\n\n```ts\nexport function roundMoney(amount: number, currency: string): number {\n  const digits = currency === \"JPY\" ? 0 : 2;\n  return bankersRound(amount, digits);\n}\n```"
+        },
+        "createdAt": "@now-30000"
+      }
+    }
+  ]
+}

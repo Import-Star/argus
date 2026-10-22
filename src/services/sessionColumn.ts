@@ -11,6 +11,23 @@ export interface RegistryEntry {
   startedAt?: number;
 }
 
+export interface LiveChat {
+  sessionId: string;
+  busy: boolean;
+  since: number;
+}
+
+// An Argus chat counts as open even when Claude Code's registry has no file for it (yet); a real entry wins.
+export function withLiveChats(registry: Map<string, RegistryEntry>, chats: readonly LiveChat[], pid: number): Map<string, RegistryEntry> {
+  const merged = new Map(registry);
+  for (const chat of chats) {
+    if (!merged.has(chat.sessionId)) {
+      merged.set(chat.sessionId, { pid, sessionId: chat.sessionId, status: chat.busy ? "busy" : "idle", statusUpdatedAt: chat.since, startedAt: chat.since });
+    }
+  }
+  return merged;
+}
+
 // A prompt sent after archiving brings the session back.
 export function isArchivedManually(record: SessionRecord, archivedAt: number | undefined): boolean {
   return (archivedAt ?? -1) > (record.lastPromptAt ?? 0);

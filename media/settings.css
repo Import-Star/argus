@@ -1,0 +1,23 @@
+[data-tab-root="settings"] .settings-body { max-width: 760px; padding: 6px 18px 24px; }
+[data-tab-root="settings"] .setting-group h2 { margin: 18px 0 8px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+[data-tab-root="settings"] .setting-group:first-child h2 { color: var(--coral); }
+[data-tab-root="settings"] .setting { padding: 8px 10px 10px 11px; margin-bottom: 6px; background: var(--row); border: 1px solid var(--border); border-left: 3px solid var(--dim); border-radius: 6px; }
+[data-tab-root="settings"] .setting-head { display: flex; align-items: baseline; gap: 8px; }
+[data-tab-root="settings"] .setting-head .title { font-weight: 600; }
+[data-tab-root="settings"] .setting-head button.link { margin-left: auto; font-size: 11px; }
+[data-tab-root="settings"] .setting-head button.link:hover { color: var(--text); }
+[data-tab-root="settings"] .setting-desc { margin-top: 3px; line-height: 1.45; }
+[data-tab-root="settings"] .setting-desc code,
+[data-tab-root="settings"] .setting-note code { font-family: var(--mono); font-size: 11.5px; padding: 0 3px; border-radius: 3px; background: var(--coral-soft); color: var(--text); }
+[data-tab-root="settings"] .setting-control { margin-top: 8px; }
+[data-tab-root="settings"] .setting-note { margin-top: 6px; font-size: 12px; }
+[data-tab-root="settings"] .setting-note:empty { display: none; }
+[data-tab-root="settings"] .toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+[data-tab-root="settings"] input[type="checkbox"] { accent-color: var(--coral); margin: 0; }
+[data-tab-root="settings"] input[type="text"],
+[data-tab-root="settings"] input[type="number"],
+[data-tab-root="settings"] select { width: 100%; max-width: 420px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--vscode-input-background, var(--row)); color: var(--text); font: inherit; }
+[data-tab-root="settings"] input[type="number"] { max-width: 140px; }
+[data-tab-root="settings"] select { width: auto; min-width: 160px; }
+[data-tab-root="settings"] input:focus,
+[data-tab-root="settings"] select:focus { outline: 0; border-color: var(--coral); }

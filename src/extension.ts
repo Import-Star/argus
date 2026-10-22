@@ -1,16 +1,18 @@
 import * as vscode from "vscode";
 import { createApi, SessionChipsRegistry } from "./api";
+import { ChatLoader } from "./chat/loader";
 import { registerDiffReview } from "./diffReview";
 import { AttentionNotifier } from "./providers/AttentionNotifier";
 import { AttentionStatusBar } from "./providers/AttentionStatusBar";
 import { ControlCenter } from "./providers/ControlCenter";
 import { SessionTreeProvider } from "./providers/SessionTreeProvider";
 import { createSessionsTab } from "./providers/SessionsTab";
+import { createSettingsTab } from "./providers/SettingsTab";
 import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
 import { findChats, readChat, writeChats } from "./services/importChats";
-import { newChat, openSession, openWorktree } from "./services/openSession";
+import { newChat, openSession, openWorktree, routeChatsTo, routeCloseTo } from "./services/openSession";
 import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
 import { renameSessionPrompt, SessionStore, SESSIONS_DIR } from "./services/SessionStore";
 import { UsageStatusBar } from "./providers/UsageStatusBar";
@@ -45,9 +47,23 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
 
   registerDiffReview(context, sessions, chips);
 
-  const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup);
+  const chat = new ChatLoader(context, {
+    getCards: () => sessions.getCards(),
+    onDidChangeCards: sessions.onDidChange,
+    markRead: (sessionId) => sessions.markRead(sessionId),
+    getGroupOf: () => sessions.getGroupOf(),
+    addToGroup: (newSessionId, existingSessionId) => sessions.addToGroup(newSessionId, existingSessionId),
+    setLiveChats: (provider) => sessions.setLiveChats(provider),
+    archive: (sessionId) => archiveWithCleanup(sessions, archiveCleanup, sessionId)
+  });
+  const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup, chat);
   const sessionsTabHandle = api.registerTab(sessionsTab.tab);
   sessionsTab.attach(sessionsTabHandle);
+
+  const settingsTab = createSettingsTab(context);
+  const settingsTabHandle = api.registerTab(settingsTab.tab);
+  settingsTab.attach(settingsTabHandle);
+  context.subscriptions.push(settingsTabHandle, ...settingsTab.disposables);
 
   const tree = new SessionTreeProvider(sessions);
   const treeView = vscode.window.createTreeView("argusSessions", { treeDataProvider: tree });
@@ -97,7 +113,20 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   });
   register("argus.usage.refresh", () => usage?.service.refresh());
 
+  context.subscriptions.push(
+    chat,
+    chat.onDidChange((host) => {
+      routeChatsTo(host && ((sessionId, prompt, column) => host.open(sessionId, prompt, column)));
+      routeCloseTo(host && ((sessionId) => host.closeSession(sessionId)));
+    }),
+    { dispose: () => { routeChatsTo(undefined); routeCloseTo(undefined); } }
+  );
+  chat.apply();
+  register("argus.chat.new", () => chat.host?.open());
+  register("argus.chat.openGrid", () => chat.host?.openGrid());
+
   register("argus.openControlCenter", (tabId?: unknown) => api.openControlCenter(typeof tabId === "string" ? tabId : undefined));
+  register("argus.openSettings", () => api.openControlCenter("settings"));
   register("argus.sessions.newChat", () => newChat());
   register("argus.sessions.refresh", () => sessions.refreshPrs());
   register("argus.sessions.open", async (arg) => {
