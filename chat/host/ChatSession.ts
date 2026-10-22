@@ -1,4 +1,4 @@
-import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type SDKMessage, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk";
+import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type SDKMessage, type SDKUserMessage, type SlashCommand } from "@anthropic-ai/claude-agent-sdk";
 import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as os from "os";
@@ -151,6 +151,7 @@ export class ChatSession implements vscode.Disposable {
     });
     void this.pump(this.q);
     void this.loadModels(this.q);
+    void this.loadCommands(this.q);
     void this.loadCacheTtl(this.q);
   }
 
@@ -317,6 +318,8 @@ export class ChatSession implements vscode.Disposable {
       this.markResponse(message.parent_tool_use_id);
     } else if (message.type === "system" && message.subtype === "init") {
       this.update({ model: this.modelValue(message.model), permissionMode: message.permissionMode });
+    } else if (message.type === "system" && message.subtype === "commands_changed") {
+      this.setCommands(message.commands);
     } else if (message.type === "system" && message.subtype === "session_state_changed") {
       const status: ChatStatus = message.state === "running" ? "working" : message.state === "requires_action" ? "needs-you" : "idle";
       this.setStatus(this.pending.size > 0 ? "needs-you" : status);
@@ -334,6 +337,18 @@ export class ChatSession implements vscode.Disposable {
         this.turnFiles.add(path.resolve(this.options.cwd, file));
       }
     }
+  }
+
+  private async loadCommands(q: Query): Promise<void> {
+    try {
+      this.setCommands(await q.supportedCommands());
+    } catch (error) {
+      this.options.log(`commands ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  private setCommands(commands: SlashCommand[]): void {
+    this.update({ commands: commands.map(({ name, description, argumentHint }) => ({ name, description, argumentHint })) });
   }
 
   private async loadModels(q: Query): Promise<void> {

@@ -13,6 +13,12 @@ export interface ModelOption {
   efforts: EffortLevel[];
 }
 
+export interface SlashItem {
+  name: string;
+  description: string;
+  argumentHint: string;
+}
+
 export interface ChatMeta {
   sessionId: string;
   cwd: string;
@@ -24,6 +30,7 @@ export interface ChatMeta {
   effort?: EffortLevel;
   permissionMode: PermissionMode;
   models: ModelOption[];
+  commands?: SlashItem[];
   contextTokens?: number;
   contextMax?: number;
   lastResponseAt?: number;

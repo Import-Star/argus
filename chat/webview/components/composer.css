@@ -267,3 +267,25 @@
     padding-left: 2px;
   }
 }
+
+.cmp-command {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cmp-hint {
+  color: var(--muted);
+}
+
+.cmp-desc {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmp-note {
+  color: var(--muted);
+  font-size: 12px;
+}
