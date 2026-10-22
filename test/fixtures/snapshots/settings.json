@@ -1,0 +1,20 @@
+{
+  "values": {
+    "argus.chat.enabled": {
+      "globalValue": true
+    },
+    "argus.chat.permissionMode": {
+      "globalValue": "plan",
+      "workspaceValue": "acceptEdits"
+    },
+    "argus.sessions.scope": {
+      "globalValue": "all"
+    },
+    "argus.usage.refreshMinutes": {
+      "globalValue": 10
+    },
+    "argus.diffReview.baseRef": {
+      "workspaceValue": "origin/develop"
+    }
+  }
+}

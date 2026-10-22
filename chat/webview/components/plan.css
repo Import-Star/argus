@@ -1,0 +1,157 @@
+.plan-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+}
+
+.plan-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.plan-title {
+  font-weight: 600;
+  color: var(--strong);
+}
+
+.plan-close {
+  margin-left: auto;
+  padding: 2px 6px;
+  color: var(--muted);
+}
+
+.plan-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+  line-height: 1.6;
+}
+
+.plan-block {
+  margin-bottom: 12px;
+}
+
+.plan-h {
+  margin: 0;
+  color: var(--strong);
+}
+
+.plan-h1 {
+  font-size: 16px;
+}
+
+.plan-h2,
+.plan-h3 {
+  font-size: 14px;
+}
+
+.plan-para {
+  margin: 0;
+}
+
+.plan-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.plan-list li {
+  margin-bottom: 4px;
+}
+
+.plan-body code {
+  background: var(--row);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.plan-code {
+  margin: 0;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.plan-comment {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--row);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-comment blockquote {
+  margin: 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--accent);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.plan-comment form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-comment textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  resize: vertical;
+}
+
+.plan-comment-text {
+  white-space: pre-wrap;
+}
+
+.plan-comment-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.plan-comment-actions button {
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+.plan-add {
+  position: absolute;
+  z-index: 1;
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+.plan-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.plan-send {
+  margin-left: auto;
+}
+
+.plan-foot button:disabled,
+.plan-comment button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

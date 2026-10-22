@@ -60,8 +60,8 @@ finishes. The **Open Session** button jumps straight to the session. Set `argus.
 
 ### Control Center
 
-Run **Argus: Open Control Center** for the full-size view. It holds the Sessions tab, plus a tab for each
-installed plugin. On top of the sidebar, the Sessions tab has:
+Run **Argus: Open Control Center** for the full-size view. It holds the Sessions tab, a tab for each
+installed plugin, and a Settings tab. On top of the sidebar, the Sessions tab has:
 
 - Columns side by side. Press `g` (or click **by repo**) to split them into one row per repo, with repos that
   need you first.
@@ -74,6 +74,14 @@ installed plugin. On top of the sidebar, the Sessions tab has:
   A bar shows how many are picked with **Archive** (or `e`), **Unarchive**, **Select all shown** and **Clear**
   (`Esc`). Worktree and plugin cleanup for the whole batch is offered in one prompt.
 
+### Settings tab
+
+**Argus: Settings** (`argus.openSettings`) opens the Control Center on a Settings tab that edits every Argus
+setting, Chat first. Toggles, dropdowns (with each option's description), text and number fields save to your
+user settings as you change them. **Reset** removes your value, and a note shows when a workspace setting
+overrides it. Object and list settings open `settings.json`; **Open in VS Code Settings** opens the standard
+Settings UI filtered to Argus.
+
 ### Diff review
 
 Review a worktree's changes against its base branch and send line comments back to the session.
@@ -84,6 +92,28 @@ Review a worktree's changes against its base branch and send line comments back 
   The **PR # or URL** field opens any PR through `gh pr diff`, without checking it out.
 - Click a line number to comment, and shift-click to extend the range. **Send to agent** copies the review as
   markdown and opens the session for you to paste it in.
+
+### Argus chat (beta)
+
+Off by default. Turn on `argus.chat.enabled` to open Claude Code sessions in Argus's own chat panel instead of
+the Claude Code extension's tab. It runs your installed `claude` through the [Claude Agent SDK](https://docs.claude.com/en/docs/agent-sdk/overview),
+so it uses your existing Claude Code sign-in, settings and hooks. Sessions started here appear on the board like any other.
+
+- **Argus: New Chat** starts a chat. Opening a card from the board resumes its session in the chat.
+- **Argus: Open Chats Side by Side** shows several chats in a grid, each with its transcript and a message box.
+  Tiles that need you are outlined. Add, remove or expand a tile from its header.
+- Permission requests, questions and plan approvals appear inline in the chat.
+- On the Control Center Sessions tab, a card waiting on a permission or question from an Argus chat expands in
+  place: **Allow once**, **Always allow** or **Deny**, or choose an option and **Send answer**. Plan approvals
+  open the chat. **add to grid** on a card adds its chat to the side-by-side view.
+- **+ Agent** in a chat's header starts another chat in the same folder (optionally with a first message) and
+  opens the group in the grid. Agents in a group share one Sessions card: it sits in the column of its most urgent
+  agent, lists each agent with its status, and opens them all side by side when clicked (the first agent's chat if
+  chat is off). Archiving the card archives every agent. Groups are stored in `~/.claude/argus/board.json`
+  (`groupOf`).
+
+`argus.chat.claudePath` sets the `claude` executable (empty: `claude` on your PATH, then `~/.local/bin`, then the
+Claude Code extension's copy). New chats take their model, effort and permission mode from your Claude Code settings (`model`, `effortLevel`, `permissions.defaultMode`); a reopened chat keeps the model and effort last picked in it.
 
 ### Claude plan usage
 
@@ -168,18 +198,23 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.diffReview.contextLines` | `3` | Unchanged lines shown around each change. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
+| `argus.chat.enabled` | `false` | Open sessions in Argus's own chat (beta) instead of the Claude Code extension's tab. |
+| `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then the Claude Code extension's copy. |
 | `argus.plugins.config` | `{}` | Settings for locally installed plugins, keyed by plugin id. See [Plugins](#plugins). |
 | `argus.plugins.paths` | `[]` | Extra plugin folders to load, on top of everything in `~/.claude/argus/plugins`. |
 
 ## Commands
 
 - **Argus: Open Control Center** (`argus.openControlCenter`)
+- **Argus: Settings** (`argus.openSettings`)
 - **Argus: Welcome** (`argus.welcome`)
 - **Argus: Sessions Needing You** (`argus.sessions.showAttention`)
 - **Argus: Set Up Session Tracking** (`argus.sessions.installHooks`)
 - **Argus: Import Existing Claude Chats** (`argus.sessions.importChats`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
 - **Argus: Review Worktree Diff** (`argus.diffReview.pick`)
+- **Argus: New Chat** (`argus.chat.new`, chat enabled only)
+- **Argus: Open Chats Side by Side** (`argus.chat.openGrid`, chat enabled only)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)
 - **Argus: Refresh Claude Plan Usage** (`argus.usage.refresh`)
 - **Argus: Reload Plugins** (`argus.plugins.reload`)

@@ -1,0 +1,619 @@
+{
+  "messages": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "66666666-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "rail",
+      "sessions": [
+        {
+          "sessionId": "66666666-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "column": "working",
+          "activity": "Editing src/math.ts",
+          "since": "@now-134000",
+          "repo": "orders"
+        },
+        {
+          "sessionId": "66666666-0000-4000-8000-000000000002",
+          "title": "Fix flaky MFA test",
+          "column": "needs-you",
+          "activity": "Waiting on permission: Bash",
+          "since": "@now-540000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "66666666-0000-4000-8000-000000000003",
+          "title": "Charts ECS dev rollout",
+          "column": "working",
+          "activity": "Running tests",
+          "since": "@now-840000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r4",
+          "title": "Review PR 11215",
+          "column": "needs-you",
+          "activity": "Question for you",
+          "since": "@now-1860000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "r5",
+          "title": "Update Redis alerts runbook",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-7200000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r6",
+          "title": "Orders leader election notes",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-36000000",
+          "repo": "orders"
+        }
+      ]
+    },
+    {
+      "type": "card",
+      "card": {
+        "sessionId": "66666666-0000-4000-8000-000000000001",
+        "worktree": "/work/orders",
+        "prs": [],
+        "usedTokens": 48210,
+        "compactions": 0
+      }
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "66666666-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "audit/orders",
+        "status": "working",
+        "statusSince": "@now-252000",
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "default",
+            "displayName": "Default (recommended)",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "opus",
+            "displayName": "Opus 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "fable",
+            "displayName": "Fable 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "sonnet",
+            "displayName": "Sonnet 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "haiku",
+            "displayName": "Haiku 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-haiku-4-5-20251001",
+            "displayName": "Haiku 4.5",
+            "efforts": []
+          },
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-5",
+            "displayName": "Opus 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-fable-5",
+            "displayName": "Fable 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-8",
+            "displayName": "Opus 4.8",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-7",
+            "displayName": "Opus 4.7",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-6",
+            "displayName": "Opus 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-sonnet-4-6",
+            "displayName": "Sonnet 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-mythos-5-1",
+            "displayName": "Mythos 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "lastResponseAt": "@now-20000",
+        "cacheTtlMs": 300000,
+        "title": "Audit order rounding and fees"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000001",
+        "message": {
+          "role": "user",
+          "content": "Run the orders-audit workflow across the order and fee code."
+        },
+        "origin": {
+          "kind": "human"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000002",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_2",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Starting the audit workflow. It runs three phases: discover, review, verify."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_wf1",
+              "name": "Workflow",
+              "input": {
+                "script": "export const meta = {\n  name: \"orders-audit\",\n  description: \"Audit the order flow for rounding and fee drift\",\n  phases: [{ title: \"Discover\" }, { title: \"Review\" }, { title: \"Verify\" }]\n};"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000003",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_wf1",
+              "content": "{\"taskId\":\"wf-orders-1\",\"workflowName\":\"orders-audit\"}",
+              "is_error": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000004",
+        "task_id": "wf-orders-1",
+        "tool_use_id": "toolu_wf1",
+        "description": "orders-audit",
+        "task_type": "local_workflow",
+        "workflow_name": "orders-audit"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000005",
+        "task_id": "a1",
+        "parent_task_id": "wf-orders-1",
+        "tool_use_id": "toolu_a1",
+        "description": "Discover: map order entry points",
+        "subagent_type": "general-purpose",
+        "task_type": "local_agent"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000006",
+        "task_id": "a2",
+        "parent_task_id": "wf-orders-1",
+        "tool_use_id": "toolu_a2",
+        "description": "Discover: list fee calculators",
+        "subagent_type": "general-purpose",
+        "task_type": "local_agent"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_notification",
+        "uuid": "00000000-0000-4000-8000-000000000007",
+        "task_id": "a1",
+        "tool_use_id": "toolu_a1",
+        "status": "completed",
+        "summary": "Found 4 entry points in src/orders",
+        "usage": {
+          "total_tokens": 21800,
+          "tool_uses": 12,
+          "duration_ms": 38000
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_notification",
+        "uuid": "00000000-0000-4000-8000-000000000008",
+        "task_id": "a2",
+        "tool_use_id": "toolu_a2",
+        "status": "completed",
+        "summary": "Found 3 fee calculators",
+        "usage": {
+          "total_tokens": 18400,
+          "tool_uses": 9,
+          "duration_ms": 31000
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000009",
+        "task_id": "a3",
+        "parent_task_id": "wf-orders-1",
+        "tool_use_id": "toolu_a3",
+        "description": "Review: totals rounding in totals.ts",
+        "subagent_type": "general-purpose",
+        "task_type": "local_agent"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000010",
+        "task_id": "a4",
+        "parent_task_id": "wf-orders-1",
+        "tool_use_id": "toolu_a4",
+        "description": "Review: fee rounding in fees.ts",
+        "subagent_type": "general-purpose",
+        "task_type": "local_agent"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000011",
+        "task_id": "a5",
+        "parent_task_id": "wf-orders-1",
+        "tool_use_id": "toolu_a5",
+        "description": "Review: refund path rounding",
+        "subagent_type": "general-purpose",
+        "task_type": "local_agent"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_notification",
+        "uuid": "00000000-0000-4000-8000-000000000012",
+        "task_id": "a3",
+        "tool_use_id": "toolu_a3",
+        "status": "completed",
+        "summary": "Math.round used on half-cent totals",
+        "usage": {
+          "total_tokens": 30200,
+          "tool_uses": 17,
+          "duration_ms": 64000
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_notification",
+        "uuid": "00000000-0000-4000-8000-000000000013",
+        "task_id": "a4",
+        "tool_use_id": "toolu_a4",
+        "status": "completed",
+        "summary": "Fee rows round per line, not per order",
+        "usage": {
+          "total_tokens": 27100,
+          "tool_uses": 15,
+          "duration_ms": 59000
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_updated",
+        "uuid": "00000000-0000-4000-8000-000000000014",
+        "task_id": "a5",
+        "patch": {
+          "status": "failed",
+          "error": "Timed out after 120s reading refund fixtures"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_notification",
+        "uuid": "00000000-0000-4000-8000-000000000015",
+        "task_id": "a5",
+        "tool_use_id": "toolu_a5",
+        "status": "failed",
+        "summary": "Timed out after 120s",
+        "usage": {
+          "total_tokens": 15900,
+          "tool_uses": 8,
+          "duration_ms": 120000
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000016",
+        "task_id": "a6",
+        "parent_task_id": "wf-orders-1",
+        "tool_use_id": "toolu_a6",
+        "description": "Verify: rerun totals on fixture orders",
+        "subagent_type": "general-purpose",
+        "task_type": "local_agent"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_progress",
+        "uuid": "00000000-0000-4000-8000-000000000017",
+        "task_id": "a6",
+        "description": "Verify: rerun totals on fixture orders",
+        "subagent_type": "general-purpose",
+        "last_tool_name": "Bash",
+        "summary": "Comparing 40 fixture orders",
+        "usage": {
+          "total_tokens": 12600,
+          "tool_uses": 6,
+          "duration_ms": 43000
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000018",
+        "task_id": "a7",
+        "parent_task_id": "wf-orders-1",
+        "tool_use_id": "toolu_a7",
+        "description": "Verify: diff fee rows against prod sample",
+        "subagent_type": "general-purpose",
+        "task_type": "local_agent"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_updated",
+        "uuid": "00000000-0000-4000-8000-000000000019",
+        "task_id": "a7",
+        "patch": {
+          "status": "pending"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "66666666-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_progress",
+        "uuid": "00000000-0000-4000-8000-000000000020",
+        "task_id": "wf-orders-1",
+        "description": "orders-audit",
+        "usage": {
+          "total_tokens": 126000,
+          "tool_uses": 67,
+          "duration_ms": 252000
+        }
+      }
+    },
+    {
+      "type": "taskOutput",
+      "sessionId": "66666666-0000-4000-8000-000000000001",
+      "taskId": "a5",
+      "output": "Reading fixtures/refunds/*.json\nread 18 files\nrunning refund totals against fixtures\nerror: timed out after 120s waiting for fixtures/refunds/large-batch.json"
+    }
+  ]
+}

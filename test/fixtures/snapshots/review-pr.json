@@ -1,0 +1,105 @@
+{
+  "messages": [
+    {
+      "type": "changes",
+      "sessionId": "44444444-0000-4000-8000-000000000001",
+      "scope": "pr",
+      "prUrl": "https://github.com/acme/orders/pull/412",
+      "base": "main",
+      "files": [
+        {
+          "path": "src/math.ts",
+          "added": 4,
+          "removed": 1,
+          "status": "modified"
+        },
+        {
+          "path": "README.md",
+          "added": 2,
+          "removed": 0,
+          "status": "modified"
+        }
+      ]
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "44444444-0000-4000-8000-000000000001",
+      "scope": "pr",
+      "prUrl": "https://github.com/acme/orders/pull/412",
+      "diff": {
+        "path": "src/math.ts",
+        "lines": [
+          {
+            "kind": "ctx",
+            "oldNo": 1,
+            "newNo": 1,
+            "text": "export function add(a: number, b: number): number {"
+          },
+          {
+            "kind": "del",
+            "oldNo": 2,
+            "text": "  return a+b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 2,
+            "text": "  return a + b;"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 3,
+            "newNo": 3,
+            "text": "}"
+          },
+          {
+            "kind": "add",
+            "newNo": 4,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "export function subtract(a: number, b: number): number {"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "  return a - b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 7,
+            "text": "}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "44444444-0000-4000-8000-000000000001",
+      "scope": "pr",
+      "prUrl": "https://github.com/acme/orders/pull/412",
+      "diff": {
+        "path": "README.md",
+        "lines": [
+          {
+            "kind": "ctx",
+            "oldNo": 1,
+            "newNo": 1,
+            "text": "# orders"
+          },
+          {
+            "kind": "add",
+            "newNo": 2,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 3,
+            "text": "Includes add and subtract helpers."
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -3,9 +3,31 @@ import { SessionCard } from "../types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+type ChatRoute = (sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn) => Promise<void>;
+let chatRoute: ChatRoute | undefined;
+
+// Set while Argus chat (argus.chat.enabled) is on: sessions then open in Argus's own chat instead of Claude Code's.
+export function routeChatsTo(route: ChatRoute | undefined): void {
+  chatRoute = route;
+}
+
+let chatClose: ((sessionId: string) => boolean) | undefined;
+
+export function routeCloseTo(close: ((sessionId: string) => boolean) | undefined): void {
+  chatClose = close;
+}
+
+// True when the session lives in an Argus chat and its tab was closed.
+export function closeChatSession(sessionId: string): boolean {
+  return chatClose?.(sessionId) ?? false;
+}
+
 // Args: sessionId, initialPrompt, viewColumn, group, fullEditor, options.
 // A programmatic value other than "honor-preferred-location" always opens an editor tab, never the sidebar.
 export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
+  if (chatRoute) {
+    return chatRoute(sessionId, prompt, column);
+  }
   const target = column ?? vscode.window.tabGroups.activeTabGroup.viewColumn;
   try {
     await vscode.commands.executeCommand("claude-vscode.editor.open", sessionId, prompt, target, undefined, undefined, {
