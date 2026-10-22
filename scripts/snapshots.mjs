@@ -80,6 +80,7 @@ async function textOnlySteps(page) {
 async function reviewPrSteps(page) {
   await page.getByRole("button", { name: "Diff of #412" }).click();
   await page.locator(".review-diff .review-line").first().waitFor();
+  await page.locator(".review-gap").nth(1).getByRole("button").click();
 }
 
 async function slashSteps(page) {
@@ -110,7 +111,7 @@ const SCREENS = [
   { name: "permission", ...CHAT_PAGE, expect: { permission: ".perm-card", command: ".perm-code", actions: ".perm-actions button" } },
   { name: "plan", ...CHAT_PAGE, steps: planSteps, expect: { planPane: ".plan-pane", planBlocks: ".plan-block", comment: ".plan-comment", approve: ".plan-foot button" } },
   { name: "review", ...CHAT_PAGE, steps: reviewSteps, expect: { overlay: ".review", threads: ".review-thread", answered: ".review-claude:not(.review-working)", inProgress: ".review-working", files: ".review-file" } },
-  { name: "review-pr", ...CHAT_PAGE, messages: () => [...fixture("review").messages, ...fixture("review-pr").messages], steps: reviewPrSteps, expect: { overlay: ".review", prTab: '.review-tabs [aria-selected="true"]', files: ".review-file", deleted: ".review-k-del" } },
+  { name: "review-pr", ...CHAT_PAGE, messages: () => [...fixture("review").messages, ...fixture("review-pr").messages], steps: reviewPrSteps, expect: { overlay: ".review", prTab: '.review-tabs [aria-selected="true"]', files: ".review-file", deleted: ".review-k-del", gapCollapsed: ".review-gap", gapExpanded: ".review-line.review-k-ctx" } },
   { name: "grid", ...CHAT_PAGE, expect: { tiles: ".grid-tile", needsYou: ".grid-tile.needs", summary: ".grid-needs", groupName: ".grid-group", addAgent: ".grid-add-agent" } },
   { name: "board", ...CENTER_PAGE, height: 1200, tab: "sessions", messages: () => fixture("board").messages, steps: boardSteps, expect: { cards: ".row", permission: ".pending-code", question: ".pending-q", columns: ".scol", group: ".row.group", agents: ".row.group .agent", groupPending: ".row.group .agent-pending .pending-code" } },
   { name: "workflow", ...CHAT_PAGE, steps: workflowSteps, expect: { card: ".wf-card", pane: ".wf-pane", phases: ".wf-column", failed: ".wf-agent-failed", detail: ".wf-detail" } },

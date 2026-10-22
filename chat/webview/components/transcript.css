@@ -523,3 +523,19 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+.tr-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tr-thumb {
+  max-width: 220px;
+  max-height: 160px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  object-fit: contain;
+  background: var(--bg);
+}

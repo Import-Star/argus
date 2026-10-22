@@ -19,7 +19,7 @@ export interface Todo {
 }
 
 export type Item =
-  | { kind: "user"; id: string; text: string; images: number }
+  | { kind: "user"; id: string; text: string; images: string[] }
   | { kind: "text"; id: string; text: string; streaming?: boolean }
   | { kind: "thinking"; id: string; text: string; streaming?: boolean }
   | { kind: "lookups"; id: string; calls: Lookup[]; summary: string; pending: boolean }
@@ -192,9 +192,9 @@ function applyTaskUpdate(tasks: { id?: string; todo: Todo }[], task: { id?: stri
 
 const USER_NOISE = /^<(local-command-caveat|local-command-stdout|task-notification|system-reminder|command-message)\b/;
 
-function userContent(content: unknown): { text: string; images: number } {
+function userContent(content: unknown): { text: string; images: string[] } {
   if (typeof content === "string") {
-    return { text: content, images: 0 };
+    return { text: content, images: [] };
   }
   const parts = blocks(content);
   return {
@@ -202,8 +202,14 @@ function userContent(content: unknown): { text: string; images: number } {
       .filter((block) => block.type === "text")
       .map((block) => str(block.text))
       .join("\n"),
-    images: parts.filter((block) => block.type === "image").length
+    images: parts.filter((block) => block.type === "image").map(imageUrl).filter((url): url is string => Boolean(url))
   };
+}
+
+// Only inline base64 images are shown; the webview's CSP allows data: images.
+function imageUrl(block: Block): string | undefined {
+  const source = (block as { source?: unknown }).source as { type?: string; media_type?: string; data?: string } | undefined;
+  return source?.type === "base64" && source.media_type?.startsWith("image/") && source.data ? `data:${source.media_type};base64,${source.data}` : undefined;
 }
 
 function cleanUserText(raw: string): string {
@@ -338,7 +344,7 @@ export function buildItems(messages: SDKMessage[]): Item[] {
     const clean = reviewSummary(text) ?? cleanUserText(text);
     if (text.startsWith("[Request interrupted")) {
       items.push({ kind: "note", id: str(message.uuid) || `u${items.length}`, text: "Interrupted", tone: "muted" });
-    } else if (clean || images) {
+    } else if (clean || images.length) {
       items.push({ kind: "user", id: str(message.uuid) || `u${items.length}`, text: clean, images });
     }
   };
