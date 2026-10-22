@@ -3,6 +3,18 @@ import { post, setUi, useSession } from "../store";
 import { agentCounts, findWorkflow, formatDuration, taskGraph, type AgentCounts, type WorkflowInfo } from "../workflow";
 import "./workflow.css";
 
+export function useTick(active: boolean): number {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [active]);
+  return active ? Date.now() : now;
+}
+
 export function useElapsed(durationMs: number, running: boolean): number {
   const base = useRef({ durationMs, at: Date.now() });
   const [, tick] = useState(0);

@@ -48,6 +48,18 @@ export interface CardInfo {
   compactions?: number;
 }
 
+// claude.ai plan limits as /usage reports them. Null where plan limits don't apply (API key, Bedrock, Vertex).
+export interface PlanUsageWindow {
+  key: string;
+  label: string;
+  percent: number;
+  resetsAt?: number;
+}
+
+export interface PlanUsage {
+  windows: PlanUsageWindow[];
+}
+
 export interface RailSession {
   sessionId: string;
   title: string;
@@ -85,6 +97,14 @@ export interface PermissionRequest {
 export type PermissionDecision =
   | { behavior: "allow"; always?: boolean; updatedInput?: Record<string, unknown> }
   | { behavior: "deny"; message: string };
+
+// A message sent while Claude is working. `sent` means the CLI already took it, so it can no longer be withdrawn.
+export interface QueuedMessage {
+  id: string;
+  text: string;
+  images: number;
+  sent: boolean;
+}
 
 export type ChangeScope = "base" | "turn" | "uncommitted" | "session" | "pr";
 
@@ -131,7 +151,12 @@ export type HostMessage =
   | { type: "changes"; sessionId: string; scope: ChangeScope; prUrl?: string; worktree?: string; base?: string; files: FileChange[]; error?: string }
   | { type: "fileDiff"; sessionId: string; scope: ChangeScope; prUrl?: string; worktree?: string; diff: FileDiff }
   | { type: "taskOutput"; sessionId: string; taskId: string; output: string }
-  | { type: "openReview"; sessionId: string; scope: ChangeScope };
+  | { type: "queue"; sessionId: string; items: QueuedMessage[] }
+  | { type: "usage"; sessionId: string; usage: PlanUsage | null }
+  | { type: "openReview"; sessionId: string; scope: ChangeScope }
+  | { type: "rewound"; sessionId: string; userMessageId: string; text: string }
+  | { type: "draft"; sessionId: string; text: string }
+  | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string };
 
 export type WebviewMessage =
   | { type: "archive"; sessionId: string }
@@ -145,6 +170,7 @@ export type WebviewMessage =
   | { type: "fileSuggestions"; sessionId: string; query: string }
   | { type: "openFile"; sessionId: string; path: string; line?: number; worktree?: string }
   | { type: "openUrl"; url: string }
+  | { type: "openSimpleBrowser"; url: string }
   | { type: "openSession"; sessionId: string }
   | { type: "newChat" }
   | { type: "addAgent"; sessionId: string }
@@ -154,4 +180,10 @@ export type WebviewMessage =
   | { type: "fileDiff"; sessionId: string; scope: ChangeScope; path: string; files?: string[]; prUrl?: string; worktree?: string }
   | { type: "sendComments"; sessionId: string; comments: DiffComment[] }
   | { type: "taskOutput"; sessionId: string; taskId: string }
-  | { type: "stopTask"; sessionId: string; taskId: string };
+  | { type: "usage"; sessionId: string }
+  | { type: "stopTask"; sessionId: string; taskId: string }
+  | { type: "queue"; sessionId: string; id: string; action: "edit" | "remove" | "up" | "down" | "sendNow"; text?: string }
+  | { type: "rewind"; sessionId: string; userMessageId: string; text: string }
+  | { type: "fork"; sessionId: string; messageId: string; before?: boolean; draft?: string }
+  | { type: "aside"; sessionId: string; askId: string; text: string }
+  | { type: "asideClose"; sessionId: string };

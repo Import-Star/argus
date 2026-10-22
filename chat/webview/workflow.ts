@@ -17,6 +17,13 @@ export interface AgentInfo {
   error?: string;
   phase?: string;
   startIndex: number;
+  inWorkflow?: boolean;
+  agentId?: string;
+  model?: string;
+  attempt?: number;
+  promptPreview?: string;
+  resultPreview?: string;
+  startedAt?: number;
 }
 
 export interface WorkflowColumn {
@@ -52,6 +59,34 @@ export interface AgentCounts {
   waiting: number;
 }
 
+interface SnapshotPhase {
+  index: number;
+  title: string;
+}
+
+interface SnapshotAgent {
+  index: number;
+  label: string;
+  phaseIndex?: number;
+  phaseTitle?: string;
+  agentId?: string;
+  model?: string;
+  state?: string;
+  startedAt?: number;
+  attempt?: number;
+  promptPreview?: string;
+  resultPreview?: string;
+  error?: string;
+  tokens: number;
+  toolCalls: number;
+  durationMs: number;
+}
+
+interface Snapshot {
+  phases: SnapshotPhase[];
+  agents: SnapshotAgent[];
+}
+
 interface Task {
   taskId: string;
   runId?: string;
@@ -71,6 +106,7 @@ interface Task {
   ambient: boolean;
   startIndex: number;
   endIndex?: number;
+  snapshot?: Snapshot;
 }
 
 interface ToolUse {
@@ -155,6 +191,47 @@ function str(value: unknown): string | undefined {
   return typeof value === "string" && value !== "" ? value : undefined;
 }
 
+function num(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
+function parseSnapshot(value: unknown): Snapshot | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const snapshot: Snapshot = { phases: [], agents: [] };
+  for (const entry of value.map(asRecord)) {
+    const index = num(entry.index);
+    if (index === undefined) {
+      continue;
+    }
+    if (entry.type === "workflow_phase") {
+      snapshot.phases.push({ index, title: str(entry.title) ?? `Phase ${index}` });
+    } else if (entry.type === "workflow_agent") {
+      snapshot.agents.push({
+        index,
+        label: str(entry.label) ?? `agent ${index}`,
+        phaseIndex: num(entry.phaseIndex),
+        phaseTitle: str(entry.phaseTitle),
+        agentId: str(entry.agentId),
+        model: str(entry.model),
+        state: str(entry.state),
+        startedAt: num(entry.startedAt),
+        attempt: num(entry.attempt),
+        promptPreview: str(entry.promptPreview),
+        resultPreview: str(entry.resultPreview),
+        error: str(entry.error),
+        tokens: num(entry.tokens) ?? 0,
+        toolCalls: num(entry.toolCalls) ?? 0,
+        durationMs: num(entry.durationMs) ?? 0
+      });
+    }
+  }
+  snapshot.phases.sort((a, b) => a.index - b.index);
+  snapshot.agents.sort((a, b) => a.index - b.index);
+  return snapshot;
+}
+
 function blocks(content: unknown): Record<string, unknown>[] {
   return Array.isArray(content) ? content.map(asRecord) : [];
 }
@@ -193,6 +270,31 @@ function mapStatus(status: string | undefined): AgentStatus | undefined {
       return "stopped";
     default:
       return undefined;
+  }
+}
+
+function mapAgentState(state: string | undefined, startedAt: number | undefined): AgentStatus {
+  switch (state) {
+    case "done":
+    case "completed":
+    case "complete":
+      return "done";
+    case "failed":
+    case "error":
+    case "errored":
+      return "failed";
+    case "stopped":
+    case "killed":
+    case "cancelled":
+    case "canceled":
+    case "aborted":
+      return "stopped";
+    case "queued":
+    case "pending":
+    case "waiting":
+      return "waiting";
+    default:
+      return startedAt === undefined ? "waiting" : "running";
   }
 }
 
@@ -256,6 +358,7 @@ function applySystem(message: Extract<SDKMessage, { type: "system" }>, tasks: Ma
         task.subagentType ??= message.subagent_type;
         task.lastTool = message.last_tool_name ?? task.lastTool;
         task.summary = message.summary ?? task.summary;
+        task.snapshot = parseSnapshot(asRecord(message).workflow_progress) ?? task.snapshot;
         applyUsage(task, message.usage);
       }
       return;
@@ -330,6 +433,47 @@ function agentInfo(task: Task): AgentInfo {
     error: task.error,
     startIndex: task.startIndex
   };
+}
+
+function snapshotAgents(task: Task, snapshot: Snapshot): AgentInfo[] {
+  const finished = TERMINAL.has(task.status);
+  return snapshot.agents.map((entry) => {
+    const state = mapAgentState(entry.state, entry.startedAt);
+    const status = finished && !TERMINAL.has(state) ? "stopped" : state;
+    const phase = snapshot.phases.find((candidate) => candidate.index === entry.phaseIndex)?.title ?? entry.phaseTitle;
+    return {
+      taskId: `${task.taskId}:${entry.index}`,
+      description: entry.label,
+      status,
+      tokens: entry.tokens,
+      toolUses: entry.toolCalls,
+      durationMs: entry.durationMs,
+      summary: entry.resultPreview,
+      error: entry.error,
+      phase,
+      startIndex: entry.index,
+      inWorkflow: true,
+      agentId: entry.agentId,
+      model: entry.model,
+      attempt: entry.attempt,
+      promptPreview: entry.promptPreview,
+      resultPreview: entry.resultPreview,
+      startedAt: entry.startedAt
+    };
+  });
+}
+
+export function agentDuration(agent: AgentInfo, now: number): number {
+  return agent.status === "running" && agent.startedAt !== undefined ? Math.max(agent.durationMs, now - agent.startedAt) : agent.durationMs;
+}
+
+export function outputKey(agent: AgentInfo): string {
+  return agent.agentId ?? agent.taskId;
+}
+
+function mergePhases(snapshot: Snapshot | undefined, declared: string[]): string[] {
+  const titles = snapshot?.phases.map((phase) => phase.title) ?? [];
+  return [...titles, ...declared.filter((title) => !titles.includes(title))];
 }
 
 function buildColumns(agents: AgentInfo[], phases: string[]): WorkflowColumn[] {
@@ -421,9 +565,15 @@ function derive(messages: SDKMessage[]): TaskGraph {
     workflows: workflows.map(({ use, task }) => {
       const meta = parseMeta(str(use?.input.script) ?? "");
       const result = use ? results.get(use.id) : undefined;
-      const agents = toInfos(agentTasks.filter((candidate) => owner.get(candidate.taskId) === (task?.taskId ?? use?.id)));
-      for (const agent of agents) {
-        agent.phase = phaseOf(agent.description, meta.phases);
+      const snapshot = task?.snapshot;
+      const agents =
+        task && snapshot
+          ? snapshotAgents(task, snapshot)
+          : toInfos(agentTasks.filter((candidate) => owner.get(candidate.taskId) === (task?.taskId ?? use?.id)));
+      if (!snapshot) {
+        for (const agent of agents) {
+          agent.phase = phaseOf(agent.description, meta.phases);
+        }
       }
       const tokens = Math.max(task?.tokens ?? 0, agents.reduce((sum, agent) => sum + agent.tokens, 0));
       const durationMs = Math.max(task?.durationMs ?? 0, ...agents.map((agent) => agent.durationMs));
@@ -437,7 +587,7 @@ function derive(messages: SDKMessage[]): TaskGraph {
         tokens,
         durationMs,
         agents,
-        columns: buildColumns(agents, meta.phases)
+        columns: buildColumns(agents, mergePhases(snapshot, meta.phases))
       };
     }),
     standalone

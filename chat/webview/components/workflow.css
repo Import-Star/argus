@@ -255,7 +255,8 @@
   font-size: 12px;
 }
 
-.wf-result + .wf-dur {
+.wf-result + .wf-dur,
+.wf-dur + .wf-dur {
   margin-left: 0;
 }
 

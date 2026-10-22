@@ -29,7 +29,8 @@ export type Item =
   | { kind: "agent"; id: string; toolUseId: string; subagentType: string; description: string; taskId?: string; pending: boolean; error?: string }
   | { kind: "workflow"; id: string; toolUseId: string; input: Record<string, unknown> }
   | { kind: "tool"; id: string; name: string; summary: string; pending: boolean; error?: string }
-  | { kind: "note"; id: string; text: string; tone: "muted" | "error" };
+  | { kind: "note"; id: string; text: string; tone: "muted" | "error" }
+  | { kind: "usage"; id: string; input: number; output: number; cacheRead: number; cacheWrite: number; cost?: number };
 
 type Block = { type: string; [key: string]: unknown };
 type ToolResult = { text: string; isError: boolean };
@@ -231,6 +232,26 @@ function resultNote(message: Raw, id: string): Item | undefined {
   return { kind: "note", id, text: detail ? `${label}: ${detail}` : label, tone: "error" };
 }
 
+// total_cost_usd is a running total. A resumed or rewound session carries earlier spend in its first total, so no per-turn cost there.
+function usageItem(message: Raw, id: string, lastCost: number | undefined, humanTurns: number): Extract<Item, { kind: "usage" }> | undefined {
+  const usage = message.usage;
+  const total = message.total_cost_usd;
+  if (!usage || typeof total !== "number") {
+    return undefined;
+  }
+  const known = lastCost !== undefined || humanTurns <= 1;
+  const item = {
+    kind: "usage" as const,
+    id: `usage:${id}`,
+    input: Number(usage.input_tokens) || 0,
+    output: Number(usage.output_tokens) || 0,
+    cacheRead: Number(usage.cache_read_input_tokens) || 0,
+    cacheWrite: Number(usage.cache_creation_input_tokens) || 0,
+    cost: known ? Math.max(0, lastCost === undefined || total < lastCost ? total : total - lastCost) : undefined
+  };
+  return item.input + item.output + item.cacheRead + item.cacheWrite > 0 ? item : undefined;
+}
+
 function systemNote(message: Raw, id: string): Item | undefined {
   if (message.subtype === "api_retry") {
     const seconds = Math.round((message.retry_delay_ms ?? 0) / 1000);
@@ -253,6 +274,8 @@ export function buildItems(messages: SDKMessage[]): Item[] {
   const background = new Set<string>();
   let partial = new Map<number, { kind: "text" | "thinking"; text: string }>();
   let latestTodos = -1;
+  let lastCost: number | undefined;
+  let humanTurns = 0;
   const tasks: { id?: string; todo: Todo }[] = [];
 
   const addTool = (id: string, name: string, input: Input) => {
@@ -345,6 +368,7 @@ export function buildItems(messages: SDKMessage[]): Item[] {
     if (text.startsWith("[Request interrupted")) {
       items.push({ kind: "note", id: str(message.uuid) || `u${items.length}`, text: "Interrupted", tone: "muted" });
     } else if (clean || images.length) {
+      humanTurns++;
       items.push({ kind: "user", id: str(message.uuid) || `u${items.length}`, text: clean, images });
     }
   };
@@ -387,12 +411,19 @@ export function buildItems(messages: SDKMessage[]): Item[] {
       }
     } else if (message.type === "result") {
       partial = new Map();
+      const usage = usageItem(message, id, lastCost, humanTurns);
+      if (usage) {
+        items.push(usage);
+      }
+      lastCost = typeof message.total_cost_usd === "number" ? message.total_cost_usd : lastCost;
       const note = resultNote(message, id);
       if (note) {
         items.push(note);
       }
     } else if (message.type === "system") {
-      if (message.subtype === "task_started" && message.tool_use_id) {
+      if ((message.subtype as string) === "rewound") {
+        lastCost = undefined;
+      } else if (message.subtype === "task_started" && message.tool_use_id) {
         const agent = agents.get(message.tool_use_id);
         if (agent) {
           agent.taskId = message.task_id;
@@ -443,7 +474,7 @@ const CALL_KINDS = new Set<Item["kind"]>(["edit", "bash", "todos", "agent", "wor
 
 const callCount = (item: Item): number => (item.kind === "lookups" ? item.calls.length : CALL_KINDS.has(item.kind) ? 1 : 0);
 
-const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || (item.kind === "note" && item.tone === "error");
+const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || (item.kind === "note" && item.tone === "error");
 
 export function textOnlyRows(items: Item[]): Row[] {
   const rows: Row[] = [];
@@ -498,4 +529,44 @@ export function turnOutputTokens(messages: SDKMessage[]): number {
     }
   }
   return [...perMessage.values()].reduce((sum, tokens) => sum + tokens, 0);
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// The transcript uuid behind a finished message item; items built from partial streams or without one have none.
+export function messageUuid(item: Item): string | undefined {
+  if ((item.kind !== "user" && item.kind !== "text") || (item.kind === "text" && item.streaming)) {
+    return undefined;
+  }
+  const uuid = item.id.split(":")[0];
+  return UUID.test(uuid) ? uuid : undefined;
+}
+
+export const MAX_OUTPUT = 20000;
+
+// Everything an item can show, folded parts included; a superset of its rendered text.
+export function searchText(item: Item): string {
+  switch (item.kind) {
+    case "user":
+    case "text":
+    case "thinking":
+    case "note":
+      return item.text;
+    case "lookups":
+      return [item.summary, ...item.calls.map((call) => `${call.name} ${call.label}`)].join("\n");
+    case "edit":
+      return [item.path, ...item.lines.map((line) => line.text), item.error ?? ""].join("\n");
+    case "bash":
+      return [item.command, item.description ?? "", (item.output ?? "").slice(0, MAX_OUTPUT)].join("\n");
+    case "todos":
+      return item.todos.map((todo) => todo.content).join("\n");
+    case "agent":
+      return [item.subagentType, item.description, item.error ?? ""].join("\n");
+    case "workflow":
+      return JSON.stringify(item.input);
+    case "tool":
+      return [item.name, item.summary, item.error ?? ""].join("\n");
+    case "usage":
+      return "";
+  }
 }

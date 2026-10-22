@@ -424,6 +424,7 @@
 }
 
 .tr-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -538,4 +539,116 @@
   border-radius: 6px;
   object-fit: contain;
   background: var(--bg);
+}
+
+.tr-actions {
+  position: absolute;
+  top: -13px;
+  right: 6px;
+  z-index: 1;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--row);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.tr-item:hover .tr-actions,
+.tr-actions:focus-within {
+  opacity: 1;
+}
+
+.tr-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border-color: transparent;
+  color: var(--muted);
+}
+
+.tr-actions button:hover {
+  color: var(--strong);
+  background: var(--row-hover);
+}
+
+.tr-compact .tr-actions {
+  top: -11px;
+}
+
+.tr-usage {
+  margin-top: -8px;
+  color: var(--dim);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-compact .tr-usage {
+  margin-top: -4px;
+  font-size: 10px;
+}
+
+.tr-search {
+  position: absolute;
+  top: 34px;
+  right: 14px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: min(360px, calc(100% - 28px));
+  padding: 4px 4px 4px 10px;
+  background: var(--row);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: var(--muted);
+}
+
+.tr-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 4px;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--strong);
+  font: inherit;
+}
+
+.tr-search:focus-within {
+  border-color: var(--accent);
+}
+
+.tr-search-count {
+  flex: none;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.tr-search button {
+  display: flex;
+  align-items: center;
+  padding: 3px 5px;
+  color: var(--muted);
+}
+
+.tr-search button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+::highlight(tr-hit) {
+  background-color: rgba(224, 179, 90, 0.35);
+  color: inherit;
+}
+
+::highlight(tr-hit-current) {
+  background-color: rgba(217, 119, 87, 0.7);
+  color: inherit;
 }

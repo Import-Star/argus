@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
-import type { CardInfo, ChangeScope, ChatGroup, ChatMeta, FileChange, FileDiff, HostMessage, PermissionRequest, RailSession, SDKMessage, WebviewMessage } from "../../src/chat/protocol";
+import type { CardInfo, ChangeScope, ChatGroup, ChatMeta, FileChange, FileDiff, HostMessage, PermissionRequest, PlanUsage, QueuedMessage, RailSession,SDKMessage, WebviewMessage } from "../../src/chat/protocol";
 
+import { noteArrival } from "./backgroundTasks";
 import { EMPTY_REVIEW, type ReviewState } from "./review";
+import { rewindMessages } from "./rewind";
 
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void; setState(state: unknown): void };
 const vscodeApi = acquireVsCodeApi();
@@ -10,7 +12,7 @@ export function post(message: WebviewMessage): void {
   vscodeApi.postMessage(message);
 }
 
-export type SidePane = "details" | "plan" | "review" | "workflow";
+export type SidePane = "details" | "plan" | "review" | "workflow" | "preview";
 
 export interface SessionUi {
   side: SidePane;
@@ -21,6 +23,8 @@ export interface SessionUi {
   workflowTaskId?: string;
   agentTaskId?: string;
   textOnly?: boolean;
+  draft?: string;
+  previewUrl?: string;
 }
 
 export interface SessionState {
@@ -32,6 +36,8 @@ export interface SessionState {
   changes?: { scope: ChangeScope; prUrl?: string; worktree?: string; base?: string; files: FileChange[]; error?: string };
   diffs: Record<string, FileDiff>;
   taskOutputs: Record<string, string>;
+  queue: QueuedMessage[];
+  usage?: PlanUsage | null;
   review: ReviewState;
   ui: SessionUi;
 }
@@ -49,7 +55,7 @@ let state: State = { view: "single", sessionIds: [], groups: [], rail: [], sessi
 const listeners = new Set<() => void>();
 
 function emptySession(): SessionState {
-  return { messages: [], permissions: [], diffs: {}, taskOutputs: {}, review: EMPTY_REVIEW, ui: { side: "details", reviewScope: "base" } };
+  return { messages: [], permissions: [], diffs: {}, taskOutputs: {}, queue: [], review: EMPTY_REVIEW, ui: { side: "details", reviewScope: "base" } };
 }
 
 function set(next: State): void {
@@ -95,6 +101,7 @@ export function dispatch(message: HostMessage): void {
       updateSession(message.sessionId, (session) => ({ ...session, messages: message.messages }));
       return;
     case "sdk":
+      noteArrival(message.message);
       updateSession(message.sessionId, (session) => ({ ...session, messages: [...session.messages, message.message] }));
       return;
     case "permission":
@@ -118,8 +125,20 @@ export function dispatch(message: HostMessage): void {
     case "fileDiff":
       updateSession(message.sessionId, (session) => ({ ...session, diffs: { ...session.diffs, [message.diff.path]: message.diff } }));
       return;
+    case "rewound":
+      updateSession(message.sessionId, (session) => ({ ...session, messages: rewindMessages(session.messages, message.userMessageId), ui: { ...session.ui, draft: message.text } }));
+      return;
+    case "draft":
+      setUi(message.sessionId, { draft: message.text });
+      return;
     case "openReview":
       setUi(message.sessionId, { side: "review", reviewScope: message.scope, worktree: undefined, reviewFile: undefined });
+      return;
+    case "usage":
+      updateSession(message.sessionId, (session) => ({ ...session, usage: message.usage }));
+      return;
+    case "queue":
+      updateSession(message.sessionId, (session) => ({ ...session, queue: message.items }));
       return;
     case "taskOutput":
       updateSession(message.sessionId, (session) => ({ ...session, taskOutputs: { ...session.taskOutputs, [message.taskId]: message.output } }));

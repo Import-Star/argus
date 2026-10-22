@@ -1,0 +1,14 @@
+{
+  "asks": [
+    {
+      "question": "Which file did you change the rounding in?",
+      "text": "The rounding change is in `src/math.ts`:\n\n- `subtract` now rounds to cents with `Math.round(x * 100) / 100`\n- `add` is unchanged\n\n```ts\nexport function subtract(a: number, b: number): number {\n  return Math.round((a - b) * 100) / 100;\n}\n```\n\nSee the [rounding notes](https://example.com/rounding) for why cents.",
+      "status": "done"
+    },
+    {
+      "question": "Does the validator also reject NaN?",
+      "text": "Not yet. The validator only checks that both inputs are numbers, so `subtract(NaN, 1)` returns `NaN`. Adding an `Number.isNaN` check there would",
+      "status": "streaming"
+    }
+  ]
+}

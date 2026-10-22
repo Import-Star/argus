@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "preact/hooks";
 import { post, setUi, useSession } from "../store";
-import { agentCounts, defaultWorkflow, findWorkflow, formatDuration, formatTokens, taskGraph, type AgentInfo, type AgentStatus, type WorkflowColumn, type WorkflowInfo } from "../workflow";
-import { useElapsed } from "./WorkflowCard";
+import { agentCounts, agentDuration, defaultWorkflow, findWorkflow, formatDuration, formatTokens, outputKey, taskGraph, type AgentInfo, type AgentStatus, type WorkflowColumn, type WorkflowInfo } from "../workflow";
+import { useElapsed, useTick } from "./WorkflowCard";
 import "./workflow.css";
 
 const GLYPHS: Record<Exclude<AgentStatus, "running">, string> = {
@@ -25,8 +25,9 @@ function Glyph({ status }: { status: AgentStatus }) {
   );
 }
 
-function AgentRow({ agent, selected, onSelect }: { agent: AgentInfo; selected: boolean; onSelect(): void }) {
+function AgentRow({ agent, selected, now, onSelect }: { agent: AgentInfo; selected: boolean; now: number; onSelect(): void }) {
   const result = agent.status === "failed" ? (agent.error ?? agent.summary ?? "failed") : agent.summary;
+  const duration = agentDuration(agent, now);
   return (
     <button type="button" class={`wf-agent wf-agent-${agent.status}`} aria-current={selected} onClick={onSelect}>
       <Glyph status={agent.status} />
@@ -36,7 +37,8 @@ function AgentRow({ agent, selected, onSelect }: { agent: AgentInfo; selected: b
           {result}
         </span>
       )}
-      {agent.durationMs > 0 && <span class="wf-dur muted">{formatDuration(agent.durationMs)}</span>}
+      {agent.tokens > 0 && <span class="wf-dur muted">{formatTokens(agent.tokens)}</span>}
+      {duration > 0 && <span class="wf-dur muted">{formatDuration(duration)}</span>}
     </button>
   );
 }
@@ -48,7 +50,7 @@ function columnState(column: WorkflowColumn): "done" | "active" | "pending" {
   return column.agents.every((agent) => agent.status === "done" || agent.status === "failed" || agent.status === "stopped") ? "done" : "active";
 }
 
-function Column({ column, index, selectedId, onSelect }: { column: WorkflowColumn; index: number; selectedId?: string; onSelect(agent: AgentInfo): void }) {
+function Column({ column, index, selectedId, now, onSelect }: { column: WorkflowColumn; index: number; selectedId?: string; now: number; onSelect(agent: AgentInfo): void }) {
   const finished = column.agents.filter((agent) => agent.status === "done").length;
   return (
     <div class="wf-column">
@@ -58,7 +60,7 @@ function Column({ column, index, selectedId, onSelect }: { column: WorkflowColum
         <span class="wf-column-count">{column.agents.length === 0 ? "waiting" : `${finished} of ${column.agents.length}`}</span>
       </h2>
       {column.agents.map((agent) => (
-        <AgentRow key={agent.taskId} agent={agent} selected={agent.taskId === selectedId} onSelect={() => onSelect(agent)} />
+        <AgentRow key={agent.taskId} agent={agent} selected={agent.taskId === selectedId} now={now} onSelect={() => onSelect(agent)} />
       ))}
     </div>
   );
@@ -66,32 +68,37 @@ function Column({ column, index, selectedId, onSelect }: { column: WorkflowColum
 
 function AgentDetail({ sessionId, agent, output }: { sessionId: string; agent: AgentInfo; output?: string }) {
   const active = agent.status === "running" || agent.status === "waiting";
+  const key = agent.inWorkflow && !agent.agentId ? undefined : outputKey(agent);
   useEffect(() => {
-    post({ type: "taskOutput", sessionId, taskId: agent.taskId });
+    if (!key) {
+      return;
+    }
+    post({ type: "taskOutput", sessionId, taskId: key });
     if (!active) {
       return;
     }
-    const timer = setInterval(() => post({ type: "taskOutput", sessionId, taskId: agent.taskId }), 4000);
+    const timer = setInterval(() => post({ type: "taskOutput", sessionId, taskId: key }), 4000);
     return () => clearInterval(timer);
-  }, [sessionId, agent.taskId, active, agent.status]);
-  const facts = [agent.subagentType, `${agent.toolUses} tool calls`, `${formatTokens(agent.tokens)} tokens`].filter(Boolean).join(" · ");
+  }, [sessionId, key, active, agent.status]);
+  const facts = [agent.subagentType, agent.model, agent.attempt && agent.attempt > 1 ? `attempt ${agent.attempt}` : undefined, `${agent.toolUses} tool calls`, `${formatTokens(agent.tokens)} tokens`].filter(Boolean).join(" · ");
+  const task = agent.promptPreview ?? agent.description;
   return (
     <section class="wf-detail" aria-label="Agent detail">
       <div class="wf-detail-head">
         <span class="wf-detail-title mono">{agent.description || agent.taskId}</span>
         <span class="muted">{facts}</span>
-        {active && (
+        {active && !agent.inWorkflow && (
           <button type="button" onClick={() => post({ type: "stopTask", sessionId, taskId: agent.taskId })}>
             Stop agent
           </button>
         )}
       </div>
       <div class="wf-detail-body">
-        <div class="muted">Task: {agent.description}</div>
+        <div class="muted">Task: {task}</div>
         {agent.lastTool && <div class="muted">Last tool: {agent.lastTool}</div>}
         {agent.summary && <div>{agent.summary}</div>}
         {agent.error && <div class="wf-error">{agent.error}</div>}
-        <pre class="wf-output">{output ?? "Loading output..."}</pre>
+        {key && <pre class="wf-output">{output ?? "Loading output..."}</pre>}
       </div>
     </section>
   );
@@ -135,6 +142,8 @@ export function WorkflowPane({ sessionId }: { sessionId: string }) {
   const columns = workflow ? workflow.columns : [{ title: "Background agents", declared: false, agents }];
   const selectedId = ui.agentTaskId ?? (standaloneFirst ? ui.workflowTaskId : undefined);
   const selected = agents.find((agent) => agent.taskId === selectedId);
+  const counts = agentCounts(agents);
+  const now = useTick(counts.running > 0);
 
   if (!workflow && agents.length === 0) {
     return (
@@ -143,7 +152,6 @@ export function WorkflowPane({ sessionId }: { sessionId: string }) {
       </div>
     );
   }
-  const counts = agentCounts(agents);
   return (
     <div class="wf-pane">
       {workflow ? (
@@ -161,10 +169,10 @@ export function WorkflowPane({ sessionId }: { sessionId: string }) {
       )}
       <div class="wf-columns">
         {columns.map((column, index) => (
-          <Column key={column.title} column={column} index={index} selectedId={selectedId} onSelect={(agent) => setUi(sessionId, { agentTaskId: agent.taskId })} />
+          <Column key={column.title} column={column} index={index} selectedId={selectedId} now={now} onSelect={(agent) => setUi(sessionId, { agentTaskId: agent.taskId })} />
         ))}
       </div>
-      {selected && <AgentDetail sessionId={sessionId} agent={selected} output={taskOutputs[selected.taskId]} />}
+      {selected && <AgentDetail sessionId={sessionId} agent={selected} output={taskOutputs[outputKey(selected)]} />}
     </div>
   );
 }

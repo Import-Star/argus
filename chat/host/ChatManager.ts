@@ -10,6 +10,7 @@ import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, 
 import { ChatPanel } from "./ChatPanel";
 import { hasTranscript, readPanelState } from "./restore";
 import { ChatSession } from "./ChatSession";
+import { forkTranscript } from "./history";
 
 interface Remembered {
   model?: string;
@@ -200,6 +201,21 @@ export class ChatManager implements vscode.Disposable {
     }
   }
 
+  // The fork joins the source's group and opens the grid; `draft` lands in its composer.
+  public async forkAgent(fromSessionId: string, messageId: string, before: boolean, draft?: string): Promise<void> {
+    const from = this.sessions.get(fromSessionId);
+    if (!from) {
+      return;
+    }
+    const sessionId = await forkTranscript(from, messageId, before);
+    const session = this.add(new ChatSession({ sessionId, cwd: from.meta.cwd, resume: true, ...this.defaults(from.meta.cwd, fromSessionId), title: from.meta.title && `${from.meta.title} (fork)` }));
+    this.deps.addToGroup(session.sessionId, fromSessionId);
+    await this.showGrid(this.memberIds(fromSessionId), this.deps.getGroupOf()[fromSessionId]);
+    if (draft) {
+      session.fillComposer(draft);
+    }
+  }
+
   public groups(): ChatGroup[] {
     const groupOf = this.deps.getGroupOf();
     const cards = new Map(this.deps.getCards().map((card) => [card.record.sessionId, card]));
@@ -278,6 +294,11 @@ export class ChatManager implements vscode.Disposable {
 
   public worktreePath(sessionId: string, folder?: string): string | undefined {
     return folder ? this.card(sessionId)?.worktrees.find((entry) => entry.path === folder)?.path : undefined;
+  }
+
+  public sideQuestionDefaults(cwd: string): { claudePath?: string; additionalDirectories: string[]; log(line: string): void } {
+    const { claudePath, additionalDirectories, log } = this.defaults(cwd);
+    return { claudePath, additionalDirectories, log };
   }
 
   public card(sessionId: string): CardInfo | undefined {
