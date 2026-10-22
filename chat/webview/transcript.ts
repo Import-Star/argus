@@ -234,6 +234,9 @@ function systemNote(message: Raw, id: string): Item | undefined {
     const tokens = message.compact_metadata?.pre_tokens;
     return { kind: "note", id, text: `Conversation compacted${tokens ? ` · ${Math.round(tokens / 1000)}k tokens before` : ""}`, tone: "muted" };
   }
+  if (message.subtype === "local_command_output" && str(message.content).trim()) {
+    return { kind: "note", id, text: str(message.content).trim(), tone: "muted" };
+  }
   return undefined;
 }
 

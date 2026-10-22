@@ -396,6 +396,7 @@
 }
 
 .tr-note {
+  white-space: pre-wrap;
   color: var(--muted);
   font-size: 12px;
   text-align: center;

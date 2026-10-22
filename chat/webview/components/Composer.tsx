@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { EffortLevel, PermissionMode } from "../../../src/chat/protocol";
 import { post, useSession } from "../store";
+import { fenceFile, fileUris, filterCommands, isTextLike, MAX_TEXT_BYTES, uriToPath } from "./composerLogic";
 import "./composer.css";
 
 const EFFORT_LABELS: Record<EffortLevel, string> = { low: "Low", medium: "Med", high: "High", xhigh: "XHigh", max: "Max" };
@@ -14,12 +15,18 @@ const MODES: { value: PermissionMode; label: string }[] = [
   { value: "auto", label: "Auto" }
 ];
 
+const SLASH = /^\/(\S*)$/;
 const MENTION = /(^|\s)@([^\s@]*)$/;
 
 interface Mention {
   query: string;
   start: number;
   end: number;
+}
+
+interface Doc {
+  name: string;
+  text: string;
 }
 
 interface Attachment {
@@ -62,6 +69,9 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   const [text, setText] = useState("");
   const [images, setImages] = useState<Attachment[]>([]);
   const [files, setFiles] = useState<string[]>([]);
+  const [docs, setDocs] = useState<Doc[]>([]);
+  const [note, setNote] = useState("");
+  const [slashOff, setSlashOff] = useState(false);
   const [mention, setMention] = useState<Mention>();
   const [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
@@ -73,8 +83,13 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   // A model missing from the list (an explicit id) still gets the control; the CLI downgrades what it can't use.
   const efforts = model ? model.efforts : meta?.models.length ? ALL_EFFORTS : [];
   const suggestions = mention && fileSuggestions?.query === mention.query ? fileSuggestions.files : [];
+  const slashQuery = !compact && !slashOff ? SLASH.exec(text)?.[1] : undefined;
+  const commands = slashQuery === undefined ? [] : filterCommands(meta?.commands ?? [], slashQuery);
+  const options = commands.length ? commands.map((command) => command.name) : suggestions;
+  const typed = /^\/(\S+) $/.exec(text)?.[1];
+  const hint = typed ? meta?.commands?.find((command) => command.name === typed)?.argumentHint : undefined;
   const chips = files.filter((file) => text.includes(`@${file}`));
-  const canSend = text.trim().length > 0 || images.length > 0;
+  const canSend = text.trim().length > 0 || images.length > 0 || docs.length > 0;
 
   useEffect(() => {
     const el = input.current;
@@ -104,8 +119,11 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
     if (!canSend) {
       return;
     }
-    post({ type: "send", sessionId, text: text.trim(), images: images.length ? images : undefined });
+    const body = [text.trim(), ...docs.map((doc) => fenceFile(doc.name, doc.text))].filter(Boolean).join("\n\n");
+    post({ type: "send", sessionId, text: body, images: images.length ? images : undefined });
     setText("");
+    setDocs([]);
+    setNote("");
     setImages([]);
     setFiles([]);
     setMention(undefined);
@@ -122,6 +140,68 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
     setActive(0);
     window.clearTimeout(suggestTimer.current);
     suggestTimer.current = window.setTimeout(() => post({ type: "fileSuggestions", sessionId, query }), 120);
+  }
+
+  function pickCommand(name: string) {
+    setText(`/${name} `);
+    requestAnimationFrame(() => input.current?.focus());
+  }
+
+  function addPaths(paths: string[]) {
+    const mentions = paths.map((path) => `@${path} `).join("");
+    setText((current) => `${current && !/\s$/.test(current) ? `${current} ` : current}${mentions}`);
+    setFiles((current) => [...new Set([...current, ...paths])]);
+  }
+
+  async function addTextFiles(list: File[]) {
+    for (const file of list) {
+      if (!isTextLike(file)) {
+        setNote(`Can't attach ${file.name}: only text and images`);
+      } else if (file.size > MAX_TEXT_BYTES) {
+        setNote(`Can't attach ${file.name}: over 200 KB`);
+      } else {
+        const content = await file.text();
+        setDocs((current) => [...current, { name: file.name, text: content }]);
+      }
+    }
+  }
+
+  function attachImage(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = String(reader.result);
+      setImages((current) => [...current, { mediaType: file.type, data: url.slice(url.indexOf(",") + 1) }]);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function takeFiles(data: DataTransfer | null, event: Event) {
+    if (!data) {
+      return;
+    }
+    const paths = fileUris(data.getData("text/uri-list"))
+      .map((uri) => uriToPath(uri, meta?.cwd ?? ""))
+      .filter((path): path is string => Boolean(path));
+    const dropped = [...data.files];
+    if (!paths.length && !dropped.length) {
+      return;
+    }
+    event.preventDefault();
+    if (paths.length) {
+      addPaths(paths);
+      return;
+    }
+    setNote("");
+    dropped.filter((file) => file.type.startsWith("image/")).forEach(attachImage);
+    void addTextFiles(dropped.filter((file) => !file.type.startsWith("image/")));
+  }
+
+  function choose(index: number) {
+    if (commands.length) {
+      pickCommand(commands[index].name);
+    } else {
+      pick(suggestions[index]);
+    }
   }
 
   function pick(path: string) {
@@ -152,21 +232,23 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   }
 
   function onKeyDown(event: KeyboardEvent) {
-    if (suggestions.length) {
+    if (options.length) {
       const move = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
       if (move) {
         event.preventDefault();
-        setActive((active + move + suggestions.length) % suggestions.length);
+        setActive((active + move + options.length) % options.length);
         return;
       }
       if ((event.key === "Enter" || event.key === "Tab") && !event.isComposing) {
         event.preventDefault();
-        pick(suggestions[active] ?? suggestions[0]);
+        choose(options[active] ? active : 0);
         return;
       }
     }
     if (event.key === "Escape") {
-      if (mention) {
+      if (commands.length) {
+        setSlashOff(true);
+      } else if (mention) {
         setMention(undefined);
       } else if (working) {
         post({ type: "interrupt", sessionId });
@@ -180,19 +262,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   }
 
   function onPaste(event: ClipboardEvent) {
-    const pasted = [...(event.clipboardData?.files ?? [])].filter((file) => file.type.startsWith("image/"));
-    if (!pasted.length) {
-      return;
-    }
-    event.preventDefault();
-    for (const file of pasted) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const url = String(reader.result);
-        setImages((current) => [...current, { mediaType: file.type, data: url.slice(url.indexOf(",") + 1) }]);
-      };
-      reader.readAsDataURL(file);
-    }
+    takeFiles(event.clipboardData, event);
   }
 
   const modes = MODES.some((mode) => mode.value === meta?.permissionMode) || !meta ? MODES : [...MODES, { value: meta.permissionMode, label: meta.permissionMode }];
@@ -202,7 +272,29 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   return (
     <div class="chat-composer" ref={root} data-compact={compact ? "true" : undefined}>
       <div class="cmp-box">
-        {suggestions.length > 0 && (
+        {commands.length > 0 && (
+          <div class="cmp-suggest" role="listbox" aria-label="Commands">
+            {commands.map((command, index) => (
+              <div
+                key={command.name}
+                id={`cmp-${sessionId}-opt-${index}`}
+                role="option"
+                aria-selected={index === active}
+                class={`cmp-option cmp-command${index === active ? " active" : ""}`}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  pickCommand(command.name);
+                }}
+                onMouseEnter={() => setActive(index)}
+              >
+                <span class="mono">/{command.name}</span>
+                {command.argumentHint && <span class="cmp-hint mono">{command.argumentHint}</span>}
+                <span class="cmp-desc">{command.description}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {commands.length === 0 && suggestions.length > 0 && (
           <div class="cmp-suggest" role="listbox" aria-label="Files">
             {suggestions.map((file, index) => (
               <div
@@ -222,12 +314,20 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
             ))}
           </div>
         )}
-        {(chips.length > 0 || images.length > 0) && (
+        {(chips.length > 0 || images.length > 0 || docs.length > 0) && (
           <div class="cmp-chips">
             {chips.map((file) => (
               <span class="cmp-chip mono" key={file}>
                 {file.split("/").pop()}
                 <button type="button" class="ghost" aria-label={`Remove ${file}`} onClick={() => removeFile(file)}>
+                  ×
+                </button>
+              </span>
+            ))}
+            {docs.map((doc, index) => (
+              <span class="cmp-chip mono" key={`${doc.name}:${index}`} title={`${doc.text.length} characters`}>
+                {doc.name}
+                <button type="button" class="ghost" aria-label={`Remove ${doc.name}`} onClick={() => setDocs(docs.filter((_, at) => at !== index))}>
                   ×
                 </button>
               </span>
@@ -242,6 +342,11 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
             ))}
           </div>
         )}
+        {note && (
+          <div class="cmp-note" role="status">
+            {note}
+          </div>
+        )}
         <label for={`cmp-${sessionId}`} class="sr-only">
           Message Claude
         </label>
@@ -251,17 +356,22 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
           class="cmp-input"
           rows={compact ? 1 : 2}
           value={text}
-          placeholder={compact ? "Message Claude" : working ? "Queue a follow-up, @ to add files" : "Message Claude, @ to add files"}
-          role={suggestions.length ? "combobox" : undefined}
-          aria-expanded={suggestions.length ? true : undefined}
-          aria-activedescendant={suggestions.length ? `cmp-${sessionId}-opt-${active}` : undefined}
+          placeholder={hint ? hint : compact ? "Message Claude" : working ? "Queue a follow-up, @ to add files" : "Message Claude, @ to add files"}
+          role={options.length ? "combobox" : undefined}
+          aria-expanded={options.length ? true : undefined}
+          aria-activedescendant={options.length ? `cmp-${sessionId}-opt-${active}` : undefined}
           onInput={(event) => {
             const el = event.currentTarget;
             setText(el.value);
+            setSlashOff(false);
+            setActive(0);
+            setNote("");
             updateMention(el.value, el.selectionStart);
           }}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
+          onDrop={(event) => takeFiles(event.dataTransfer, event)}
+          onDragOver={(event) => event.dataTransfer?.types.includes("Files") && event.preventDefault()}
         />
         <div class="cmp-bar">
           {!compact && (

@@ -82,6 +82,26 @@ async function reviewPrSteps(page) {
   await page.locator(".review-diff .review-line").first().waitFor();
 }
 
+async function slashSteps(page) {
+  await page.getByLabel("Message Claude").first().pressSequentially("/re");
+  await page.locator(".cmp-command").first().waitFor();
+}
+
+async function pasteSteps(page) {
+  await page.evaluate(() => {
+    const box = document.querySelector(".cmp-input");
+    const paste = (fill) => {
+      const data = new DataTransfer();
+      fill(data);
+      box.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
+    };
+    paste((data) => data.setData("text/uri-list", "file:///work/orders/src/math.ts"));
+    paste((data) => data.items.add(new File(["# Notes\nsubtract must reject NaN\n"], "notes.md", { type: "text/markdown" })));
+    paste((data) => data.items.add(new File(["x"], "archive.zip", { type: "application/zip" })));
+  });
+  await page.locator(".cmp-note").waitFor();
+}
+
 const CHAT_PAGE = { html: "chat.html" };
 const CENTER_PAGE = { html: "center.html" };
 
@@ -96,6 +116,8 @@ const SCREENS = [
   { name: "workflow", ...CHAT_PAGE, steps: workflowSteps, expect: { card: ".wf-card", pane: ".wf-pane", phases: ".wf-column", failed: ".wf-agent-failed", detail: ".wf-detail" } },
   { name: "text-only", ...CHAT_PAGE, steps: textOnlySteps, expect: { pill: '.tr-pill[aria-pressed="true"]', divider: ".tr-hidden", text: ".tr-text" } },
   { name: "working", ...CHAT_PAGE, expect: { working: ".tr-working", glyph: ".tr-working-glyph", meta: ".tr-working-meta" } },
+  { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
+  { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } }
 ];
 
