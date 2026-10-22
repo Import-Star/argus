@@ -3,31 +3,28 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/ho
 import { highlightCode, languageFor } from "../highlight";
 import { renderMarkdown } from "../markdown";
 import { post, setUi, useSession } from "../store";
-import { buildItems, displayPath, textOnlyRows, turnOutputTokens, type Item, type Row as TranscriptRow } from "../transcript";
+import { buildItems, displayPath, MAX_OUTPUT, messageUuid, searchText, textOnlyRows, turnOutputTokens, type Item, type Row as TranscriptRow } from "../transcript";
+import { clearMatches, fillComposer, findMatches, paintMatches, revealMatch } from "../transcriptSearch";
+import { Icon } from "./Icon";
 import { PermissionCard } from "./PermissionCard";
+import { TranscriptSearch } from "./TranscriptSearch";
 import { WorkflowCard } from "./WorkflowCard";
 import "./transcript.css";
 
 const COMPACT_ITEMS = 12;
 const BOTTOM_SLACK = 48;
-const MAX_OUTPUT = 20000;
 const GLYPHS = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
 const VERBS = ["Thinking", "Pondering", "Cogitating", "Working", "Brewing", "Noodling", "Mulling", "Churning", "Ruminating", "Simmering"];
 const VERB_MS = 4000;
 const GLYPH_MS = 140;
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
-function Icon({ d, size = 14, stroke = 2 }: { d: string; size?: number; stroke?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width={stroke} aria-hidden="true">
-      <path d={d} />
-    </svg>
-  );
-}
-
 const CHEVRON = "M9 6l6 6-6 6";
 const CHECK = "M5 12l5 5L20 7";
 const FILE = "M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z M14 3v6h6";
+const REWIND = "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8 M3 3v5h5";
+const FORK = "M6 3v12 M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M18 9a9 9 0 0 1-9 9";
+const BUSY = new Set(["starting", "working", "needs-you"]);
 
 function Status({ pending, error }: { pending: boolean; error?: boolean }) {
   if (pending) {
@@ -45,9 +42,9 @@ function Fold({ open, onToggle, children }: { open: boolean; onToggle: () => voi
   );
 }
 
-function useToggle(): [boolean, () => void] {
+function useToggle(forced = false): [boolean, () => void] {
   const [open, setOpen] = useState(false);
-  return [open, () => setOpen((value) => !value)];
+  return [open || forced, () => setOpen((value) => !(value || forced))];
 }
 
 function Text({ text, streaming }: { text: string; streaming?: boolean }) {
@@ -58,8 +55,8 @@ function Text({ text, streaming }: { text: string; streaming?: boolean }) {
   return <div class="tr-text" dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-function Thinking({ text, streaming }: { text: string; streaming?: boolean }) {
-  const [open, toggle] = useToggle();
+function Thinking({ text, streaming, forceOpen }: { text: string; streaming?: boolean; forceOpen?: boolean }) {
+  const [open, toggle] = useToggle(forceOpen);
   return (
     <div class="tr-card tr-thinking">
       <Fold open={open} onToggle={toggle}>
@@ -71,8 +68,8 @@ function Thinking({ text, streaming }: { text: string; streaming?: boolean }) {
   );
 }
 
-function Lookups({ item, cwd }: { item: Extract<Item, { kind: "lookups" }>; cwd?: string }) {
-  const [open, toggle] = useToggle();
+function Lookups({ item, cwd, forceOpen }: { item: Extract<Item, { kind: "lookups" }>; cwd?: string; forceOpen?: boolean }) {
+  const [open, toggle] = useToggle(forceOpen);
   return (
     <div class="tr-card">
       <Fold open={open} onToggle={toggle}>
@@ -127,8 +124,8 @@ function EditCard({ item, sessionId, cwd }: { item: Extract<Item, { kind: "edit"
   );
 }
 
-function BashCard({ item }: { item: Extract<Item, { kind: "bash" }> }) {
-  const [open, toggle] = useToggle();
+function BashCard({ item, forceOpen }: { item: Extract<Item, { kind: "bash" }>; forceOpen?: boolean }) {
+  const [open, toggle] = useToggle(forceOpen);
   const output = item.output?.trim();
   return (
     <div class="tr-card">
@@ -201,8 +198,31 @@ function formatElapsed(ms: number): string {
   return minutes < 60 ? `${minutes}m ${seconds % 60}s` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
 }
 
+function formatCount(count: number): string {
+  return count < 1000 ? String(count) : `${(count / 1000).toFixed(1)}k`;
+}
+
 function formatTokens(count: number): string {
-  return count < 1000 ? `${count} tokens` : `${(count / 1000).toFixed(1)}k tokens`;
+  return `${formatCount(count)} tokens`;
+}
+
+function formatCost(cost: number): string {
+  return `$${cost.toFixed(cost < 0.01 ? 4 : cost < 1 ? 3 : 2)}`;
+}
+
+function Usage({ item }: { item: Extract<Item, { kind: "usage" }> }) {
+  const parts = [`${formatCount(item.input)} in`, `${formatCount(item.output)} out`];
+  if (item.cacheRead > 0 || item.cacheWrite > 0) {
+    parts.push(`cache ${formatCount(item.cacheRead)} read, ${formatCount(item.cacheWrite)} written`);
+  }
+  if (item.cost !== undefined) {
+    parts.push(formatCost(item.cost));
+  }
+  return (
+    <div class="tr-usage" title="Tokens are the main agent's. Cost is this turn's, subagents included.">
+      {parts.join(" · ")}
+    </div>
+  );
 }
 
 function useTick(intervalMs: number): number {
@@ -242,7 +262,7 @@ function HiddenDivider({ calls, onShow }: { calls: number; onShow: () => void })
   );
 }
 
-function Row({ item, sessionId, cwd }: { item: Item; sessionId: string; cwd?: string }) {
+function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId: string; cwd?: string; forceOpen?: boolean }) {
   switch (item.kind) {
     case "user":
       return (
@@ -260,13 +280,13 @@ function Row({ item, sessionId, cwd }: { item: Item; sessionId: string; cwd?: st
     case "text":
       return <Text text={item.text} streaming={item.streaming} />;
     case "thinking":
-      return <Thinking text={item.text} streaming={item.streaming} />;
+      return <Thinking text={item.text} streaming={item.streaming} forceOpen={forceOpen} />;
     case "lookups":
-      return <Lookups item={item} cwd={cwd} />;
+      return <Lookups item={item} cwd={cwd} forceOpen={forceOpen} />;
     case "edit":
       return <EditCard item={item} sessionId={sessionId} cwd={cwd} />;
     case "bash":
-      return <BashCard item={item} />;
+      return <BashCard item={item} forceOpen={forceOpen} />;
     case "todos":
       return <Todos item={item} />;
     case "agent":
@@ -277,7 +297,29 @@ function Row({ item, sessionId, cwd }: { item: Item; sessionId: string; cwd?: st
       return <Tool item={item} />;
     case "note":
       return <div class={`tr-note${item.tone === "error" ? " tr-note-error" : ""}`}>{item.text}</div>;
+    case "usage":
+      return <Usage item={item} />;
   }
+}
+
+function RowActions({ item, sessionId, rewindable, first }: { item: Item; sessionId: string; rewindable: boolean; first: boolean }) {
+  const uuid = messageUuid(item);
+  if (!uuid || first) {
+    return null;
+  }
+  const text = item.kind === "user" ? item.text : undefined;
+  return (
+    <div class="tr-actions" role="group" aria-label="Message actions">
+      {text !== undefined && rewindable && (
+        <button type="button" aria-label="Rewind to here" title="Rewind to here" onClick={() => post({ type: "rewind", sessionId, userMessageId: uuid, text })}>
+          <Icon d={REWIND} />
+        </button>
+      )}
+      <button type="button" aria-label="Fork from here" title="Fork from here" onClick={() => post({ type: "fork", sessionId, messageId: uuid, before: text !== undefined, draft: text })}>
+        <Icon d={FORK} />
+      </button>
+    </div>
+  );
 }
 
 type Anchor = { id: string; offset: number };
@@ -301,8 +343,17 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
   const session = useSession(sessionId);
   const items = useMemo(() => buildItems(session.messages), [session.messages]);
   const textOnly = session.ui.textOnly === true;
-  const rows = useMemo<TranscriptRow[]>(() => (textOnly ? textOnlyRows(items) : items), [items, textOnly]);
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState("");
+  const [current, setCurrent] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [focusTick, setFocusTick] = useState(0);
+  const needle = searching && query.trim() ? query.toLowerCase() : "";
+  const rows = useMemo<TranscriptRow[]>(() => (textOnly && !needle ? textOnlyRows(items) : items), [items, textOnly, needle]);
   const shown = compact ? rows.slice(-COMPACT_ITEMS) : rows;
+  const matched = useMemo(() => new Set(needle ? shown.filter((row) => row.kind !== "hidden" && searchText(row).toLowerCase().includes(needle)).map((row) => row.id) : []), [shown, needle]);
+  const firstUserId = useMemo(() => items.find((item) => item.kind === "user")?.id, [items]);
+  const rewindable = !!session.meta && !BUSY.has(session.meta.status);
   const working = session.meta?.status === "working" && session.permissions.length === 0;
   const tokens = useMemo(() => (working ? turnOutputTokens(session.messages) : 0), [working, session.messages]);
   const lastItem = items[items.length - 1];
@@ -312,6 +363,9 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
   const pinned = useRef(true);
   const anchor = useRef<Anchor>();
   const revealId = useRef<string>();
+  const searchBox = useRef<HTMLInputElement>(null);
+  const hits = useRef<Range[]>([]);
+  const jump = useRef(false);
   const [away, setAway] = useState(false);
 
   const scrollToEnd = () => {
@@ -346,6 +400,26 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
     setUi(sessionId, { textOnly: false });
   };
 
+  const closeSearch = () => {
+    setSearching(false);
+    setQuery("");
+    document.getElementById(`cmp-${sessionId}`)?.focus();
+  };
+
+  const searchFor = (value: string) => {
+    jump.current = true;
+    setCurrent(0);
+    setQuery(value);
+  };
+
+  const step = (delta: number) => {
+    const count = hits.current.length;
+    if (count > 0) {
+      jump.current = true;
+      setCurrent((at) => (at + delta + count) % count);
+    }
+  };
+
   const textOnlyRef = useRef(textOnly);
   textOnlyRef.current = textOnly;
   const toggleRef = useRef(setTextOnly);
@@ -365,6 +439,70 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [compact]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.shiftKey || event.altKey || event.key.toLowerCase() !== "f") {
+        return;
+      }
+      if (compact && !root.current?.contains(document.activeElement)) {
+        return;
+      }
+      event.preventDefault();
+      const selected = window.getSelection()?.toString().trim() ?? "";
+      if (selected && selected.length <= 100 && !selected.includes("\n")) {
+        jump.current = true;
+        setCurrent(0);
+        setQuery(selected);
+      }
+      setSearching(true);
+      setFocusTick((tick) => tick + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [compact]);
+
+  useEffect(() => {
+    searchBox.current?.focus();
+    searchBox.current?.select();
+  }, [focusTick]);
+
+  useEffect(() => clearMatches, []);
+
+  useLayoutEffect(() => {
+    const found = scroller.current && needle ? findMatches(scroller.current, needle) : [];
+    const at = Math.min(current, Math.max(found.length - 1, 0));
+    hits.current = found;
+    setTotal(found.length);
+    setCurrent(at);
+    if (found.length === 0) {
+      clearMatches();
+      return;
+    }
+    paintMatches(found, at);
+    if (jump.current) {
+      jump.current = false;
+      revealMatch(found[at]);
+    }
+  }, [shown, needle, current, matched]);
+
+  const draft = session.ui.draft;
+  useEffect(() => {
+    if (draft === undefined) {
+      return;
+    }
+    let tries = 0;
+    let frame = 0;
+    const attempt = () => {
+      if (fillComposer(sessionId, draft) || ++tries > 30) {
+        setUi(sessionId, { draft: undefined });
+      } else {
+        frame = requestAnimationFrame(attempt);
+      }
+    };
+    frame = requestAnimationFrame(attempt);
+    return () => cancelAnimationFrame(frame);
+  }, [draft, sessionId]);
 
   useLayoutEffect(() => {
     const el = scroller.current;
@@ -405,7 +543,8 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
               <HiddenDivider key={row.id} calls={row.calls} onShow={() => revealHidden(row.firstId)} />
             ) : (
               <div key={row.id} class="tr-item" data-item={row.id}>
-                <Row item={row} sessionId={sessionId} cwd={session.meta?.cwd} />
+                <Row item={row} sessionId={sessionId} cwd={session.meta?.cwd} forceOpen={matched.has(row.id)} />
+                <RowActions item={row} sessionId={sessionId} rewindable={rewindable} first={row.id === firstUserId} />
               </div>
             )
           )}
@@ -415,6 +554,7 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
           {working && session.meta && <WorkingLine since={session.meta.statusSince} tokens={tokens} generic={toolRunning} compact={compact} />}
         </div>
       </div>
+      {searching && <TranscriptSearch query={query} current={current} total={total} inputRef={searchBox} onQuery={searchFor} onStep={step} onClose={closeSearch} />}
       {away && (
         <button
           type="button"

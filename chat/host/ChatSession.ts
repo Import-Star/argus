@@ -1,10 +1,11 @@
-import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type SDKMessage, type SDKUserMessage, type SlashCommand } from "@anthropic-ai/claude-agent-sdk";
+import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type RewindFilesResult, type SDKMessage, type SDKUserMessage, type SlashCommand } from "@anthropic-ai/claude-agent-sdk";
 import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest } from "../../src/chat/protocol";
+import { MessageQueue, type QueueAction } from "./messageQueue";
+import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
 
 export interface ChatSessionOptions {
   sessionId?: string;
@@ -102,12 +103,19 @@ export class ChatSession implements vscode.Disposable {
   public meta: ChatMeta;
   private readonly emitter = new vscode.EventEmitter<HostMessage>();
   public readonly onMessage = this.emitter.event;
-  private readonly input = new InputQueue();
+  private input = new InputQueue();
   private readonly pending = new Map<string, Pending>();
   private q?: Query;
   private historyLoaded?: Promise<SDKMessage[]>;
   private aliases = new Map<string, string>();
   private turnFiles = new Set<string>();
+  private readonly queue = new MessageQueue({
+    submit: (entry) => this.input.push(this.userMessage(entry.uuid, entry.text, entry.images)),
+    cancel: (uuid) => this.cancelQueued(uuid),
+    interrupt: () => this.interrupt().catch((error) => this.options.log(`interrupt ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`)),
+    started: (entry) => this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message: this.userMessage(entry.uuid, entry.text, entry.images) }),
+    changed: (items) => this.emitter.fire({ type: "queue", sessionId: this.sessionId, items })
+  });
 
   constructor(private readonly options: ChatSessionOptions) {
     this.sessionId = options.sessionId ?? randomUUID();
@@ -124,7 +132,7 @@ export class ChatSession implements vscode.Disposable {
     };
   }
 
-  public start(): void {
+  public start(resumeAt?: string): void {
     if (this.q) {
       return;
     }
@@ -135,6 +143,8 @@ export class ChatSession implements vscode.Disposable {
         cwd,
         additionalDirectories,
         resume: resume ? this.sessionId : undefined,
+        resumeSessionAt: resumeAt,
+        enableFileCheckpointing: true,
         sessionId: resume ? undefined : this.sessionId,
         model,
         effort,
@@ -153,6 +163,10 @@ export class ChatSession implements vscode.Disposable {
     void this.loadModels(this.q);
     void this.loadCommands(this.q);
     void this.loadCacheTtl(this.q);
+  }
+
+  public get activeQuery(): Query | undefined {
+    return this.q;
   }
 
   public history(): Promise<SDKMessage[]> {
@@ -181,23 +195,60 @@ export class ChatSession implements vscode.Disposable {
 
   public send(text: string, images: { mediaType: string; data: string }[] = []): void {
     this.start();
+    if (this.meta.status === "working" || this.meta.status === "needs-you") {
+      this.queue.add(text, images);
+      return;
+    }
     this.turnFiles = new Set();
+    const message = this.userMessage(randomUUID(), text, images);
+    this.input.push(message);
+    // The SDK doesn't echo prompts back, so the transcript gets them from here.
+    this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message });
+    this.setStatus("working");
+  }
+
+  public queued(): QueuedMessage[] {
+    return this.queue.items();
+  }
+
+  public queueAction(id: string, action: QueueAction, text?: string): void {
+    this.queue.act(id, action, text);
+  }
+
+  private userMessage(uuid: string, text: string, images: { mediaType: string; data: string }[]): SDKUserMessage {
     const content = [
       ...images.map((image) => ({ type: "image" as const, source: { type: "base64" as const, media_type: image.mediaType, data: image.data } })),
       { type: "text" as const, text }
     ];
-    const message = {
+    return {
       type: "user",
-      uuid: randomUUID(),
+      uuid,
       session_id: this.sessionId,
       message: { role: "user", content: images.length > 0 ? content : text },
       parent_tool_use_id: null,
       origin: { kind: "human" }
     } as SDKUserMessage;
-    this.input.push(message);
-    // The SDK doesn't echo prompts back, so the transcript gets them from here.
-    this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message });
-    this.setStatus("working");
+  }
+
+  // cancelAsyncMessage and command_lifecycle exist in the SDK runtime but not in sdk.d.ts.
+  private async cancelQueued(uuid: string): Promise<boolean> {
+    try {
+      const q = this.q as (Query & { cancelAsyncMessage?(uuid: string): Promise<boolean> }) | undefined;
+      return (await q?.cancelAsyncMessage?.(uuid)) === true;
+    } catch {
+      return false;
+    }
+  }
+
+  private trackLifecycle(message: SDKMessage): boolean {
+    const event = message as unknown as { type: string; command_uuid?: string; state?: string };
+    if (event.type !== "command_lifecycle") {
+      return false;
+    }
+    if (event.command_uuid && event.state) {
+      this.queue.onLifecycle(event.command_uuid, event.state);
+    }
+    return true;
   }
 
   public async interrupt(): Promise<void> {
@@ -233,6 +284,28 @@ export class ChatSession implements vscode.Disposable {
     await this.q?.stopTask(taskId);
   }
 
+  public async rewindFiles(userMessageId: string, dryRun: boolean): Promise<RewindFilesResult> {
+    this.start();
+    return this.q!.rewindFiles(userMessageId, { dryRun });
+  }
+
+  // Restarts the CLI on the same session, resumed only up to `at`; the SDK has no in-place truncate.
+  public async truncateTo(at: string, userMessageId: string, text: string): Promise<void> {
+    const old = this.q;
+    this.q = undefined;
+    this.input.close();
+    this.input = new InputQueue();
+    old?.close();
+    this.queue.clear();
+    this.options.resume = true;
+    this.historyLoaded = getSessionMessages(this.sessionId, { dir: this.options.cwd })
+      .then((chain) => chain.slice(0, chain.findIndex((entry) => entry.uuid === at) + 1) as unknown as SDKMessage[])
+      .catch(() => []);
+    this.start(at);
+    this.emitter.fire({ type: "rewound", sessionId: this.sessionId, userMessageId, text });
+    this.setStatus("idle");
+  }
+
   public respond(id: string, decision: PermissionDecision): void {
     const entry = this.pending.get(id);
     if (!entry) {
@@ -250,6 +323,10 @@ export class ChatSession implements vscode.Disposable {
     );
     this.emitter.fire({ type: "permissionResolved", sessionId: this.sessionId, id });
     this.setStatus(this.pending.size > 0 ? "needs-you" : "working");
+  }
+
+  public fillComposer(text: string): void {
+    this.emitter.fire({ type: "draft", sessionId: this.sessionId, text });
   }
 
   public rename(title: string): void {
@@ -300,14 +377,27 @@ export class ChatSession implements vscode.Disposable {
   private async pump(q: Query): Promise<void> {
     try {
       for await (const message of q) {
+        if (q !== this.q) {
+          return;
+        }
+        if (this.trackLifecycle(message)) {
+          continue;
+        }
         this.track(message);
         this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message });
       }
-      this.setStatus("ended");
+      if (q === this.q) {
+        this.queue.clear();
+        this.setStatus("ended");
+      }
     } catch (error) {
+      if (q !== this.q) {
+        return;
+      }
       const text = error instanceof Error ? error.message : String(error);
       this.options.log(`session ${this.sessionId}: ${text}`);
       this.update({ error: text });
+      this.queue.clear();
       this.setStatus("error");
     }
   }
@@ -325,6 +415,7 @@ export class ChatSession implements vscode.Disposable {
       this.setStatus(this.pending.size > 0 ? "needs-you" : status);
     } else if (message.type === "result") {
       this.markResponse(null);
+      this.queue.turnEnded();
       this.setStatus(this.pending.size > 0 ? "needs-you" : "idle");
       void this.loadContext();
     }

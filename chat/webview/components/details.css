@@ -155,3 +155,60 @@
 .det-done-toggle:hover {
   color: var(--text);
 }
+
+.det-limit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.det-meter {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--row);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.det-meter div {
+  height: 100%;
+  background: var(--accent);
+}
+
+.det-meter.warn div {
+  background: var(--amber);
+}
+
+.det-meter.danger div {
+  background: var(--danger);
+}
+
+.det-bg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.det-bg-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding-left: 18px;
+}
+
+.det-bg-actions .det-chip {
+  margin-right: auto;
+}
+
+.det-bg-output {
+  max-height: 160px;
+  margin: 0;
+  padding: 6px 8px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--row);
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

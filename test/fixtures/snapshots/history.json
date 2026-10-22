@@ -1,0 +1,479 @@
+{
+  "messages": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "11111111-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "groups",
+      "groups": [
+        {
+          "id": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "members": [
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000001",
+              "title": "Add subtract to math.ts",
+              "status": "working"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000002",
+              "title": "Fix flaky MFA test",
+              "status": "needs-you"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000003",
+              "title": "Charts ECS dev rollout",
+              "status": "working"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rail",
+      "sessions": [
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "column": "working",
+          "activity": "Editing src/math.ts",
+          "since": "@now-134000",
+          "repo": "orders"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000002",
+          "title": "Fix flaky MFA test",
+          "column": "needs-you",
+          "activity": "Waiting on permission: Bash",
+          "since": "@now-540000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000003",
+          "title": "Charts ECS dev rollout",
+          "column": "working",
+          "activity": "Running tests",
+          "since": "@now-840000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r4",
+          "title": "Review PR 11215",
+          "column": "needs-you",
+          "activity": "Question for you",
+          "since": "@now-1860000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "r5",
+          "title": "Update Redis alerts runbook",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-7200000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r6",
+          "title": "Orders leader election notes",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-36000000",
+          "repo": "orders"
+        }
+      ]
+    },
+    {
+      "type": "card",
+      "card": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "worktree": "/work/orders",
+        "worktrees": [
+          {
+            "name": "orders",
+            "path": "/work/orders",
+            "branch": "feat/subtract"
+          },
+          {
+            "name": "wt-sg",
+            "path": "/work/worktrees/wt-sg",
+            "branch": "spike/skeleton-gen"
+          }
+        ],
+        "prs": [
+          {
+            "key": "acme/orders#412",
+            "title": "Add subtract helper",
+            "url": "https://github.com/acme/orders/pull/412",
+            "state": "OPEN",
+            "isDraft": false,
+            "reviewDecision": "REVIEW_REQUIRED",
+            "checks": [
+              {
+                "name": "build",
+                "status": "COMPLETED",
+                "conclusion": "SUCCESS"
+              },
+              {
+                "name": "lint",
+                "status": "IN_PROGRESS"
+              }
+            ]
+          }
+        ],
+        "usedTokens": 48210,
+        "compactions": 0
+      }
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/subtract-fn",
+        "status": "idle",
+        "statusSince": "@now-60000",
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "default",
+            "displayName": "Default (recommended)",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "opus",
+            "displayName": "Opus 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "fable",
+            "displayName": "Fable 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "sonnet",
+            "displayName": "Sonnet 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "haiku",
+            "displayName": "Haiku 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-haiku-4-5-20251001",
+            "displayName": "Haiku 4.5",
+            "efforts": []
+          },
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-5",
+            "displayName": "Opus 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-fable-5",
+            "displayName": "Fable 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-8",
+            "displayName": "Opus 4.8",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-7",
+            "displayName": "Opus 4.7",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-6",
+            "displayName": "Opus 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-sonnet-4-6",
+            "displayName": "Sonnet 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-mythos-5-1",
+            "displayName": "Mythos 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "lastResponseAt": "@now-150000",
+        "cacheTtlMs": 300000,
+        "title": "Add subtract to math.ts"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "10000000-0000-4000-8000-000000000001",
+        "message": {
+          "role": "user",
+          "content": "Add a subtract helper to src/math.ts and run the tests."
+        },
+        "origin": {
+          "kind": "human"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "10000000-0000-4000-8000-000000000002",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_a",
+          "type": "message",
+          "content": [
+            {
+              "type": "thinking",
+              "thinking": "The helper should mirror add. I will write subtract(a, b) next to add and then run the suite to confirm nothing else changed."
+            },
+            {
+              "type": "text",
+              "text": "I will add `subtract` next to `add`, then run the tests."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_b1",
+              "name": "Bash",
+              "input": {
+                "command": "yarn test --silent",
+                "description": "Run the test suite"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "10000000-0000-4000-8000-000000000003",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_b1",
+              "content": "PASS src/math.test.ts\n  add\n    ok adds two numbers\n  subtract\n    ok subtracts two numbers\n    ok rejects NaN like add does\n\nTests: 3 passed, 3 total"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "10000000-0000-4000-8000-000000000004",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_b",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Added `subtract` to `src/math.ts` and three tests cover it. All 3 pass."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "result",
+        "subtype": "success",
+        "uuid": "10000000-0000-4000-8000-000000000005",
+        "is_error": false,
+        "duration_ms": 9000,
+        "num_turns": 2,
+        "result": "",
+        "total_cost_usd": 0.0412,
+        "usage": {
+          "input_tokens": 6,
+          "output_tokens": 412,
+          "cache_read_input_tokens": 31840,
+          "cache_creation_input_tokens": 5210
+        },
+        "modelUsage": {},
+        "permission_denials": []
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "10000000-0000-4000-8000-000000000006",
+        "message": {
+          "role": "user",
+          "content": "Now add a multiply helper the same way."
+        },
+        "origin": {
+          "kind": "human"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "10000000-0000-4000-8000-000000000007",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_c",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Done: `multiply` sits right after `subtract` and follows the same NaN check. The suite still passes."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "result",
+        "subtype": "success",
+        "uuid": "10000000-0000-4000-8000-000000000008",
+        "is_error": false,
+        "duration_ms": 9000,
+        "num_turns": 2,
+        "result": "",
+        "total_cost_usd": 0.0587,
+        "usage": {
+          "input_tokens": 4,
+          "output_tokens": 268,
+          "cache_read_input_tokens": 38200,
+          "cache_creation_input_tokens": 1190
+        },
+        "modelUsage": {},
+        "permission_denials": []
+      }
+    }
+  ]
+}

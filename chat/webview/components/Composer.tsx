@@ -3,6 +3,7 @@ import type { ComponentChildren } from "preact";
 import type { EffortLevel, PermissionMode } from "../../../src/chat/protocol";
 import { post, useSession } from "../store";
 import { fenceFile, fileUris, filterCommands, isTextLike, MAX_TEXT_BYTES, uriToPath } from "./composerLogic";
+import { Queue } from "./Queue";
 import "./composer.css";
 
 const EFFORT_LABELS: Record<EffortLevel, string> = { low: "Low", medium: "Med", high: "High", xhigh: "XHigh", max: "Max" };
@@ -271,6 +272,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
 
   return (
     <div class="chat-composer" ref={root} data-compact={compact ? "true" : undefined}>
+      <Queue sessionId={sessionId} />
       <div class="cmp-box">
         {commands.length > 0 && (
           <div class="cmp-suggest" role="listbox" aria-label="Commands">

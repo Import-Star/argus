@@ -1,0 +1,42 @@
+{
+  "messages": [
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000101",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_pv1",
+          "type": "message",
+          "content": [
+            { "type": "text", "text": "Starting the dev server." },
+            { "type": "tool_use", "id": "toolu_pv_bash", "name": "Bash", "input": { "command": "npm run dev", "run_in_background": true } },
+            { "type": "tool_use", "id": "toolu_pv_art", "name": "Artifact", "input": { "title": "Orders dashboard", "file_path": "/work/orders/dashboard.html" } }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000102",
+        "message": {
+          "role": "user",
+          "content": [
+            { "type": "tool_result", "tool_use_id": "toolu_pv_bash", "content": "  VITE v5.4.0  ready in 212 ms\n\n  \u001b[32m➜\u001b[39m  Local:   \u001b[36mhttp://localhost:\u001b[1m__PORT__\u001b[22m/\u001b[39m\n  ➜  Network: http://0.0.0.0:__PORT__/", "is_error": false },
+            { "type": "tool_result", "tool_use_id": "toolu_pv_art", "content": "Published https://claude.ai/code/artifact/0a1b2c3d-orders (private)", "is_error": false }
+          ]
+        }
+      }
+    }
+  ]
+}

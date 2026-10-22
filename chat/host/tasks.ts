@@ -20,7 +20,8 @@ function assistantText(message: unknown): string {
   return blocks.map(describeBlock).filter(Boolean).join("\n");
 }
 
-// A task_id is usually the subagent's agent id, sometimes with a one-letter prefix.
+// Standalone task_ids are the agent id (sometimes one-letter prefixed); workflow agents pass their agentId.
+// listSubagents also finds subagents/workflows/<run>/agent-<id>.jsonl.
 async function findAgentId(sessionId: string, cwd: string, taskId: string): Promise<string | undefined> {
   const ids = await listSubagents(sessionId, { dir: cwd });
   return ids.find((id) => id === taskId) ?? ids.find((id) => id.endsWith(taskId) || taskId.endsWith(id));

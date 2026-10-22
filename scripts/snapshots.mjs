@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import http from "node:http";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
@@ -83,6 +84,12 @@ async function reviewPrSteps(page) {
   await page.locator(".review-gap").nth(1).getByRole("button").click();
 }
 
+async function detailsSteps(page) {
+  await page.getByRole("button", { name: "Show output of yarn workspace api dev" }).click();
+  await page.locator(".det-bg-output").filter({ hasText: "listening" }).waitFor();
+  await page.getByRole("button", { name: /Show 1 finished/ }).click();
+}
+
 async function slashSteps(page) {
   await page.getByLabel("Message Claude").first().pressSequentially("/re");
   await page.locator(".cmp-command").first().waitFor();
@@ -103,11 +110,79 @@ async function pasteSteps(page) {
   await page.locator(".cmp-note").waitFor();
 }
 
+const previewServers = [];
+
+async function previewSteps(page) {
+  const html = "<!doctype html><title>Orders dev</title><body style=\"font:16px sans-serif;padding:24px\"><h1>Orders dev server</h1><p>Served from a random local port.</p>";
+  const server = http.createServer((_, response) => response.writeHead(200, { "content-type": "text/html" }).end(html));
+  previewServers.push(server);
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const { port } = server.address();
+  const { messages } = JSON.parse(JSON.stringify(fixture("preview")).replaceAll("__PORT__", String(port)));
+  await page.evaluate((played) => window.__harness.play(played), messages);
+  await page.getByRole("button", { name: "More actions" }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Preview" }).click();
+  await page.locator(".pv-chip", { hasText: `localhost:${port}` }).click();
+  await page.frameLocator(".pv-frame").locator("h1").waitFor();
+  await page.locator(".pv-chip", { hasText: "Orders dashboard" }).click();
+  await page.locator(".pv-fallback").waitFor();
+  await page.locator(".pv-chip", { hasText: `localhost:${port}` }).click();
+  await page.frameLocator(".pv-frame").locator("h1").waitFor();
+}
+
+async function previewFallbackSteps(page) {
+  await previewSteps(page);
+  await page.locator(".pv-chip", { hasText: "Orders dashboard" }).click();
+  await page.locator(".pv-fallback").waitFor();
+}
+
+async function asideSteps(page, data) {
+  const sessionId = fixture("chat").messages.find((message) => message.type === "layout").sessionIds[0];
+  await page.getByRole("button", { name: "Ask aside" }).click();
+  for (const ask of data.asks) {
+    await page.getByLabel("Side question", { exact: true }).last().fill(ask.question);
+    await page.keyboard.press("Enter");
+    const posted = await page.evaluate(() => window.__posted.filter((message) => message.type === "aside").at(-1));
+    await page.evaluate((messages) => window.__harness.play(messages), [{ type: "aside", sessionId, askId: posted.askId, text: ask.text, status: ask.status }]);
+  }
+}
+
+async function queueSteps(page) {
+  await page.getByRole("button", { name: "Edit queued message 3" }).click();
+  await page.locator(".q-edit").waitFor();
+}
+
+async function historySteps(page) {
+  const second = page.locator(".tr-item", { has: page.locator(".tr-user", { hasText: "multiply" }) });
+  await second.hover();
+  await second.getByRole("button", { name: "Rewind to here" }).click();
+  await second.getByRole("button", { name: "Fork from here" }).click();
+  const sent = await page.evaluate(() => window.__posted.filter((message) => message.type === "rewind" || message.type === "fork"));
+  const [rewind, fork] = sent;
+  if (rewind?.type !== "rewind" || rewind.text !== "Now add a multiply helper the same way." || fork?.type !== "fork" || fork.before !== true || fork.messageId !== rewind.userMessageId) {
+    throw new Error(`unexpected rewind/fork messages: ${JSON.stringify(sent)}`);
+  }
+  await page.locator(".tr-item", { has: page.locator(".tr-user", { hasText: "subtract helper" }) }).locator(".tr-actions").waitFor({ state: "detached" });
+  await page.locator(".tr-item", { has: page.locator(".tr-text", { hasText: "multiply" }) }).hover();
+}
+
+async function searchSteps(page) {
+  await page.keyboard.press("Meta+f");
+  await page.getByLabel("Search conversation").fill("rejects NaN");
+  await page.locator(".tr-output").waitFor();
+  await page.locator(".tr-search-count", { hasText: "1 of 1" }).waitFor();
+  await page.getByLabel("Search conversation").fill("subtract");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.locator(".tr-search-count", { hasText: "3 of" }).waitFor();
+}
+
 const CHAT_PAGE = { html: "chat.html" };
 const CENTER_PAGE = { html: "center.html" };
 
 const SCREENS = [
   { name: "chat", ...CHAT_PAGE, expect: { todos: ".tr-todos", diffCard: ".tr-diff", agent: ".tr-row strong", streaming: ".tr-cursor", cache: ".det-row[title=\"Prompt cache expires if idle\"]", effort: ".cmp-effort .on", details: ".det-section", agentsChip: ".hdr-agents", agentDots: ".hdr-agent-dots .hdr-dot" } },
+  { name: "chat-narrow", ...CHAT_PAGE, width: 900, fixture: "chat", expect: { agentsChip: ".hdr-agents", header: ".chat-header" } },
   { name: "permission", ...CHAT_PAGE, expect: { permission: ".perm-card", command: ".perm-code", actions: ".perm-actions button" } },
   { name: "plan", ...CHAT_PAGE, steps: planSteps, expect: { planPane: ".plan-pane", planBlocks: ".plan-block", comment: ".plan-comment", approve: ".plan-foot button" } },
   { name: "review", ...CHAT_PAGE, steps: reviewSteps, expect: { overlay: ".review", threads: ".review-thread", answered: ".review-claude:not(.review-working)", inProgress: ".review-working", files: ".review-file" } },
@@ -116,14 +191,21 @@ const SCREENS = [
   { name: "board", ...CENTER_PAGE, height: 1200, tab: "sessions", messages: () => fixture("board").messages, steps: boardSteps, expect: { cards: ".row", permission: ".pending-code", question: ".pending-q", columns: ".scol", group: ".row.group", agents: ".row.group .agent", groupPending: ".row.group .agent-pending .pending-code" } },
   { name: "workflow", ...CHAT_PAGE, steps: workflowSteps, expect: { card: ".wf-card", pane: ".wf-pane", phases: ".wf-column", failed: ".wf-agent-failed", detail: ".wf-detail" } },
   { name: "text-only", ...CHAT_PAGE, steps: textOnlySteps, expect: { pill: '.tr-pill[aria-pressed="true"]', divider: ".tr-hidden", text: ".tr-text" } },
+  { name: "details", ...CHAT_PAGE, steps: detailsSteps, expect: { limits: ".det-limit", warn: ".det-meter.warn", background: ".det-bg", output: ".det-bg-output", stop: ".det-bg-actions button[aria-label^=Stop]", finished: '.det-bg svg[aria-label="done"]' } },
+  { name: "history", ...CHAT_PAGE, steps: historySteps, expect: { actions: ".tr-actions", usage: ".tr-usage", user: ".tr-user" } },
+  { name: "history-search", ...CHAT_PAGE, messages: () => fixture("history").messages, steps: searchSteps, expect: { search: ".tr-search", count: ".tr-search-count", output: ".tr-output", thinking: ".tr-thinking-body" } },
   { name: "working", ...CHAT_PAGE, expect: { working: ".tr-working", glyph: ".tr-working-glyph", meta: ".tr-working-meta" } },
+  { name: "queue", ...CHAT_PAGE, messages: () => [...fixture("working").messages, ...fixture("queue").messages], steps: queueSteps, expect: { queue: ".q", rows: ".q-row", sent: ".q-sent .q-warn", editor: ".q-edit", sendNow: ".q-now" } },
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
   { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
+  { name: "preview", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: previewSteps, expect: { pane: ".pv-pane", address: ".pv-address input", serverChip: ".pv-chip[aria-pressed=\"true\"]", artifactChip: ".pv-chip .muted", frame: ".pv-frame" } },
+  { name: "preview-fallback", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: previewFallbackSteps, expect: { pane: ".pv-pane", fallback: ".pv-fallback", simple: ".pv-fallback .primary" } },
+  { name: "aside", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: asideSteps, expect: { panel: ".aside-panel", questions: ".aside-question", answer: ".aside-answer pre", streaming: ".aside-answer[aria-busy=\"true\"]", form: ".aside-form button" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } }
 ];
 
 async function shoot(browser, screen, errors) {
-  const context = await browser.newContext({ viewport: { width: 1440, height: screen.height ?? 900 }, deviceScaleFactor: 1 });
+  const context = await browser.newContext({ viewport: { width: screen.width ?? 1440, height: screen.height ?? 900 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
   const fail = (text) => errors.push(`${screen.name}: ${text}`);
   page.on("console", (message) => message.type() === "error" && fail(`console error: ${message.text()}`));
@@ -133,7 +215,7 @@ async function shoot(browser, screen, errors) {
   const tab = screen.tab;
   await page.addInitScript(`window.__SNAPSHOT_NOW = ${NOW};${tab ? `window.__argusTabs = ${JSON.stringify(TABS)}; window.__argusActive = ${JSON.stringify(tab)};` : ""}`);
   await page.goto(pathToFileURL(path.join(root, "scripts", "snapshots", screen.html)).href);
-  const data = tab ? undefined : fixture(screen.name);
+  const data = tab ? undefined : fixture(screen.fixture ?? screen.name);
   if (tab) {
     const mark = readFileSync(path.join(root, "media", "logo-mono.svg"), "utf8").replace(/<title>.*?<\/title>/s, "").replace('width="24" height="24"', 'width="16" height="16"');
     await page.evaluate((svg) => (document.querySelector(".mark").innerHTML = `<span>${svg}</span>Argus`), mark);
@@ -170,6 +252,7 @@ try {
     await shoot(browser, screen, errors).catch((error) => errors.push(`${screen.name}: ${error.message.split("\n")[0]}`));
   }
 } finally {
+  previewServers.forEach((server) => server.close());
   await browser.close();
 }
 if (errors.length > 0) {

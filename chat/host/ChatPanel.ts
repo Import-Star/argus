@@ -3,13 +3,19 @@ import * as path from "path";
 import * as vscode from "vscode";
 import type { HostMessage, WebviewMessage } from "../../src/chat/protocol";
 import type { ChatManager } from "./ChatManager";
+import type { ChatSession } from "./ChatSession";
+import { rewind } from "./history";
+import { openInSimpleBrowser } from "./preview";
 import { commentsPrompt, fileDiff, listChanges } from "./review";
+import { SideQuestion } from "./sideQuestion";
 import { taskOutput } from "./tasks";
+import { planUsage, shellTaskOutput } from "./usage";
 
 export class ChatPanel implements vscode.Disposable {
   private readonly panel: vscode.WebviewPanel;
   private readonly subscriptions: vscode.Disposable[] = [];
   private sessionDisposables = new Map<string, vscode.Disposable>();
+  private readonly asides = new Map<string, SideQuestion>();
   private ready = false;
   private markReady!: () => void;
   public readonly whenReady = new Promise<void>((resolve) => (this.markReady = resolve));
@@ -80,6 +86,7 @@ export class ChatPanel implements vscode.Disposable {
     this.subscriptions.forEach((item) => item.dispose());
     this.sessionDisposables.forEach((item) => item.dispose());
     this.sessionDisposables.clear();
+    this.asides.forEach((item) => item.dispose());
     this.panel.dispose();
     this.onDisposeEmitter.fire();
     this.onDisposeEmitter.dispose();
@@ -105,6 +112,12 @@ export class ChatPanel implements vscode.Disposable {
       if (!this.ids.includes(id)) {
         disposable.dispose();
         this.sessionDisposables.delete(id);
+      }
+    }
+    for (const [id, aside] of this.asides) {
+      if (!this.ids.includes(id)) {
+        aside.dispose();
+        this.asides.delete(id);
       }
     }
     for (const id of this.ids) {
@@ -141,6 +154,7 @@ export class ChatPanel implements vscode.Disposable {
       for (const request of session.pendingRequests()) {
         this.post({ type: "permission", sessionId: id, request });
       }
+      this.post({ type: "queue", sessionId: id, items: session.queued() });
     }
   }
 
@@ -153,6 +167,10 @@ export class ChatPanel implements vscode.Disposable {
     }
     if (message.type === "openUrl") {
       await vscode.env.openExternal(vscode.Uri.parse(message.url));
+      return;
+    }
+    if (message.type === "openSimpleBrowser") {
+      await openInSimpleBrowser(message.url);
       return;
     }
     if (message.type === "newChat") {
@@ -230,15 +248,47 @@ export class ChatPanel implements vscode.Disposable {
           session.send(commentsPrompt(message.comments, session.meta.cwd));
           return;
         case "taskOutput":
-          this.post({ type: "taskOutput", sessionId: session.sessionId, taskId: message.taskId, output: await taskOutput(session, message.taskId) });
+          this.post({ type: "taskOutput", sessionId: session.sessionId, taskId: message.taskId, output: (await shellTaskOutput(session, message.taskId)) ?? (await taskOutput(session, message.taskId)) });
           return;
+        case "usage": {
+          const usage = await planUsage(session);
+          if (usage !== undefined) {
+            this.post({ type: "usage", sessionId: session.sessionId, usage });
+          }
+          return;
+        }
         case "stopTask":
           await session.stopTask(message.taskId);
+          return;
+        case "queue":
+          session.queueAction(message.id, message.action, message.text);
+          return;
+        case "rewind":
+          await rewind(session, message);
+          return;
+        case "fork":
+          await this.manager.forkAgent(session.sessionId, message.messageId, message.before === true, message.draft);
+          return;
+        case "aside":
+          this.aside(session).ask(message.askId, message.text, session.meta.model);
+          return;
+        case "asideClose":
+          this.asides.get(session.sessionId)?.dispose();
+          this.asides.delete(session.sessionId);
           return;
       }
     } catch (error) {
       void vscode.window.showErrorMessage(`Argus chat: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  private aside(session: ChatSession): SideQuestion {
+    let aside = this.asides.get(session.sessionId);
+    if (!aside) {
+      aside = new SideQuestion({ sessionId: session.sessionId, cwd: session.meta.cwd, ...this.manager.sideQuestionDefaults(session.meta.cwd), emit: (message) => this.post(message) });
+      this.asides.set(session.sessionId, aside);
+    }
+    return aside;
   }
 
   private html(root: vscode.Uri): string {
@@ -250,7 +300,7 @@ export class ChatPanel implements vscode.Disposable {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; frame-src http://localhost:* http://127.0.0.1:*; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="${style}">
 </head>
