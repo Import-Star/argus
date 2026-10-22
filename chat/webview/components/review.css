@@ -277,8 +277,26 @@
 }
 
 .review-gap {
+  display: flex;
+  align-items: center;
+  gap: 4px 12px;
   padding: 4px 0 4px 76px;
   color: var(--dim);
+}
+
+.review-gap-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.review-gap-btn:hover,
+.review-gap-btn:focus-visible {
+  color: var(--vscode-textLink-foreground, inherit);
+  text-decoration: underline;
 }
 
 .review-thread {

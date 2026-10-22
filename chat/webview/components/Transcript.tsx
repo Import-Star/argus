@@ -248,7 +248,13 @@ function Row({ item, sessionId, cwd }: { item: Item; sessionId: string; cwd?: st
       return (
         <div class="tr-user">
           {item.text}
-          {item.images > 0 && <div class="tr-chip">{item.images === 1 ? "1 image" : `${item.images} images`}</div>}
+          {item.images.length > 0 && (
+            <div class="tr-thumbs">
+              {item.images.map((url, index) => (
+                <img key={index} class="tr-thumb" src={url} alt={`Attached image ${index + 1}`} />
+              ))}
+            </div>
+          )}
         </div>
       );
     case "text":

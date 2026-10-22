@@ -57,6 +57,26 @@ function anchorOf(line: DiffLine): Anchor | undefined {
   return line.newNo === undefined ? undefined : { side: "new", no: line.newNo };
 }
 
+const GAP_STEP = 20;
+
+interface Reveal {
+  top: number;
+  bottom: number;
+}
+
+type Reveals = Record<number, Reveal>;
+type Row = DiffLine & { gap?: number; hidden?: number };
+
+function withReveals(lines: DiffLine[], reveals: Reveals): Row[] {
+  return lines.flatMap((line, gap): Row[] => {
+    if (line.kind !== "gap" || !line.lines) return [line];
+    const { top, bottom } = reveals[gap] ?? { top: 0, bottom: 0 };
+    const ctx = (items: NonNullable<DiffLine["lines"]>): Row[] => items.map((item) => ({ kind: "ctx", ...item }));
+    const hidden = line.lines.length - top - bottom;
+    return [...ctx(line.lines.slice(0, top)), ...(hidden > 0 ? [{ ...line, gap, hidden }] : []), ...ctx(line.lines.slice(line.lines.length - bottom))];
+  });
+}
+
 const isAt = (thread: ReviewThread, anchor?: Anchor) => anchor !== undefined && thread.side === anchor.side && thread.line === anchor.no;
 
 function Spinner() {
@@ -208,17 +228,50 @@ function Thread({ thread, views, actions }: { thread: ReviewThread; views: Map<s
   );
 }
 
+function GapRow({ line, onReveal }: { line: Row; onReveal(gap: number, reveal: Reveal): void }) {
+  const gap = line.gap;
+  const hidden = line.hidden ?? 0;
+  if (gap === undefined) {
+    return <div class="review-gap">… {line.text}</div>;
+  }
+  const all = () => onReveal(gap, { top: hidden, bottom: 0 });
+  if (hidden <= GAP_STEP) {
+    return (
+      <div class="review-gap">
+        <button type="button" class="review-gap-btn" aria-expanded="false" onClick={all}>
+          … {line.text}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div class="review-gap">
+      <span class="review-gap-text">… {line.text}</span>
+      <button type="button" class="review-gap-btn" aria-expanded="false" onClick={() => onReveal(gap, { top: GAP_STEP, bottom: 0 })}>
+        Show {GAP_STEP} above
+      </button>
+      <button type="button" class="review-gap-btn" aria-expanded="false" onClick={all}>
+        Show all
+      </button>
+      <button type="button" class="review-gap-btn" aria-expanded="false" onClick={() => onReveal(gap, { top: 0, bottom: GAP_STEP })}>
+        Show {GAP_STEP} below
+      </button>
+    </div>
+  );
+}
+
 interface DiffRowsProps {
   path: string;
-  lines: DiffLine[];
+  lines: Row[];
   html: string[];
   threads: ReviewThread[];
   views: Map<string, TurnView>;
   actions: ThreadActions;
   onOpen(anchor: Anchor, code: string): void;
+  onReveal(gap: number, reveal: Reveal): void;
 }
 
-function DiffRows({ path, lines, html, threads, views, actions, onOpen }: DiffRowsProps) {
+function DiffRows({ path, lines, html, threads, views, actions, onOpen, onReveal }: DiffRowsProps) {
   const anchors = lines.map(anchorOf);
   const orphans = threads.filter((thread) => !anchors.some((anchor) => isAt(thread, anchor)));
   return (
@@ -228,7 +281,7 @@ function DiffRows({ path, lines, html, threads, views, actions, onOpen }: DiffRo
       ))}
       {lines.map((line, index) => {
         if (line.kind === "gap") {
-          return <div class="review-gap">… {line.text}</div>;
+          return <GapRow key={`gap-${line.gap ?? index}`} line={line} onReveal={onReveal} />;
         }
         const anchor = anchors[index];
         const here = threads.filter((thread) => isAt(thread, anchor));
@@ -265,6 +318,7 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
   const lastBase = useRef("main");
   const [jump, setJump] = useState<Jump>();
   const [focusLine, setFocusLine] = useState<number>();
+  const [reveals, setReveals] = useState<Reveals>({});
   const scope = ui.reviewScope;
   const status = meta?.status;
   const tabs = ui.prUrl ? [...SCOPES, { scope: "pr" as ChangeScope, label: `PR ${prLabel({ key: "", url: ui.prUrl })}` }] : SCOPES;
@@ -291,10 +345,12 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
   }, [loaded, current]);
 
   useEffect(() => setFocusLine(undefined), [current]);
+  useEffect(() => setReveals({}), [current, scope, ui.worktree, ui.prUrl]);
 
   const diff = current ? diffs[current] : undefined;
   const shown = diff && diff.path === current ? diff : undefined;
-  const html = useMemo(() => shown?.lines.map((line) => highlightCode(line.text, languageFor(shown.path))) ?? [], [shown]);
+  const rows = useMemo(() => (shown ? withReveals(shown.lines, reveals) : []), [shown, reveals]);
+  const html = useMemo(() => rows.map((line) => highlightCode(line.text, languageFor(shown?.path ?? ""))), [rows]);
 
   useEffect(() => {
     if (!jump || shown?.path !== jump.path) return;
@@ -442,12 +498,13 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
                 {current && shown && (
                   <DiffRows
                     path={current}
-                    lines={shown.lines}
+                    lines={rows}
                     html={html}
                     threads={review.threads.filter((thread) => thread.path === current)}
                     views={views}
                     actions={actions}
                     onOpen={open}
+                    onReveal={(gap, add) => setReveals((prev) => ({ ...prev, [gap]: { top: (prev[gap]?.top ?? 0) + add.top, bottom: (prev[gap]?.bottom ?? 0) + add.bottom } }))}
                   />
                 )}
               </div>

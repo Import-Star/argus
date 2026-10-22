@@ -100,6 +100,7 @@ export interface DiffLine {
   oldNo?: number;
   newNo?: number;
   text: string;
+  lines?: { oldNo: number; newNo: number; text: string }[];
 }
 
 export interface FileDiff {
