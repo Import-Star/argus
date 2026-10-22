@@ -93,7 +93,7 @@
         "worktree": "/work/orders",
         "worktrees": [
           { "name": "orders", "path": "/work/orders", "branch": "feat/subtract" },
-          { "name": "wt-sg", "path": "/private/tmp/scratchpad/wt-sg", "branch": "spike/skeleton-gen" }
+          { "name": "wt-sg", "path": "/work/worktrees/wt-sg", "branch": "spike/skeleton-gen" }
         ],
         "prs": [
           {
