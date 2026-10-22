@@ -42,6 +42,7 @@ export interface ChatMeta {
 export interface CardInfo {
   sessionId: string;
   worktree?: string;
+  worktrees: { name: string; path: string; branch?: string }[];
   prs: { key: string; title?: string; url: string; state: string; isDraft: boolean; reviewDecision?: string; checks: { name: string; status: string; conclusion?: string }[] }[];
   usedTokens?: number;
   compactions?: number;
@@ -126,8 +127,8 @@ export type HostMessage =
   | { type: "permission"; sessionId: string; request: PermissionRequest }
   | { type: "permissionResolved"; sessionId: string; id: string }
   | { type: "fileSuggestions"; sessionId: string; query: string; files: string[] }
-  | { type: "changes"; sessionId: string; scope: ChangeScope; prUrl?: string; base?: string; files: FileChange[]; error?: string }
-  | { type: "fileDiff"; sessionId: string; scope: ChangeScope; prUrl?: string; diff: FileDiff }
+  | { type: "changes"; sessionId: string; scope: ChangeScope; prUrl?: string; worktree?: string; base?: string; files: FileChange[]; error?: string }
+  | { type: "fileDiff"; sessionId: string; scope: ChangeScope; prUrl?: string; worktree?: string; diff: FileDiff }
   | { type: "taskOutput"; sessionId: string; taskId: string; output: string }
   | { type: "openReview"; sessionId: string; scope: ChangeScope };
 
@@ -141,15 +142,15 @@ export type WebviewMessage =
   | { type: "setPermissionMode"; sessionId: string; mode: PermissionMode }
   | { type: "permission"; sessionId: string; id: string; decision: PermissionDecision }
   | { type: "fileSuggestions"; sessionId: string; query: string }
-  | { type: "openFile"; sessionId: string; path: string; line?: number }
+  | { type: "openFile"; sessionId: string; path: string; line?: number; worktree?: string }
   | { type: "openUrl"; url: string }
   | { type: "openSession"; sessionId: string }
   | { type: "newChat" }
   | { type: "addAgent"; sessionId: string }
   | { type: "openGroup"; sessionId: string }
   | { type: "grid"; action: "add" | "remove" | "expand"; sessionId: string }
-  | { type: "changes"; sessionId: string; scope: ChangeScope; files?: string[]; prUrl?: string }
-  | { type: "fileDiff"; sessionId: string; scope: ChangeScope; path: string; files?: string[]; prUrl?: string }
+  | { type: "changes"; sessionId: string; scope: ChangeScope; files?: string[]; prUrl?: string; worktree?: string }
+  | { type: "fileDiff"; sessionId: string; scope: ChangeScope; path: string; files?: string[]; prUrl?: string; worktree?: string }
   | { type: "sendComments"; sessionId: string; comments: DiffComment[] }
   | { type: "taskOutput"; sessionId: string; taskId: string }
   | { type: "stopTask"; sessionId: string; taskId: string };

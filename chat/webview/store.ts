@@ -17,6 +17,7 @@ export interface SessionUi {
   reviewScope: ChangeScope;
   reviewFile?: string;
   prUrl?: string;
+  worktree?: string;
   workflowTaskId?: string;
   agentTaskId?: string;
   textOnly?: boolean;
@@ -28,7 +29,7 @@ export interface SessionState {
   messages: SDKMessage[];
   permissions: PermissionRequest[];
   fileSuggestions?: { query: string; files: string[] };
-  changes?: { scope: ChangeScope; prUrl?: string; base?: string; files: FileChange[]; error?: string };
+  changes?: { scope: ChangeScope; prUrl?: string; worktree?: string; base?: string; files: FileChange[]; error?: string };
   diffs: Record<string, FileDiff>;
   taskOutputs: Record<string, string>;
   review: ReviewState;
@@ -111,14 +112,14 @@ export function dispatch(message: HostMessage): void {
     case "changes":
       updateSession(message.sessionId, (session) => ({
         ...session,
-        changes: { scope: message.scope, prUrl: message.prUrl, base: message.base, files: message.files, error: message.error }
+        changes: { scope: message.scope, prUrl: message.prUrl, worktree: message.worktree, base: message.base, files: message.files, error: message.error }
       }));
       return;
     case "fileDiff":
       updateSession(message.sessionId, (session) => ({ ...session, diffs: { ...session.diffs, [message.diff.path]: message.diff } }));
       return;
     case "openReview":
-      setUi(message.sessionId, { side: "review", reviewScope: message.scope, reviewFile: undefined });
+      setUi(message.sessionId, { side: "review", reviewScope: message.scope, worktree: undefined, reviewFile: undefined });
       return;
     case "taskOutput":
       updateSession(message.sessionId, (session) => ({ ...session, taskOutputs: { ...session.taskOutputs, [message.taskId]: message.output } }));

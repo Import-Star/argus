@@ -91,6 +91,10 @@
       "card": {
         "sessionId": "11111111-0000-4000-8000-000000000001",
         "worktree": "/work/orders",
+        "worktrees": [
+          { "name": "orders", "path": "/work/orders", "branch": "feat/subtract" },
+          { "name": "wt-sg", "path": "/private/tmp/scratchpad/wt-sg", "branch": "spike/skeleton-gen" }
+        ],
         "prs": [
           {
             "key": "acme/orders#412",

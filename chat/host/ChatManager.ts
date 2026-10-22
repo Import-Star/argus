@@ -20,6 +20,14 @@ interface Remembered {
 const SESSION_CHOICES_KEY = "argus.chat.sessionChoices";
 const SESSION_CWDS_KEY = "argus.chat.sessionCwds";
 
+function gitBranch(folder: string): string | undefined {
+  try {
+    return execFileSync("git", ["-C", folder, "rev-parse", "--abbrev-ref", "HEAD"], { encoding: "utf8", timeout: 2000, stdio: ["ignore", "pipe", "ignore"] }).trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export class ChatManager implements vscode.Disposable {
   private readonly sessions = new Map<string, ChatSession>();
   private readonly panels = new Set<ChatPanel>();
@@ -263,6 +271,15 @@ export class ChatManager implements vscode.Disposable {
       }));
   }
 
+  private worktreesOf(record: { cwd: string; worktrees?: string[] }, cwdWorktree?: string): CardInfo["worktrees"] {
+    const paths = [...(cwdWorktree ? [record.cwd] : []), ...(record.worktrees ?? [])];
+    return [...new Set(paths)].map((folder) => ({ name: path.basename(folder), path: folder, branch: gitBranch(folder) }));
+  }
+
+  public worktreePath(sessionId: string, folder?: string): string | undefined {
+    return folder ? this.card(sessionId)?.worktrees.find((entry) => entry.path === folder)?.path : undefined;
+  }
+
   public card(sessionId: string): CardInfo | undefined {
     const card = this.deps.getCards().find((entry) => entry.record.sessionId === sessionId);
     if (!card) {
@@ -271,6 +288,7 @@ export class ChatManager implements vscode.Disposable {
     return {
       sessionId,
       worktree: card.worktree,
+      worktrees: this.worktreesOf(card.record, card.worktree),
       prs: card.prs.map((pr) => ({
         key: pr.key,
         title: pr.title,
