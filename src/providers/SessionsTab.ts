@@ -3,6 +3,7 @@ import { ArgusTab, SessionCard, SessionChip, TabHandle } from "../types";
 import { ArchiveCleanupRegistry, archiveManyWithCleanup } from "../services/archiveSession";
 import { SessionChipsRegistry } from "../api";
 import type { ChatLoader } from "../chat/loader";
+import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../chat/multiAgent";
 import { answeredInput, toWirePending, type WirePending } from "../chat/pendingWire";
 import { newChat, openWorktree } from "../services/openSession";
 import { renameSessionPrompt, SessionStore } from "../services/SessionStore";
@@ -66,7 +67,7 @@ export function createSessionsTab(
       column: group.column,
       summary: group.summary
     }));
-    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, archiving: [...archiving], chat: Boolean(host) });
+    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, archiving: [...archiving], chat: Boolean(host), multiAgent: Boolean(host) && multiAgentEnabled() });
     handle.setBadge(sessions.needsYou().length || undefined);
   };
 
@@ -79,7 +80,8 @@ export function createSessionsTab(
       pendingListener = host?.onDidChangePending(() => push());
       push();
     }),
-    { dispose: () => pendingListener?.dispose() }
+    { dispose: () => pendingListener?.dispose() },
+    vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration(MULTI_AGENT_SETTING) && push())
   ];
 
   const findCard = (sessionId: string): SessionCard | undefined => sessions.getCards().find((candidate) => candidate.record.sessionId === sessionId);

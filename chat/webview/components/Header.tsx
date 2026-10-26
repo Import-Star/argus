@@ -127,6 +127,8 @@ export function CacheCountdown({ expiresAt }: { expiresAt: number }) {
   );
 }
 
+const selectMultiAgent = (state: State) => state.multiAgent;
+
 function AgentsChip({ group, sessionId }: { group: ChatGroup; sessionId: string }) {
   const label = `${group.members.length} agents`;
   return (
@@ -213,6 +215,7 @@ function MoreMenu({ items }: { items: MenuItem[] }) {
 export function Header({ sessionId }: { sessionId: string }) {
   const { meta, card, messages, ui } = useSession(sessionId);
   const group = useStore(useCallback((state: State) => state.groups.find((entry) => entry.members.some((member) => member.sessionId === sessionId)), [sessionId]));
+  const multiAgent = useStore(selectMultiAgent);
   const title = meta?.title || firstPrompt(messages) || "New chat";
   const pr = card?.prs.find((candidate) => candidate.state.toLowerCase() === "open");
   const reviewing = ui.side === "review";
@@ -238,7 +241,7 @@ export function Header({ sessionId }: { sessionId: string }) {
           PR {prLabel(pr)} open
         </button>
       )}
-      {group && <AgentsChip group={group} sessionId={sessionId} />}
+      {group && multiAgent && <AgentsChip group={group} sessionId={sessionId} />}
       <div class="hdr-end">
         {meta?.contextTokens !== undefined && meta.contextMax ? <ContextMeter tokens={meta.contextTokens} max={meta.contextMax} /> : null}
         <SideQuestion sessionId={sessionId} />
@@ -247,7 +250,7 @@ export function Header({ sessionId }: { sessionId: string }) {
         </button>
         <MoreMenu
           items={[
-            { label: "+ Agent", title: "Start another agent in this folder", onSelect: () => post({ type: "addAgent", sessionId }) },
+            ...(multiAgent ? [{ label: "+ Agent", title: "Start another agent in this folder", onSelect: () => post({ type: "addAgent", sessionId }) }] : []),
             { label: "Preview", checked: previewing, onSelect: () => setUi(sessionId, { side: previewing ? "details" : "preview" }) },
             { label: "Archive", title: "Archive this agent, like archiving its board card", onSelect: () => post({ type: "archive", sessionId }) }
           ]}

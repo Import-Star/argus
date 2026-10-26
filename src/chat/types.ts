@@ -9,6 +9,7 @@ export interface ChatDeps {
   markRead(sessionId: string): void;
   getGroupOf(): Record<string, string>;
   addToGroup(newSessionId: string, existingSessionId: string): void;
+  removeFromGroup(sessionId: string): void;
   setLiveChats(provider: (() => LiveChat[]) | undefined): void;
   archive(sessionId: string): Promise<void>;
 }

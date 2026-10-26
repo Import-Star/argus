@@ -53,6 +53,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     markRead: (sessionId) => sessions.markRead(sessionId),
     getGroupOf: () => sessions.getGroupOf(),
     addToGroup: (newSessionId, existingSessionId) => sessions.addToGroup(newSessionId, existingSessionId),
+    removeFromGroup: (sessionId) => sessions.removeFromGroup(sessionId),
     setLiveChats: (provider) => sessions.setLiveChats(provider),
     archive: (sessionId) => archiveWithCleanup(sessions, archiveCleanup, sessionId)
   });

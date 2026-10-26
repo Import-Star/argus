@@ -112,7 +112,9 @@ function Summary({ ids, group }: { ids: string[]; group: boolean }) {
   const list = statuses ? (statuses.split(",") as ChatStatus[]) : [];
   const needs = list.filter((status) => status === "needs-you").length;
   const working = list.filter((status) => status === "working" || status === "starting").length;
-  const quiet = [working ? `${working} working` : "", `${list.length - needs - working} idle`].filter(Boolean).join(" · ");
+  const done = list.filter((status) => status === "ended" || status === "error").length;
+  const idle = list.length - needs - working - done;
+  const quiet = [working && `${working} working`, idle && `${idle} idle`, done && `${done} done`].filter(Boolean).join(" · ");
   return (
     <>
       <span class="grid-count">

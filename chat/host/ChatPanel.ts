@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import * as path from "path";
 import * as vscode from "vscode";
+import { multiAgentEnabled } from "../../src/chat/multiAgent";
 import type { HostMessage, WebviewMessage } from "../../src/chat/protocol";
 import type { ChatManager } from "./ChatManager";
 import type { ChatSession } from "./ChatSession";
@@ -27,7 +28,7 @@ export class ChatPanel implements vscode.Disposable {
   constructor(
     private readonly manager: ChatManager,
     extensionUri: vscode.Uri,
-    public readonly view: "single" | "grid",
+    public view: "single" | "grid",
     private ids: string[],
     column?: vscode.ViewColumn,
     private group?: string,
@@ -64,12 +65,20 @@ export class ChatPanel implements vscode.Disposable {
     return this.group;
   }
 
+  // A single chat tab turns into the side-by-side view in place when an agent joins it.
+  public becomeGrid(ids: string[], groupId?: string): Promise<void> {
+    this.view = "grid";
+    return this.setSessions(ids, groupId);
+  }
+
+  // Only newly shown chats get their history; resending the rest re-renders every tile.
   public setSessions(ids: string[], groupId?: string): Promise<void> {
+    const added = ids.filter((id) => !this.ids.includes(id));
     this.ids = ids;
     this.group = groupId;
     this.panel.title = this.title();
     this.watchSessions();
-    return this.ready ? this.sendAll() : this.whenReady;
+    return this.ready ? this.sendAll(added) : this.whenReady;
   }
 
   public post(message: HostMessage): void {
@@ -136,11 +145,15 @@ export class ChatPanel implements vscode.Disposable {
     }
   }
 
-  private async sendAll(): Promise<void> {
-    this.post({ type: "layout", view: this.view, sessionIds: this.ids, groupId: this.group });
+  public sendLayout(): void {
+    this.post({ type: "layout", view: this.view, sessionIds: this.ids, groupId: this.group, multiAgent: multiAgentEnabled() });
+  }
+
+  private async sendAll(ids: readonly string[] = this.ids): Promise<void> {
+    this.sendLayout();
     this.post({ type: "groups", groups: this.manager.groups() });
     this.post({ type: "rail", sessions: this.manager.rail() });
-    for (const id of this.ids) {
+    for (const id of ids) {
       const session = this.manager.session(id);
       if (!session) {
         continue;
@@ -190,7 +203,7 @@ export class ChatPanel implements vscode.Disposable {
       return;
     }
     if (message.type === "grid") {
-      this.manager.gridAction(message.action, message.sessionId);
+      this.manager.gridAction(message.action, message.sessionId, this);
       return;
     }
     if (message.type === "archive") {

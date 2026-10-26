@@ -84,7 +84,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   // A model missing from the list (an explicit id) still gets the control; the CLI downgrades what it can't use.
   const efforts = model ? model.efforts : meta?.models.length ? ALL_EFFORTS : [];
   const suggestions = mention && fileSuggestions?.query === mention.query ? fileSuggestions.files : [];
-  const slashQuery = !compact && !slashOff ? SLASH.exec(text)?.[1] : undefined;
+  const slashQuery = !slashOff ? SLASH.exec(text)?.[1] : undefined;
   const commands = slashQuery === undefined ? [] : filterCommands(meta?.commands ?? [], slashQuery);
   const options = commands.length ? commands.map((command) => command.name) : suggestions;
   const typed = /^\/(\S+) $/.exec(text)?.[1];
@@ -131,7 +131,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   }
 
   function updateMention(value: string, caret: number) {
-    const match = compact ? null : MENTION.exec(value.slice(0, caret));
+    const match = MENTION.exec(value.slice(0, caret));
     if (!match) {
       setMention(undefined);
       return;
@@ -358,7 +358,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
           class="cmp-input"
           rows={compact ? 1 : 2}
           value={text}
-          placeholder={hint ? hint : compact ? "Message Claude" : working ? "Queue a follow-up, @ to add files" : "Message Claude, @ to add files"}
+          placeholder={hint ? hint : working ? "Queue a follow-up, @ to add files" : "Message Claude, @ to add files"}
           role={options.length ? "combobox" : undefined}
           aria-expanded={options.length ? true : undefined}
           aria-activedescendant={options.length ? `cmp-${sessionId}-opt-${active}` : undefined}
@@ -376,12 +376,10 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
           onDragOver={(event) => event.dataTransfer?.types.includes("Files") && event.preventDefault()}
         />
         <div class="cmp-bar">
-          {!compact && (
-            <button type="button" class="ghost cmp-icon" aria-label="Add file" onClick={addMention}>
-              <PaperclipIcon />
-            </button>
-          )}
-          {!compact && meta && (
+          <button type="button" class="ghost cmp-icon" aria-label="Add file" onClick={addMention}>
+            <PaperclipIcon />
+          </button>
+          {meta && (
             <>
               <Pick label="Permission mode" text={modeLabel ?? meta.permissionMode} value={meta.permissionMode} onChange={(value) => post({ type: "setPermissionMode", sessionId, mode: value as PermissionMode })}>
                 {modes.map((mode) => (

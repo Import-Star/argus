@@ -106,6 +106,7 @@ export class ChatSession implements vscode.Disposable {
   private input = new InputQueue();
   private readonly pending = new Map<string, Pending>();
   private q?: Query;
+  private backgroundTasks = 0;
   private historyLoaded?: Promise<SDKMessage[]>;
   private aliases = new Map<string, string>();
   private turnFiles = new Set<string>();
@@ -136,6 +137,7 @@ export class ChatSession implements vscode.Disposable {
     if (this.q) {
       return;
     }
+    this.backgroundTasks = 0;
     const { cwd, resume, claudePath, additionalDirectories, model, effort, permissionMode, log } = this.options;
     this.q = query({
       prompt: this.input,
@@ -410,10 +412,15 @@ export class ChatSession implements vscode.Disposable {
       this.update({ model: this.modelValue(message.model), permissionMode: message.permissionMode });
     } else if (message.type === "system" && message.subtype === "commands_changed") {
       this.setCommands(message.commands);
+    } else if (message.type === "system" && message.subtype === "background_tasks_changed") {
+      this.backgroundTasks = message.tasks.filter((task) => !task.ambient).length;
     } else if (message.type === "system" && message.subtype === "session_state_changed") {
       const status: ChatStatus = message.state === "running" ? "working" : message.state === "requires_action" ? "needs-you" : "idle";
       this.setStatus(this.pending.size > 0 ? "needs-you" : status);
     } else if (message.type === "result") {
+      // The cached transcript stops at first load; a tab opened later must read the turns since.
+      this.historyLoaded = undefined;
+      this.options.resume = true;
       this.markResponse(null);
       this.queue.turnEnded();
       this.setStatus(this.pending.size > 0 ? "needs-you" : "idle");
@@ -501,6 +508,12 @@ export class ChatSession implements vscode.Disposable {
     } catch {
       // Older CLIs don't answer this; the header just hides the meter.
     }
+  }
+
+  // Background agents live in the CLI process, so stopping it while one runs kills the agent.
+  public get stoppable(): boolean {
+    const { status } = this.meta;
+    return status === "ended" || status === "error" || (status === "idle" && this.backgroundTasks === 0);
   }
 
   private setStatus(status: ChatStatus): void {

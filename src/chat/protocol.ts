@@ -138,7 +138,7 @@ export interface DiffComment {
 }
 
 export type HostMessage =
-  | { type: "layout"; view: "single" | "grid"; sessionIds: string[]; groupId?: string }
+  | { type: "layout"; view: "single" | "grid"; sessionIds: string[]; groupId?: string; multiAgent: boolean }
   | { type: "groups"; groups: ChatGroup[] }
   | { type: "meta"; meta: ChatMeta }
   | { type: "card"; card: CardInfo }

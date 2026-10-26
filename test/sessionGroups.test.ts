@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { SessionColumn } from "../src/types.ts";
-import { addToGroup, groupCards, groupColumn, groupSummary, membersOf, pruneGroups } from "../src/services/sessionGroups.ts";
+import { addToGroup, groupCards, groupColumn, groupSummary, membersOf, pruneGroups, removeFromGroup } from "../src/services/sessionGroups.ts";
 
 function card(sessionId: string, column: SessionColumn, startedAt = 1) {
   return { record: { sessionId, startedAt }, column };
@@ -64,5 +64,19 @@ describe("groupCards", () => {
 describe("pruneGroups", () => {
   it("drops removed sessions from their group", () => {
     assert.deepEqual(pruneGroups({ a: "a", b: "a", c: "a" }, new Set(["b"])), { a: "a", c: "a" });
+  });
+});
+
+describe("removeFromGroup", () => {
+  it("drops a member and leaves the group id alone", () => {
+    assert.deepEqual(removeFromGroup({ a: "a", b: "a", c: "a" }, "b"), { a: "a", c: "a" });
+  });
+  it("hands the group id to the next member when the group's own session leaves", () => {
+    const groupOf = removeFromGroup({ a: "a", b: "a", c: "a", x: "x", y: "x" }, "a");
+    assert.deepEqual(groupOf, { b: "b", c: "b", x: "x", y: "x" });
+    assert.deepEqual(addToGroup(groupOf, "d", "a"), { ...groupOf, a: "a", d: "a" });
+  });
+  it("ignores a session that isn't grouped", () => {
+    assert.deepEqual(removeFromGroup({ a: "a", b: "a" }, "z"), { a: "a", b: "a" });
   });
 });

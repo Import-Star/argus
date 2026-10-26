@@ -260,6 +260,11 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "In a window with several workspace folders, ask which folder each new Argus chat starts in. Off: new chats start in the first workspace folder, like the Claude Code extension."
+        },
+        "argus.chat.experimentalMultiAgent": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Experiment: several agents on one task, shown side by side in one tab. Adds **+ Agent**, the board's **add to grid**, and opening a group's card as a grid. Off: forks open in their own tab."
         }
       }
     },
@@ -345,7 +350,7 @@
         },
         {
           "command": "argus.chat.openGrid",
-          "when": "config.argus.chat.enabled"
+          "when": "config.argus.chat.enabled && config.argus.chat.experimentalMultiAgent"
         }
       ]
     },

@@ -46,12 +46,13 @@ export interface State {
   view: "single" | "grid";
   sessionIds: string[];
   groupId?: string;
+  multiAgent: boolean;
   groups: ChatGroup[];
   rail: RailSession[];
   sessions: Record<string, SessionState>;
 }
 
-let state: State = { view: "single", sessionIds: [], groups: [], rail: [], sessions: {} };
+let state: State = { view: "single", sessionIds: [], multiAgent: false, groups: [], rail: [], sessions: {} };
 const listeners = new Set<() => void>();
 
 function emptySession(): SessionState {
@@ -83,7 +84,7 @@ export function dispatch(message: HostMessage): void {
   switch (message.type) {
     case "layout":
       vscodeApi.setState({ view: message.view, sessionIds: message.sessionIds, groupId: message.groupId });
-      set({ ...state, view: message.view, sessionIds: message.sessionIds, groupId: message.groupId });
+      set({ ...state, view: message.view, sessionIds: message.sessionIds, groupId: message.groupId, multiAgent: message.multiAgent });
       return;
     case "groups":
       set({ ...state, groups: message.groups });

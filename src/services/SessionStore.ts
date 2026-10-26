@@ -6,7 +6,7 @@ import { PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord
 import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
-import { addToGroup, CardGroup, groupCards, GroupOf, pruneGroups } from "./sessionGroups";
+import { addToGroup, CardGroup, groupCards, GroupOf, pruneGroups, removeFromGroup } from "./sessionGroups";
 import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, withLiveChats } from "./sessionColumn";
 import { windowFilter } from "./windowScope";
 
@@ -105,6 +105,12 @@ export class SessionStore implements vscode.Disposable {
   public addToGroup(newSessionId: string, existingSessionId: string): void {
     this.mutateBoardState((state) => {
       state.groupOf = addToGroup(state.groupOf, newSessionId, existingSessionId);
+    });
+  }
+
+  public removeFromGroup(sessionId: string): void {
+    this.mutateBoardState((state) => {
+      state.groupOf = removeFromGroup(state.groupOf, sessionId);
     });
   }
 

@@ -73,6 +73,17 @@ export function addToGroup(groupOf: GroupOf, newSessionId: string, existingSessi
   return { ...groupOf, [existingSessionId]: groupId, [newSessionId]: groupId };
 }
 
+// The next member takes over a leaving group's own id, so adding to the session that left can't pull it back in.
+export function removeFromGroup(groupOf: GroupOf, sessionId: string): GroupOf {
+  const groupId = groupOf[sessionId];
+  const rest = pruneGroups(groupOf, new Set([sessionId]));
+  const next = Object.keys(rest).find((id) => rest[id] === groupId);
+  if (groupId !== sessionId || !next) {
+    return rest;
+  }
+  return Object.fromEntries(Object.entries(rest).map(([id, group]) => [id, group === groupId ? next : group]));
+}
+
 export function pruneGroups(groupOf: GroupOf, removed: ReadonlySet<string>): GroupOf {
   return Object.fromEntries(Object.entries(groupOf).filter(([id]) => !removed.has(id)));
 }

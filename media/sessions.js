@@ -41,6 +41,7 @@
         deep: {},
         // Whether Argus chat is on, and the answers picked for pending AskUserQuestion requests (key: session|request|question index).
         chat: false,
+        multiAgent: false,
         answers: {}
       };
       this.active = false;
@@ -61,6 +62,7 @@
         this.state.refreshedAt = message.refreshedAt;
         this.state.archiving = new Set(message.archiving || []);
         this.state.chat = Boolean(message.chat);
+        this.state.multiAgent = Boolean(message.multiAgent);
         const ids = new Set(this.state.cards.map((card) => card.record.sessionId));
         for (const id of this.state.picked) if (!ids.has(id)) this.state.picked.delete(id);
         this.render();
@@ -155,7 +157,7 @@
       const group = this.state.groups.find((entry) => entry.members[0] === sessionId);
       const live = group ? this.membersOf(sessionId).filter((card) => card.column !== "archived").map((card) => card.record.sessionId) : [];
       const ids = live.length ? live : group ? group.members : [];
-      if (this.state.chat && ids.length > 1) {
+      if (this.state.multiAgent && ids.length > 1) {
         this.ctx.post({ type: "openGrid", sessionIds: ids, groupId: group.id });
       } else {
         this.ctx.openSession(ids[0] || sessionId);
@@ -382,7 +384,7 @@
       const unread = item.members.some((member) => member.column === "needs-you" && member.record.state === "done");
       const actions = [
         `<button data-action="open-card" data-session-id="${id}">open ↵</button>`,
-        !grouped && this.state.chat && card.column !== "archived" ? `<button data-action="add-to-grid" data-session-id="${id}" title="Show this chat in the side-by-side grid">add to grid</button>` : "",
+        !grouped && this.state.multiAgent && card.column !== "archived" ? `<button data-action="add-to-grid" data-session-id="${id}" title="Show this chat in the side-by-side grid">add to grid</button>` : "",
         unread ? `<button data-action="read-session" data-session-id="${id}">read</button>` : "",
         item.column === "archived"
           ? `<button data-action="unarchive-session" data-session-id="${id}">unarchive</button>`
