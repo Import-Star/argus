@@ -216,6 +216,10 @@ function imageUrl(block: Block): string | undefined {
 function cleanUserText(raw: string): string {
   const text = raw.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, "").trim();
   const command = /<command-name>([\s\S]*?)<\/command-name>(?:[\s\S]*?<command-args>([\s\S]*?)<\/command-args>)?/.exec(text);
+  // Argus sends /rename itself to keep the session name in step with the title.
+  if (command?.[1].trim() === "/rename") {
+    return "";
+  }
   if (command) {
     return `${command[1].trim()} ${(command[2] ?? "").trim()}`.trim();
   }

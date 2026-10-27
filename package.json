@@ -147,10 +147,6 @@
         "title": "Argus: Reset Plugin Trust"
       },
       {
-        "command": "argus.diffReview.pick",
-        "title": "Argus: Review Worktree Diff"
-      },
-      {
         "command": "argus.chat.new",
         "title": "Argus: New Chat"
       },

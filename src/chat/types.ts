@@ -20,6 +20,7 @@ export interface ChatHost extends vscode.Disposable {
   open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn): Promise<void>;
   openGrid(sessionIds?: string[], groupId?: string): void;
   addToGrid(sessionId: string): void;
+  review(sessionId: string, target: { worktree?: string; prUrl?: string }): Promise<void>;
   isChatSession(sessionId: string): boolean;
   isViewing(sessionId: string): boolean;
   pendingFor(sessionId: string): PermissionRequest[];

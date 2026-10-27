@@ -52,7 +52,16 @@ function Text({ text, streaming }: { text: string; streaming?: boolean }) {
   if (streaming) {
     html = /<\/(p|li)>\s*$/.test(html) ? html.replace(/(<\/(?:p|li)>\s*)$/, '<span class="tr-cursor"></span>$1') : `${html}<span class="tr-cursor"></span>`;
   }
-  return <div class="tr-text" dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div class="tr-reply">
+      <div class="tr-text" dangerouslySetInnerHTML={{ __html: html }} />
+      {!streaming && (
+        <button type="button" class="copy-btn tr-reply-copy" title="Copy response" aria-label="Copy response" data-copy={text}>
+          <Icon d="M9 9h11v11H9zM5 15H4V4h11v1" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 function Thinking({ text, streaming, forceOpen }: { text: string; streaming?: boolean; forceOpen?: boolean }) {

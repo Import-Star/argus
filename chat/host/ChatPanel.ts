@@ -185,6 +185,10 @@ export class ChatPanel implements vscode.Disposable {
       await vscode.env.openExternal(vscode.Uri.parse(message.url));
       return;
     }
+    if (message.type === "copy") {
+      await vscode.env.clipboard.writeText(message.text);
+      return;
+    }
     if (message.type === "newChat") {
       await this.manager.open();
       return;

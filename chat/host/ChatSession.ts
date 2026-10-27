@@ -107,6 +107,8 @@ export class ChatSession implements vscode.Disposable {
   private input = new InputQueue();
   private readonly pending = new Map<string, Pending>();
   private q?: Query;
+  private pendingName?: string;
+  private sentName?: string;
   private backgroundTasks = 0;
   private historyLoaded?: Promise<SDKMessage[]>;
   private aliases = new Map<string, string>();
@@ -337,6 +339,19 @@ export class ChatSession implements vscode.Disposable {
     this.update({ title });
   }
 
+  // Other agents address a session by its Claude Code name, so keep it equal to the Argus title.
+  public syncName(name: string): void {
+    if (name === this.sentName) {
+      return;
+    }
+    this.pendingName = name;
+    if (this.q && this.meta.status === "idle") {
+      this.sentName = name;
+      this.input.push(this.userMessage(randomUUID(), `/rename ${name}`, []));
+      this.pendingName = undefined;
+    }
+  }
+
   public dispose(): void {
     for (const id of [...this.pending.keys()]) {
       this.respond(id, { behavior: "deny", message: "The chat was closed." });
@@ -427,6 +442,9 @@ export class ChatSession implements vscode.Disposable {
       this.queue.turnEnded();
       this.setStatus(this.pending.size > 0 ? "needs-you" : "idle");
       void this.loadContext();
+      if (this.pendingName && this.meta.status === "idle") {
+        this.syncName(this.pendingName);
+      }
     }
   }
 

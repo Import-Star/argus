@@ -45,8 +45,6 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
 
   const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup });
 
-  registerDiffReview(context, sessions, chips);
-
   const chat = new ChatLoader(context, {
     getCards: () => sessions.getCards(),
     onDidChangeCards: sessions.onDidChange,
@@ -58,6 +56,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     archive: (sessionId) => archiveWithCleanup(sessions, archiveCleanup, sessionId),
     rename: (sessionId) => renameSessionPrompt(sessions, sessionId)
   });
+  registerDiffReview(context, chips, chat);
   const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup, chat);
   const sessionsTabHandle = api.registerTab(sessionsTab.tab);
   sessionsTab.attach(sessionsTabHandle);

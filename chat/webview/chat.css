@@ -174,3 +174,39 @@ code,
     display: none;
   }
 }
+
+.code-block,
+.tr-reply {
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--row);
+  color: var(--muted, inherit);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.tr-reply-copy {
+  top: auto;
+  bottom: -26px;
+  right: 0;
+}
+
+.code-block:hover > .copy-btn,
+.tr-reply:hover > .copy-btn,
+.copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.copy-btn.copied {
+  opacity: 1;
+  color: var(--vscode-testing-iconPassed, #3fb950);
+}

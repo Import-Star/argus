@@ -186,6 +186,13 @@ export class ChatManager implements vscode.Disposable {
     }
   }
 
+  public async review(sessionId: string, target: { worktree?: string; prUrl?: string }): Promise<void> {
+    await this.open(sessionId);
+    const panel = [...this.panels].find((entry) => entry.sessionIds.includes(sessionId));
+    await panel?.whenReady;
+    panel?.post({ type: "openReview", sessionId, scope: target.prUrl ? "pr" : "base", ...target });
+  }
+
   public openGrid(sessionIds?: string[], groupId?: string): void {
     if (multiAgentEnabled()) {
       void this.showGrid(sessionIds, groupId);
@@ -557,6 +564,10 @@ export class ChatManager implements vscode.Disposable {
       const title = card && (card.record.title || card.record.lastPrompt);
       if (title && title !== session.meta.title) {
         session.rename(title);
+      }
+      const name = card?.record.title?.replace(/\s+/g, " ").trim();
+      if (name && card?.name && card.name !== name) {
+        session.syncName(name);
       }
     }
     const rail = this.rail();

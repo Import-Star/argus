@@ -82,7 +82,7 @@ export async function detectBase(folder: string, configured: string): Promise<st
       return ref;
     }
   }
-  throw new Error("Could not find a base branch. Set one in the Base field or argus.plugins.config.diff-review.baseRef.");
+  throw new Error("Could not find a base branch. Set argus.diffReview.baseRef.");
 }
 
 function diffArgs(scope: Scope, mergeBase: string): string[] {

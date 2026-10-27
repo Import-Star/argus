@@ -4,13 +4,15 @@ import { highlightCode } from "./highlight";
 const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (char) => ENTITIES[char]);
 
+export const COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 9h11v11H9zM5 15H4V4h11v1"/></svg>';
+
 const marked = new Marked({
   gfm: true,
   renderer: {
     html: ({ text }: Tokens.HTML | Tokens.Tag) => escapeHtml(text),
     code: ({ text, lang }: Tokens.Code) => {
       const language = lang?.trim().split(/\s+/)[0] || undefined;
-      return `<pre><code class="hljs">${highlightCode(text, language)}</code></pre>\n`;
+      return `<div class="code-block"><button type="button" class="copy-btn" title="Copy code" aria-label="Copy code">${COPY_ICON}</button><pre><code class="hljs">${highlightCode(text, language)}</code></pre></div>\n`;
     },
     image: ({ text }: Tokens.Image) => escapeHtml(text),
     link(this, { href, title, tokens }: Tokens.Link) {

@@ -143,7 +143,6 @@ button.link { border: 0; background: none; padding: 0; color: var(--dim); font-s
 .last::before { content: "⏺ "; color: var(--dim); }
 .chip.wt { color: var(--blue); border-color: color-mix(in srgb, var(--blue) 45%, transparent); }
 .last.hit::before { content: "⌕ "; }
-.usage { margin: 5px 0 0 20px; color: var(--dim); }
 button.icon.on { border-color: var(--coral); color: var(--coral); }
 .sboard.lanes { gap: 0 14px; }
 .lanes .scol h2 { margin-bottom: 0; }

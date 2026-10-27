@@ -132,7 +132,7 @@ export function dispatch(message: HostMessage): void {
       setUi(message.sessionId, { draft: message.text });
       return;
     case "openReview":
-      setUi(message.sessionId, { side: "review", reviewScope: message.scope, worktree: undefined, reviewFile: undefined });
+      setUi(message.sessionId, { side: "review", reviewScope: message.scope, worktree: message.worktree, prUrl: message.prUrl, reviewFile: undefined });
       return;
     case "usage":
       updateSession(message.sessionId, (session) => ({ ...session, usage: message.usage }));

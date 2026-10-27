@@ -8,8 +8,8 @@ glance, and know which ones are waiting on you.
 - **Notifications**: when a session needs permission, asks a question or finishes, with a button straight to it.
 - **PRs and worktrees**: each card shows the PRs and git worktrees the session made, and archives itself once its
   PRs are merged.
-- **Diff review**: review a worktree's or PR's changes, comment on lines, and send the comments back to the
-  session.
+- **Diff review**: review a worktree's or PR's changes in Argus chat, comment on lines, and send the comments to
+  the session.
 - **Plan usage**: your Claude plan usage in the status bar.
 - **Plugins**: add your own Control Center tabs, card chips and archive steps through a plugin API.
 
@@ -84,14 +84,11 @@ Settings UI filtered to Argus.
 
 ### Diff review
 
-Review a worktree's changes against its base branch and send line comments back to the session.
+Needs Argus chat (`argus.chat.enabled`).
 
 - A card with a worktree gets a `± <worktree>` chip; a card with an open PR gets `± #<number>`. Click either to
-  open the diff in an editor tab. **Argus: Review Worktree Diff** picks any linked worktree or workspace folder.
-- Scopes: **All** (merge base to working tree, plus untracked files), **Committed**, **Staged** and **Unstaged**.
-  The **PR # or URL** field opens any PR through `gh pr diff`, without checking it out.
-- Click a line number to comment, and shift-click to extend the range. **Send to agent** copies the review as
-  markdown and opens the session for you to paste it in.
+  open the session's chat with that diff in its review panel.
+- Comment on lines and send the comments to the agent from the review panel.
 
 ### Argus chat (beta)
 
@@ -212,7 +209,6 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 - **Argus: Set Up Session Tracking** (`argus.sessions.installHooks`)
 - **Argus: Import Existing Claude Chats** (`argus.sessions.importChats`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
-- **Argus: Review Worktree Diff** (`argus.diffReview.pick`)
 - **Argus: New Chat** (`argus.chat.new`, chat enabled only)
 - **Argus: Open Chats Side by Side** (`argus.chat.openGrid`, chat enabled only)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)

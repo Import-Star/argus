@@ -368,11 +368,6 @@
       const last = hit
         ? `<div class="last hit">${esc(hit)}</div>`
         : !grouped && !r.pending && !working && r.lastMessage && card.column !== "archived" ? `<div class="last">${esc(r.lastMessage.replace(/\*\*|__|`|^#+\s*/g, ""))}</div>` : "";
-      const used = item.members.reduce((sum, member) => sum + ((member.usage && member.usage.usedTokens) || 0), 0);
-      const u = grouped ? { usedTokens: used } : card.usage;
-      const usage = u && u.usedTokens
-        ? `<div class="usage mono" title="${esc(`Context: size of the latest prompt. Used: new input, cache writes and output across the session and its sub-agents. Cache reads: ${tokens(u.cacheReadTokens)}.`)}">${u.contextTokens ? `ctx ${esc(tokens(u.contextTokens))} · ` : ""}${esc(tokens(u.usedTokens))} used${u.compactions ? ` · compacted ×${esc(u.compactions)}` : ""}</div>`
-        : "";
       const prs = uniqueBy(item.members.flatMap((member) => member.prs), (pr) => pr.url);
       const done = prs.filter((pr) => pr.state === "MERGED" || pr.state === "CLOSED");
       const showDone = this.state.showDonePrs.has(r.sessionId);
@@ -401,7 +396,7 @@
           <div class="l2 mono"><span class="where"><span class="state">${esc(state)}</span> · ${esc(where)}${!grouped && card.name && card.open && card.name !== r.title ? ` · ${esc(card.name)}` : ""}</span><div class="actions">${actions}</div></div>
           ${grouped ? this.renderAgents(item) : prompt}${activity}${agentLine}${last}
           ${chips ? `<div class="chips mono">${chips}</div>` : ""}
-          ${usage}
+          
         </article>`;
     },
 
@@ -716,13 +711,6 @@
     const counts = new Map();
     for (const type of types) counts.set(type, (counts.get(type) || 0) + 1);
     return [...counts].map(([type, n]) => (n > 1 ? `${type} ×${n}` : type)).join(", ");
-  }
-
-  function tokens(n) {
-    if (!n) return "0";
-    if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`;
-    if (n >= 1e3) return `${Math.round(n / 1e3)}k`;
-    return String(n);
   }
 
   function fitRow(row) {

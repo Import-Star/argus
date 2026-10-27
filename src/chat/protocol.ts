@@ -155,7 +155,7 @@ export type HostMessage =
   | { type: "taskOutput"; sessionId: string; taskId: string; output: string }
   | { type: "queue"; sessionId: string; items: QueuedMessage[] }
   | { type: "usage"; sessionId: string; usage: PlanUsage | null }
-  | { type: "openReview"; sessionId: string; scope: ChangeScope }
+  | { type: "openReview"; sessionId: string; scope: ChangeScope; worktree?: string; prUrl?: string }
   | { type: "rewound"; sessionId: string; userMessageId: string; text: string }
   | { type: "draft"; sessionId: string; text: string }
   | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string };
@@ -174,6 +174,7 @@ export type WebviewMessage =
   | { type: "fileSuggestions"; sessionId: string; query: string }
   | { type: "openFile"; sessionId: string; path: string; line?: number; worktree?: string }
   | { type: "openUrl"; url: string }
+  | { type: "copy"; text: string }
   | { type: "openSession"; sessionId: string }
   | { type: "newChat" }
   | { type: "addAgent"; sessionId: string }
