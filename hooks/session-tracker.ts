@@ -17,6 +17,7 @@ interface SessionRecord {
   state: SessionState;
   title?: string;
   titleSource?: "user";
+  titled?: boolean;
   lastPrompt?: string;
   pending?: string;
   lastMessage?: string;
@@ -301,7 +302,9 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       }
       record.lastMessageAt = now;
       if (record.titleSource !== "user") {
-        record.title = chatTitle(input.transcript_path ?? record.transcriptPath) ?? record.title;
+        const title = chatTitle(input.transcript_path ?? record.transcriptPath);
+        record.title = title ?? record.title;
+        record.titled ||= title !== undefined;
       }
       setState(record, "done", now);
       return;

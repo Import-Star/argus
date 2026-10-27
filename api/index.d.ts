@@ -27,6 +27,8 @@ export interface SessionRecord {
   title?: string;
   // "user" once set by /rename or a board rename, so the hook stops replacing it with Claude's title.
   titleSource?: "user";
+  // True once the title comes from Claude or the user, not the first prompt Argus shows until then.
+  titled?: boolean;
   lastPrompt?: string;
   pending?: string;
   lastMessage?: string;

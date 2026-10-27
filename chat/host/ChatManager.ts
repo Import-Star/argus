@@ -565,7 +565,7 @@ export class ChatManager implements vscode.Disposable {
       if (title && title !== session.meta.title) {
         session.rename(title);
       }
-      const name = card?.record.title?.replace(/\s+/g, " ").trim();
+      const name = (card?.record.titled || card?.record.titleSource === "user") && card.record.title?.replace(/\s+/g, " ").trim();
       if (name && card?.name && card.name !== name) {
         session.syncName(name);
       }
