@@ -311,8 +311,9 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
     case "SessionEnd":
       record.endReason = input.reason;
       record.subagents = undefined;
-      // Keep "working" so the board can show a session closed mid-turn as interrupted.
-      if (record.state !== "working") {
+      // Keep "working" so the board can show a session closed mid-turn as interrupted, and "done" so an unread
+      // reply still needs you after Argus stops a chat whose tab was closed.
+      if (record.state !== "working" && record.state !== "done") {
         setState(record, "ended", now);
       }
       return;

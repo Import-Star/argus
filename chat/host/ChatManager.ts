@@ -33,6 +33,7 @@ function gitBranch(folder: string): string | undefined {
 
 export class ChatManager implements vscode.Disposable {
   private readonly sessions = new Map<string, ChatSession>();
+  private readonly idleTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly panels = new Set<ChatPanel>();
   // Where the board's "add to grid" goes when no grid tab asked: the grid focused last.
   private lastGrid?: ChatPanel;
@@ -421,6 +422,7 @@ export class ChatManager implements vscode.Disposable {
   }
 
   public dispose(): void {
+    this.idleTimers.forEach((timer) => clearTimeout(timer));
     this.panels.forEach((panel) => panel.dispose());
     this.sessions.forEach((session) => session.dispose());
     this.sessions.clear();
@@ -447,15 +449,24 @@ export class ChatManager implements vscode.Disposable {
     return panel;
   }
 
-  // A session with no panel left keeps running until its turn and background agents end, like a background tab.
+  // A session with no panel left keeps running in the background until it has been idle for backgroundIdleMinutes.
   private closeUnused(): void {
+    const idleMs = vscode.workspace.getConfiguration("argus.chat").get<number>("backgroundIdleMinutes", 60) * 60_000;
     for (const [id, session] of this.sessions) {
+      clearTimeout(this.idleTimers.get(id));
+      this.idleTimers.delete(id);
       const shown = [...this.panels].some((panel) => panel.sessionIds.includes(id));
-      if (!shown && session.stoppable) {
-        session.dispose();
-        this.sessions.delete(id);
-        this.deps.setLiveChats(() => this.liveChats());
+      if (shown || !session.stoppable) {
+        continue;
       }
+      const left = session.meta.statusSince + idleMs - Date.now();
+      if (left > 0) {
+        this.idleTimers.set(id, setTimeout(() => this.closeUnused(), left));
+        continue;
+      }
+      session.dispose();
+      this.sessions.delete(id);
+      this.deps.setLiveChats(() => this.liveChats());
     }
   }
 

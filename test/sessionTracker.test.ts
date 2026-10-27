@@ -33,6 +33,12 @@ describe("session-tracker hook", () => {
     assert.equal(record.lastPrompt, "fix the bug");
     assert.ok((record.lastPromptAt as number) >= before);
   });
+  it("keeps an unread reply as done when the session ends", () => {
+    fire({ hook_event_name: "UserPromptSubmit", prompt: "hi" });
+    fire({ hook_event_name: "Stop", last_assistant_message: "done" });
+    fire({ hook_event_name: "SessionEnd", reason: "other" });
+    assert.equal(saved().state, "done");
+  });
   it("leaves lastPromptAt alone on Stop", () => {
     fire({ hook_event_name: "UserPromptSubmit", prompt: "hi" });
     const promptAt = saved().lastPromptAt;

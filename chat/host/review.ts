@@ -9,10 +9,10 @@ import type { ChatSession } from "./ChatSession";
 type PrRef = NonNullable<Awaited<ReturnType<typeof loadPrDiff>>["pr"]>;
 const posix = (file: string) => file.split(path.sep).join("/");
 
-async function loadScope(session: ChatSession, scope: ChangeScope, edited: string[] = [], prUrl?: string, worktree?: string): Promise<{ base?: string; files: DiffFile[]; pr?: PrRef }> {
+async function loadScope(session: ChatSession, scope: ChangeScope, edited: string[] = [], prUrl?: string, worktree?: string, reuse = false): Promise<{ base?: string; files: DiffFile[]; pr?: PrRef }> {
   const cwd = worktree ?? session.meta.cwd;
   if (scope === "pr") {
-    const result = await loadPrDiff(session.meta.cwd, prUrl ?? "");
+    const result = await loadPrDiff(session.meta.cwd, prUrl ?? "", reuse);
     return { base: result.base, files: result.files, pr: result.pr };
   }
   const config = vscode.workspace.getConfiguration("argus.diffReview");
@@ -63,12 +63,12 @@ export function hunkRange(header: string): { start: number; end: number; offset:
 }
 
 export async function fileDiff(session: ChatSession, scope: ChangeScope, file: string, edited?: string[], prUrl?: string, worktree?: string): Promise<FileDiff> {
-  const { files, pr } = await loadScope(session, scope, edited, prUrl, worktree);
+  const { files, pr } = await loadScope(session, scope, edited, prUrl, worktree, true);
   const found = files.find((candidate) => candidate.path === file);
   if (!found) {
     return { path: file, lines: [] };
   }
-  const source = pr ? prFileLines(session.meta.cwd, pr.repo, pr.headSha, found.path) : fileLines(worktree ?? session.meta.cwd, "unstaged", found.path);
+  const source = pr ? prFileLines(session.meta.cwd, pr, found.path) : fileLines(worktree ?? session.meta.cwd, "unstaged", found.path);
   const content = found.status === "deleted" ? [] : await source.catch(() => [] as string[]);
   const lines: DiffLine[] = [];
   let previousEnd = 0;

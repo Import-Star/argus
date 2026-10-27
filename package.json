@@ -274,6 +274,12 @@
           },
           "default": [],
           "markdownDescription": "Models to leave out of the chat's model picker, by name as shown (e.g. `Haiku 4.5`) or id (e.g. `claude-opus-4-6`, `haiku`). A chat's current model always stays listed. Applies to chats opened after the change."
+        },
+        "argus.chat.backgroundIdleMinutes": {
+          "type": "number",
+          "default": 60,
+          "minimum": 0,
+          "markdownDescription": "How long a chat with no open tab keeps its Claude process after it goes idle. While it runs, other agents can message it and its timers keep firing. A chat that is working or waiting on you is never stopped. `0` stops it as soon as its turn ends."
         }
       }
     },
