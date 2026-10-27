@@ -530,7 +530,7 @@
           <label class="search"><input id="session-search" type="search" placeholder="Search agents…" value="${esc(this.state.query)}" /><kbd>/</kbd></label>
           <button id="new-chat" class="primary">+ New chat</button>
           <button id="group-repo" class="icon${this.state.groupByRepo ? " on" : ""}" title="Group by repo (g)">⊞ by repo</button>
-          <button id="refresh-sessions" class="icon${this.state.refreshing ? " refreshing" : ""}" title="${this.state.refreshing ? "Refreshing PR states…" : "Refresh PR states"}" aria-busy="${this.state.refreshing}" ${this.state.refreshing ? "disabled" : ""}>↻</button>
+          <button id="refresh-sessions" class="icon${this.state.refreshing ? " refreshing" : ""}" title="${this.state.refreshing ? "Refreshing PR states…" : "Refresh PR states"}" aria-busy="${this.state.refreshing}" ${this.state.refreshing ? "disabled" : ""}><span class="refresh-glyph">↻</span></button>
         </div>
         ${this.bulkBar()}
         ${this.statusLine()}

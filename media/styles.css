@@ -198,4 +198,5 @@ body.welcome { max-width: 760px; margin: 0 auto; padding: 24px 24px 40px; line-h
 .pending-label { display: block; font-weight: 600; }
 .pending-desc { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
 
-#refresh-sessions.refreshing { display: inline-block; animation: spin 0.8s linear infinite; cursor: default; }
+#refresh-sessions.refreshing { cursor: default; }
+#refresh-sessions.refreshing .refresh-glyph { display: inline-block; animation: spin 0.8s linear infinite; }
