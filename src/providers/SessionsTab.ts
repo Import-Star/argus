@@ -61,13 +61,15 @@ export function createSessionsTab(
         pending: pending.length ? pending : undefined
       };
     });
-    const groups = sessions.getGroups().map((group) => ({
+    const multiAgent = Boolean(host) && multiAgentEnabled();
+    // With multi-agent off a card opens one chat, so grouped agents show as their own cards.
+    const groups = (multiAgent ? sessions.getGroups() : []).map((group) => ({
       id: group.id,
       members: group.members.map((member) => member.record.sessionId),
       column: group.column,
       summary: group.summary
     }));
-    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, archiving: [...archiving], chat: Boolean(host), multiAgent: Boolean(host) && multiAgentEnabled() });
+    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, archiving: [...archiving], chat: Boolean(host), multiAgent });
     handle.setBadge(sessions.needsYou().length || undefined);
   };
 

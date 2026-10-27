@@ -3,7 +3,6 @@ import { DetailsPane } from "./components/DetailsPane";
 import { Grid } from "./components/Grid";
 import { Header } from "./components/Header";
 import { PlanPane } from "./components/PlanPane";
-import { PreviewPane } from "./components/PreviewPane";
 import { ReviewPane } from "./components/ReviewPane";
 import { Transcript } from "./components/Transcript";
 import { WorkflowPane } from "./components/WorkflowPane";
@@ -18,8 +17,6 @@ function SidePane({ sessionId }: { sessionId: string }) {
       return <PlanPane sessionId={sessionId} />;
     case "workflow":
       return <WorkflowPane sessionId={sessionId} />;
-    case "preview":
-      return <PreviewPane sessionId={sessionId} />;
     default:
       return <DetailsPane sessionId={sessionId} />;
   }

@@ -170,7 +170,6 @@ export type WebviewMessage =
   | { type: "fileSuggestions"; sessionId: string; query: string }
   | { type: "openFile"; sessionId: string; path: string; line?: number; worktree?: string }
   | { type: "openUrl"; url: string }
-  | { type: "openSimpleBrowser"; url: string }
   | { type: "openSession"; sessionId: string }
   | { type: "newChat" }
   | { type: "addAgent"; sessionId: string }

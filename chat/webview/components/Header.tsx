@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { useCallback, useEffect, useState } from "preact/hooks";
 import type { ChatGroup, ChatStatus, SDKMessage } from "../../../src/chat/protocol";
 import { post, setUi, useSession, useStore, type State } from "../store";
+import { Icon } from "./Icon";
 import { SideQuestion } from "./SideQuestion";
 import "./header.css";
 
@@ -143,75 +144,6 @@ function AgentsChip({ group, sessionId }: { group: ChatGroup; sessionId: string 
   );
 }
 
-interface MenuItem {
-  label: string;
-  title?: string;
-  checked?: boolean;
-  onSelect: () => void;
-}
-
-function MoreMenu({ items }: { items: MenuItem[] }) {
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const trigger = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    root.current?.querySelector<HTMLElement>('[role^="menuitem"]')?.focus();
-    const away = (event: MouseEvent) => !root.current?.contains(event.target as Node) && setOpen(false);
-    document.addEventListener("mousedown", away);
-    return () => document.removeEventListener("mousedown", away);
-  }, [open]);
-
-  const close = () => {
-    setOpen(false);
-    trigger.current?.focus();
-  };
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-      return;
-    }
-    const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
-    const entries = [...(root.current?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ?? [])];
-    if (step && entries.length) {
-      event.preventDefault();
-      const at = entries.indexOf(document.activeElement as HTMLElement);
-      entries[(at + step + entries.length) % entries.length].focus();
-    }
-  };
-
-  return (
-    <div class="hdr-more" ref={root} onKeyDown={onKeyDown}>
-      <button ref={trigger} type="button" aria-label="More actions" aria-haspopup="menu" aria-expanded={open} title="More actions" onClick={() => setOpen(!open)}>
-        ⋯
-      </button>
-      {open && (
-        <div class="hdr-menu" role="menu" aria-label="More actions">
-          {items.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              role={item.checked === undefined ? "menuitem" : "menuitemcheckbox"}
-              aria-checked={item.checked}
-              title={item.title}
-              onClick={() => {
-                item.onSelect();
-                close();
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function Header({ sessionId }: { sessionId: string }) {
   const { meta, card, messages, ui } = useSession(sessionId);
   const group = useStore(useCallback((state: State) => state.groups.find((entry) => entry.members.some((member) => member.sessionId === sessionId)), [sessionId]));
@@ -219,7 +151,6 @@ export function Header({ sessionId }: { sessionId: string }) {
   const title = meta?.title || firstPrompt(messages) || "New chat";
   const pr = card?.prs.find((candidate) => candidate.state.toLowerCase() === "open");
   const reviewing = ui.side === "review";
-  const previewing = ui.side === "preview";
   return (
     <header class="chat-header">
       <div class="hdr-title">
@@ -248,13 +179,14 @@ export function Header({ sessionId }: { sessionId: string }) {
         <button type="button" aria-pressed={reviewing} onClick={() => setUi(sessionId, { side: reviewing ? "details" : "review" })}>
           {reviewing ? "Close review" : "Review changes"}
         </button>
-        <MoreMenu
-          items={[
-            ...(multiAgent ? [{ label: "+ Agent", title: "Start another agent in this folder", onSelect: () => post({ type: "addAgent", sessionId }) }] : []),
-            { label: "Preview", checked: previewing, onSelect: () => setUi(sessionId, { side: previewing ? "details" : "preview" }) },
-            { label: "Archive", title: "Archive this agent, like archiving its board card", onSelect: () => post({ type: "archive", sessionId }) }
-          ]}
-        />
+        {multiAgent && (
+          <button type="button" class="ghost hdr-icon" aria-label="Add agent" title="Add agent: start another agent in this folder" onClick={() => post({ type: "addAgent", sessionId })}>
+            <Icon d="M12 5v14M5 12h14" />
+          </button>
+        )}
+        <button type="button" class="ghost hdr-icon" aria-label="Archive" title="Archive: like archiving its board card" onClick={() => post({ type: "archive", sessionId })}>
+          <Icon d="M3 7h18M5 7v12h14V7M9 11h6M4 4h16v3H4z" />
+        </button>
       </div>
     </header>
   );

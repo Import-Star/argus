@@ -6,7 +6,6 @@ import type { HostMessage, WebviewMessage } from "../../src/chat/protocol";
 import type { ChatManager } from "./ChatManager";
 import type { ChatSession } from "./ChatSession";
 import { rewind } from "./history";
-import { openInSimpleBrowser } from "./preview";
 import { commentsPrompt, fileDiff, listChanges } from "./review";
 import { SideQuestion } from "./sideQuestion";
 import { taskOutput } from "./tasks";
@@ -65,9 +64,9 @@ export class ChatPanel implements vscode.Disposable {
     return this.group;
   }
 
-  // A single chat tab turns into the side-by-side view in place when an agent joins it.
-  public becomeGrid(ids: string[], groupId?: string): Promise<void> {
-    this.view = "grid";
+  // A single chat tab becomes the grid in place when an agent joins, and back again when one chat is left.
+  public setView(view: "single" | "grid", ids: string[], groupId?: string): Promise<void> {
+    this.view = view;
     return this.setSessions(ids, groupId);
   }
 
@@ -180,10 +179,6 @@ export class ChatPanel implements vscode.Disposable {
     }
     if (message.type === "openUrl") {
       await vscode.env.openExternal(vscode.Uri.parse(message.url));
-      return;
-    }
-    if (message.type === "openSimpleBrowser") {
-      await openInSimpleBrowser(message.url);
       return;
     }
     if (message.type === "newChat") {
@@ -313,7 +308,7 @@ export class ChatPanel implements vscode.Disposable {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; frame-src http://localhost:* http://127.0.0.1:*; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="${style}">
 </head>

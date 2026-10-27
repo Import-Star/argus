@@ -5,7 +5,8 @@
       "view": "single",
       "sessionIds": [
         "11111111-0000-4000-8000-000000000001"
-      ]
+      ],
+      "multiAgent": true
     },
     {
       "type": "groups",
@@ -92,8 +93,16 @@
         "sessionId": "11111111-0000-4000-8000-000000000001",
         "worktree": "/work/orders",
         "worktrees": [
-          { "name": "orders", "path": "/work/orders", "branch": "feat/subtract" },
-          { "name": "wt-sg", "path": "/work/worktrees/wt-sg", "branch": "spike/skeleton-gen" }
+          {
+            "name": "orders",
+            "path": "/work/orders",
+            "branch": "feat/subtract"
+          },
+          {
+            "name": "wt-sg",
+            "path": "/work/worktrees/wt-sg",
+            "branch": "spike/skeleton-gen"
+          }
         ],
         "prs": [
           {

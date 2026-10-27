@@ -12,7 +12,7 @@ export function post(message: WebviewMessage): void {
   vscodeApi.postMessage(message);
 }
 
-export type SidePane = "details" | "plan" | "review" | "workflow" | "preview";
+export type SidePane = "details" | "plan" | "review" | "workflow";
 
 export interface SessionUi {
   side: SidePane;
@@ -24,7 +24,6 @@ export interface SessionUi {
   agentTaskId?: string;
   textOnly?: boolean;
   draft?: string;
-  previewUrl?: string;
 }
 
 export interface SessionState {

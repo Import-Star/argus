@@ -147,30 +147,20 @@
   background: var(--danger);
 }
 
-.hdr-more {
-  position: relative;
+
+
+
+
+.hdr-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--muted);
 }
 
-.hdr-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  min-width: 140px;
-  padding: 4px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--panel);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 35%);
-}
-
-.hdr-menu button {
-  border-color: transparent;
-  text-align: left;
-}
-
-.hdr-menu button[aria-checked="true"] {
-  color: var(--accent);
+.hdr-icon:hover {
+  color: var(--text);
 }

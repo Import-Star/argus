@@ -211,7 +211,7 @@ export class ChatManager implements vscode.Disposable {
       await this.resume(id);
     }
     if (host.view === "single") {
-      await host.becomeGrid(ids, groupId);
+      await host.setView("grid", ids, groupId);
     } else {
       await host.setSessions(ids, groupId);
     }
@@ -292,21 +292,16 @@ export class ChatManager implements vscode.Disposable {
     if (action === "add" && !multiAgentEnabled()) {
       return;
     }
-    const target = from ?? this.lastGrid ?? this.grids().find((panel) => !panel.groupId);
+    const last = this.lastGrid?.view === "grid" ? this.lastGrid : undefined;
+    const target = from ?? last ?? this.grids().find((panel) => !panel.groupId);
     if (!target) {
       this.openGrid([sessionId]);
       return;
     }
     const current = target.sessionIds;
-    let groupId = target.groupId;
+    const groupId = target.groupId;
     if (action === "remove") {
-      const remaining = current.filter((id) => id !== sessionId);
-      if (groupId && this.deps.getGroupOf()[sessionId] === groupId) {
-        this.deps.removeFromGroup(sessionId);
-        groupId = remaining.length ? this.deps.getGroupOf()[remaining[0]] : undefined;
-      }
-      void target.setSessions(remaining, groupId);
-      this.closeUnused();
+      void this.popOut(target, sessionId);
       return;
     }
     void (async () => {
@@ -318,6 +313,31 @@ export class ChatManager implements vscode.Disposable {
       target.reveal();
       await target.setSessions([...new Set([...current, sessionId])], groupId);
     })();
+  }
+
+  // The removed chat leaves its group and gets its own tab; a lone chat left behind turns the grid back into its single tab.
+  private async popOut(grid: ChatPanel, sessionId: string): Promise<void> {
+    const remaining = grid.sessionIds.filter((id) => id !== sessionId);
+    const groupOf = this.deps.getGroupOf();
+    if (grid.groupId && groupOf[sessionId] === grid.groupId) {
+      this.deps.removeFromGroup(sessionId);
+      if (remaining.length === 1) {
+        this.deps.removeFromGroup(remaining[0]);
+      }
+    }
+    if (remaining.length === 0) {
+      await grid.setView("single", [sessionId]);
+      return;
+    }
+    // Open first: closing the grid stops chats no tab shows, which would include this one.
+    await this.open(sessionId);
+    const single = remaining.length === 1 && [...this.panels].find((panel) => panel.view === "single" && panel.sessionIds[0] === remaining[0]);
+    if (single) {
+      grid.dispose();
+    } else {
+      const groupId = remaining.length > 1 ? this.deps.getGroupOf()[remaining[0]] : undefined;
+      await grid.setView(remaining.length > 1 ? "grid" : "single", remaining, groupId);
+    }
   }
 
   public rail(): RailSession[] {

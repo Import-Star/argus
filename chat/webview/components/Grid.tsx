@@ -67,7 +67,7 @@ function Tile({ sessionId, now }: { sessionId: string; now: number }) {
         <button class="ghost grid-icon" aria-label={`Expand ${title}`} title="Expand" onClick={() => post({ type: "grid", action: "expand", sessionId })}>
           <Icon path="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
         </button>
-        <button class="ghost grid-icon" aria-label={`Remove ${title} from grid`} title="Remove from grid" onClick={() => post({ type: "grid", action: "remove", sessionId })}>
+        <button class="ghost grid-icon" aria-label={`Move ${title} to its own tab`} title="Move to its own tab" onClick={() => post({ type: "grid", action: "remove", sessionId })}>
           <Icon path="M6 6l12 12M18 6L6 18" />
         </button>
       </header>

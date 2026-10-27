@@ -1,5 +1,4 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import http from "node:http";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
@@ -110,32 +109,6 @@ async function pasteSteps(page) {
   await page.locator(".cmp-note").waitFor();
 }
 
-const previewServers = [];
-
-async function previewSteps(page) {
-  const html = "<!doctype html><title>Orders dev</title><body style=\"font:16px sans-serif;padding:24px\"><h1>Orders dev server</h1><p>Served from a random local port.</p>";
-  const server = http.createServer((_, response) => response.writeHead(200, { "content-type": "text/html" }).end(html));
-  previewServers.push(server);
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const { port } = server.address();
-  const { messages } = JSON.parse(JSON.stringify(fixture("preview")).replaceAll("__PORT__", String(port)));
-  await page.evaluate((played) => window.__harness.play(played), messages);
-  await page.getByRole("button", { name: "More actions" }).click();
-  await page.getByRole("menuitemcheckbox", { name: "Preview" }).click();
-  await page.locator(".pv-chip", { hasText: `localhost:${port}` }).click();
-  await page.frameLocator(".pv-frame").locator("h1").waitFor();
-  await page.locator(".pv-chip", { hasText: "Orders dashboard" }).click();
-  await page.locator(".pv-fallback").waitFor();
-  await page.locator(".pv-chip", { hasText: `localhost:${port}` }).click();
-  await page.frameLocator(".pv-frame").locator("h1").waitFor();
-}
-
-async function previewFallbackSteps(page) {
-  await previewSteps(page);
-  await page.locator(".pv-chip", { hasText: "Orders dashboard" }).click();
-  await page.locator(".pv-fallback").waitFor();
-}
-
 async function asideSteps(page, data) {
   const sessionId = fixture("chat").messages.find((message) => message.type === "layout").sessionIds[0];
   await page.getByRole("button", { name: "Ask aside" }).click();
@@ -198,8 +171,6 @@ const SCREENS = [
   { name: "queue", ...CHAT_PAGE, messages: () => [...fixture("working").messages, ...fixture("queue").messages], steps: queueSteps, expect: { queue: ".q", rows: ".q-row", sent: ".q-sent .q-warn", editor: ".q-edit", sendNow: ".q-now" } },
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
   { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
-  { name: "preview", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: previewSteps, expect: { pane: ".pv-pane", address: ".pv-address input", serverChip: ".pv-chip[aria-pressed=\"true\"]", artifactChip: ".pv-chip .muted", frame: ".pv-frame" } },
-  { name: "preview-fallback", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: previewFallbackSteps, expect: { pane: ".pv-pane", fallback: ".pv-fallback", simple: ".pv-fallback .primary" } },
   { name: "aside", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: asideSteps, expect: { panel: ".aside-panel", questions: ".aside-question", answer: ".aside-answer pre", streaming: ".aside-answer[aria-busy=\"true\"]", form: ".aside-form button" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } }
 ];
@@ -252,7 +223,6 @@ try {
     await shoot(browser, screen, errors).catch((error) => errors.push(`${screen.name}: ${error.message.split("\n")[0]}`));
   }
 } finally {
-  previewServers.forEach((server) => server.close());
   await browser.close();
 }
 if (errors.length > 0) {
