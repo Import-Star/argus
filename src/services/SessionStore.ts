@@ -38,6 +38,7 @@ export class SessionStore implements vscode.Disposable {
   private prByUrl = new Map<string, PrSummary>();
   private readonly prsLookedUp = new Set<string>();
   public prsRefreshedAt?: number;
+  public prsRefreshing = false;
   private watchers: fs.FSWatcher[] = [];
   private debounce?: NodeJS.Timeout;
   private focusListener?: vscode.Disposable;
@@ -194,7 +195,9 @@ export class SessionStore implements vscode.Disposable {
       }
     }
     if (urls.size > 0) {
-      const fresh = await this.prSync.summarize([...urls], true);
+      this.prsRefreshing = true;
+      this.refresh();
+      const fresh = await this.prSync.summarize([...urls], true).finally(() => (this.prsRefreshing = false));
       const failed: string[] = [];
       for (const url of urls) {
         const summary = fresh.get(url);

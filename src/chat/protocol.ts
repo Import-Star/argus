@@ -32,6 +32,8 @@ export interface ChatMeta {
   models: ModelOption[];
   commands?: SlashItem[];
   contextTokens?: number;
+  // Whether this chat opens in Text only: its own last choice, else argus.chat.textOnlyDefault.
+  textOnly?: boolean;
   contextMax?: number;
   lastResponseAt?: number;
   cacheTtlMs?: number;
@@ -159,6 +161,7 @@ export type HostMessage =
   | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string };
 
 export type WebviewMessage =
+  | { type: "setTextOnly"; sessionId: string; value: boolean }
   | { type: "archive"; sessionId: string }
   | { type: "ready" }
   | { type: "send"; sessionId: string; text: string; images?: { mediaType: string; data: string }[] }

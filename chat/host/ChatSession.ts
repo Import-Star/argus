@@ -17,6 +17,7 @@ export interface ChatSessionOptions {
   model?: string;
   effort?: EffortLevel;
   permissionMode: PermissionMode;
+  textOnly: boolean;
   log(line: string): void;
 }
 
@@ -127,6 +128,7 @@ export class ChatSession implements vscode.Disposable {
       status: "starting",
       statusSince: Date.now(),
       model: options.model ?? "default",
+      textOnly: options.textOnly,
       effort: options.effort,
       permissionMode: options.permissionMode,
       models: []

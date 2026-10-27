@@ -69,7 +69,7 @@ export function createSessionsTab(
       column: group.column,
       summary: group.summary
     }));
-    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, archiving: [...archiving], chat: Boolean(host), multiAgent });
+    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, refreshing: sessions.prsRefreshing, archiving: [...archiving], chat: Boolean(host), multiAgent });
     handle.setBadge(sessions.needsYou().length || undefined);
   };
 

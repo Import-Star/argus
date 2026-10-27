@@ -265,6 +265,11 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Experiment: several agents on one task, shown side by side in one tab. Adds **+ Agent**, the board's **add to grid**, and opening a group's card as a grid. Off: forks open in their own tab."
+        },
+        "argus.chat.textOnlyDefault": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Open chats in Text only view (your messages and Claude's replies, tool calls hidden). The Text only button in a chat still switches it, and each chat remembers its own choice."
         }
       }
     },

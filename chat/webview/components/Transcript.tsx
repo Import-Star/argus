@@ -342,7 +342,7 @@ function findItem(scroller: HTMLElement, id: string): HTMLElement | null {
 export function Transcript({ sessionId, compact }: { sessionId: string; compact?: boolean }) {
   const session = useSession(sessionId);
   const items = useMemo(() => buildItems(session.messages), [session.messages]);
-  const textOnly = session.ui.textOnly === true;
+  const textOnly = session.ui.textOnly ?? session.meta?.textOnly === true;
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
   const [current, setCurrent] = useState(0);
@@ -393,6 +393,7 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
   const setTextOnly = (value: boolean) => {
     anchor.current = scroller.current ? captureAnchor(scroller.current) : undefined;
     setUi(sessionId, { textOnly: value });
+    post({ type: "setTextOnly", sessionId, value });
   };
 
   const revealHidden = (firstId: string) => {

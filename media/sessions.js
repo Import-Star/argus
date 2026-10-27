@@ -27,6 +27,7 @@
         groups: [],
         archiving: new Set(),
         refreshedAt: undefined,
+        refreshing: false,
         query: saved.query || "",
         selected: undefined,
         // Sessions picked for a bulk action (ctrl/cmd-click, shift-click or x), and the last one picked.
@@ -60,6 +61,7 @@
         this.state.cards = Array.isArray(message.cards) ? message.cards : [];
         this.state.groups = Array.isArray(message.groups) ? message.groups : [];
         this.state.refreshedAt = message.refreshedAt;
+        this.state.refreshing = Boolean(message.refreshing);
         this.state.archiving = new Set(message.archiving || []);
         this.state.chat = Boolean(message.chat);
         this.state.multiAgent = Boolean(message.multiAgent);
@@ -528,7 +530,7 @@
           <label class="search"><input id="session-search" type="search" placeholder="Search agents…" value="${esc(this.state.query)}" /><kbd>/</kbd></label>
           <button id="new-chat" class="primary">+ New chat</button>
           <button id="group-repo" class="icon${this.state.groupByRepo ? " on" : ""}" title="Group by repo (g)">⊞ by repo</button>
-          <button id="refresh-sessions" class="icon" title="Refresh PR states">↻</button>
+          <button id="refresh-sessions" class="icon${this.state.refreshing ? " refreshing" : ""}" title="${this.state.refreshing ? "Refreshing PR states…" : "Refresh PR states"}" aria-busy="${this.state.refreshing}" ${this.state.refreshing ? "disabled" : ""}>↻</button>
         </div>
         ${this.bulkBar()}
         ${this.statusLine()}

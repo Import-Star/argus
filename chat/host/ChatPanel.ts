@@ -226,6 +226,9 @@ export class ChatPanel implements vscode.Disposable {
           await session.setEffort(message.effort);
           this.manager.remember(session.sessionId, { effort: message.effort });
           return;
+        case "setTextOnly":
+          this.manager.remember(session.sessionId, { textOnly: message.value });
+          return;
         case "setPermissionMode":
           await session.setPermissionMode(message.mode);
           this.manager.remember(session.sessionId, { permissionMode: message.mode });

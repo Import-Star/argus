@@ -17,6 +17,7 @@ interface Remembered {
   model?: string;
   effort?: EffortLevel;
   permissionMode?: PermissionMode;
+  textOnly?: boolean;
 }
 
 const SESSION_CHOICES_KEY = "argus.chat.sessionChoices";
@@ -511,7 +512,7 @@ export class ChatManager implements vscode.Disposable {
 
   // A resumed chat keeps its own last model/effort; without one, the CLI restores the model from the transcript.
   // New chats follow Claude Code's own settings; a reopened chat keeps the model/effort last picked in it.
-  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; log(line: string): void } {
+  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; textOnly: boolean; log(line: string): void } {
     const config = vscode.workspace.getConfiguration("argus.chat");
     const claude = readClaudeSettings(cwd);
     const remembered = (resumeId && this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY)?.[resumeId]) || {};
@@ -521,6 +522,7 @@ export class ChatManager implements vscode.Disposable {
       model: remembered.model ?? claude.model,
       effort: remembered.effort ?? claude.effort,
       permissionMode: remembered.permissionMode ?? claude.permissionMode ?? "default",
+      textOnly: remembered.textOnly ?? config.get<boolean>("textOnlyDefault", false),
       log: (line) => this.log.appendLine(line)
     };
   }
