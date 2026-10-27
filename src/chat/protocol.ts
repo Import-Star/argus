@@ -161,6 +161,7 @@ export type HostMessage =
   | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string };
 
 export type WebviewMessage =
+  | { type: "rename"; sessionId: string }
   | { type: "setTextOnly"; sessionId: string; value: boolean }
   | { type: "archive"; sessionId: string }
   | { type: "ready" }

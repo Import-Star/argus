@@ -8,6 +8,7 @@ export const activateChat: ActivateChat = (context, deps) => {
     openGrid: (sessionIds, groupId) => manager.openGrid(sessionIds, groupId),
     addToGrid: (sessionId) => manager.gridAction("add", sessionId),
     isChatSession: (sessionId) => manager.isChatSession(sessionId),
+    isViewing: (sessionId) => manager.isViewing(sessionId),
     pendingFor: (sessionId) => manager.pendingFor(sessionId),
     respond: (sessionId, id, decision) => manager.respond(sessionId, id, decision),
     send: (sessionId, text) => manager.send(sessionId, text),

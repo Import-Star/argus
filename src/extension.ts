@@ -55,7 +55,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     addToGroup: (newSessionId, existingSessionId) => sessions.addToGroup(newSessionId, existingSessionId),
     removeFromGroup: (sessionId) => sessions.removeFromGroup(sessionId),
     setLiveChats: (provider) => sessions.setLiveChats(provider),
-    archive: (sessionId) => archiveWithCleanup(sessions, archiveCleanup, sessionId)
+    archive: (sessionId) => archiveWithCleanup(sessions, archiveCleanup, sessionId),
+    rename: (sessionId) => renameSessionPrompt(sessions, sessionId)
   });
   const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup, chat);
   const sessionsTabHandle = api.registerTab(sessionsTab.tab);
@@ -70,7 +71,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const treeView = vscode.window.createTreeView("argusSessions", { treeDataProvider: tree });
   tree.attach(treeView);
   const status = new AttentionStatusBar(sessions);
-  context.subscriptions.push(new AttentionNotifier(sessions));
+  context.subscriptions.push(new AttentionNotifier(sessions, (sessionId) => chat.host?.isViewing(sessionId) ?? false));
 
   context.subscriptions.push(sessions, controlCenter, treeView, tree, status, sessionsTabHandle, ...sessionsTab.disposables);
 

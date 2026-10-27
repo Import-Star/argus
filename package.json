@@ -270,6 +270,14 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Open chats in Text only view (your messages and Claude's replies, tool calls hidden). The Text only button in a chat still switches it, and each chat remembers its own choice."
+        },
+        "argus.chat.hiddenModels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Models to leave out of the chat's model picker, by name as shown (e.g. `Haiku 4.5`) or id (e.g. `claude-opus-4-6`, `haiku`). A chat's current model always stays listed. Applies to chats opened after the change."
         }
       }
     },

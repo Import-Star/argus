@@ -12,6 +12,7 @@ export interface ChatDeps {
   removeFromGroup(sessionId: string): void;
   setLiveChats(provider: (() => LiveChat[]) | undefined): void;
   archive(sessionId: string): Promise<void>;
+  rename(sessionId: string): Promise<void>;
 }
 
 // What the core sees of the chat bundle (out/chat/host.js). Loaded only while argus.chat.enabled is on.
@@ -20,6 +21,7 @@ export interface ChatHost extends vscode.Disposable {
   openGrid(sessionIds?: string[], groupId?: string): void;
   addToGrid(sessionId: string): void;
   isChatSession(sessionId: string): boolean;
+  isViewing(sessionId: string): boolean;
   pendingFor(sessionId: string): PermissionRequest[];
   respond(sessionId: string, id: string, decision: PermissionDecision): void;
   send(sessionId: string, text: string): void;

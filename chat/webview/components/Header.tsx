@@ -159,6 +159,9 @@ export function Header({ sessionId }: { sessionId: string }) {
           <circle cx="12" cy="12" r="3" />
         </svg>
         <span title={title}>{title}</span>
+        <button type="button" class="ghost hdr-icon hdr-rename" aria-label="Rename chat" title="Rename chat" onClick={() => post({ type: "rename", sessionId })}>
+          <Icon d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4" />
+        </button>
       </div>
       {meta && <StatusPill status={meta.status} since={meta.statusSince} error={meta.error} />}
       {meta?.branch && <span class="mono muted">{meta.branch}</span>}
@@ -176,8 +179,15 @@ export function Header({ sessionId }: { sessionId: string }) {
       <div class="hdr-end">
         {meta?.contextTokens !== undefined && meta.contextMax ? <ContextMeter tokens={meta.contextTokens} max={meta.contextMax} /> : null}
         <SideQuestion sessionId={sessionId} />
-        <button type="button" aria-pressed={reviewing} onClick={() => setUi(sessionId, { side: reviewing ? "details" : "review" })}>
-          {reviewing ? "Close review" : "Review changes"}
+        <button
+          type="button"
+          class="ghost hdr-icon"
+          aria-pressed={reviewing}
+          aria-label={reviewing ? "Close review" : "Review changes"}
+          title={reviewing ? "Close review" : "Review changes"}
+          onClick={() => setUi(sessionId, { side: reviewing ? "details" : "review" })}
+        >
+          <Icon d="M6 3v12M18 9v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM18 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 9h6l-2-2M18 15h-6l2 2" />
         </button>
         {multiAgent && (
           <button type="button" class="ghost hdr-icon" aria-label="Add agent" title="Add agent: start another agent in this folder" onClick={() => post({ type: "addAgent", sessionId })}>

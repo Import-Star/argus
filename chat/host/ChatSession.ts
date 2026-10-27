@@ -460,9 +460,13 @@ export class ChatSession implements vscode.Disposable {
           this.aliases.set(model.resolvedModel, model.value);
         }
       }
+      const current = this.meta.model && this.modelValue(this.meta.model);
+      const hidden = new Set(vscode.workspace.getConfiguration("argus.chat").get<string[]>("hiddenModels", []).map((name) => name.trim().toLowerCase()));
+      // The chat's own model stays listed even when hidden, so the picker never goes blank.
+      const shown = models.filter((model) => model.value === current || ![model.value, model.displayName, model.resolvedModel].some((name) => name && hidden.has(name.toLowerCase())));
       this.update({
-        models: models.map((model) => ({ value: model.value, displayName: model.displayName, efforts: model.supportedEffortLevels ?? [] })),
-        model: this.meta.model && this.modelValue(this.meta.model)
+        models: shown.map((model) => ({ value: model.value, displayName: model.displayName, efforts: model.supportedEffortLevels ?? [] })),
+        model: current
       });
       if (this.meta.status === "starting") {
         this.setStatus("idle");

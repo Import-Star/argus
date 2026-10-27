@@ -112,8 +112,22 @@ export class ChatManager implements vscode.Disposable {
   }
 
   // Same path as archiving the board card: confirmation, worktree and plugin cleanup, then the chat closes.
+  // Same prompt as renaming the board card; the title sync then updates this tab.
+  public async rename(sessionId: string): Promise<void> {
+    if (!this.deps.getCards().some((card) => card.record.sessionId === sessionId)) {
+      void vscode.window.showInformationMessage("Argus: send this chat its first message before renaming it.");
+      return;
+    }
+    await this.deps.rename(sessionId);
+  }
+
   public archive(sessionId: string): Promise<void> {
     return this.deps.archive(sessionId);
+  }
+
+  // True while the chat is on screen in front of the user: its tab is active in the focused window.
+  public isViewing(sessionId: string): boolean {
+    return vscode.window.state.focused && [...this.panels].some((panel) => panel.active && panel.sessionIds.includes(sessionId));
   }
 
   public isChatSession(sessionId: string): boolean {

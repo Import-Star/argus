@@ -60,6 +60,10 @@ export class ChatPanel implements vscode.Disposable {
     this.panel.reveal();
   }
 
+  public get active(): boolean {
+    return this.panel.active;
+  }
+
   public get groupId(): string | undefined {
     return this.group;
   }
@@ -199,6 +203,10 @@ export class ChatPanel implements vscode.Disposable {
     }
     if (message.type === "grid") {
       this.manager.gridAction(message.action, message.sessionId, this);
+      return;
+    }
+    if (message.type === "rename") {
+      await this.manager.rename(message.sessionId);
       return;
     }
     if (message.type === "archive") {
