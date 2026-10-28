@@ -31,7 +31,8 @@ and [README.md](README.md) for user-facing behaviour.
   key in `argus-plugin.json`'s `config` block for a plugin. Document it in that package's README.
 - `hooks/session-tracker.ts` is run as-is by Node 24 (native type stripping): erasable TypeScript syntax only. It
   runs on every Claude Code event: keep it fast, synchronous, dependency-free, silent on stdout, and never let it
-  throw. Changes need the user to re-run "Argus: Set Up Session Tracking".
+  throw. Argus copies a changed script to `~/.claude/argus` on startup by itself; adding an event to `EVENTS` in
+  `HookInstaller.ts` needs the user to re-run "Argus: Set Up Session Tracking", which Argus prompts for.
 - Every core setting and every command uses the `argus.` prefix. A plugin's settings are bare keys under
   `argus.plugins.config.<plugin-id>`; its commands still carry the `argus.` prefix.
 - Control Center webview code (core's `media/host.js`, `media/styles.css`, and each plugin's tab script) is plain

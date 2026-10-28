@@ -247,7 +247,7 @@ Argus is local-only. It has no telemetry.
 | Path | Purpose |
 | --- | --- |
 | `~/.claude/settings.json` | "Set Up Session Tracking" adds hook entries; "Remove Session Tracking" removes them. A `.bak` copy is written first. |
-| `~/.claude/argus/session-tracker.ts` | The hook script, copied out of the extension so updates never break the path in settings. |
+| `~/.claude/argus/session-tracker.ts` | The hook script, copied out of the extension so updates never break the path in settings. Argus replaces it with its own version on startup once tracking is set up, unless a newer Argus wrote it (`~/.claude/argus/package.json` records the version). |
 | `~/.claude/argus/plugins/` | Plugin folders, loaded on startup. Argus also writes `argus.d.ts` and `argus-webview.d.ts` here for plugin authors. |
 | `~/.claude/argus/sessions/<id>.json` | One record per session, written by the hook on SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PermissionRequest, Notification, Stop, SubagentStart, SubagentStop and SessionEnd. It holds prompt snippets, the last assistant message and any pending tool command in plain text. Deleted `argus.sessions.retentionDays` days after the session closes. |
 | `~/.claude/sessions/<pid>.json` | Claude Code's own registry of open sessions (read only). |
@@ -261,8 +261,9 @@ usage call above. A plugin may make its own network calls; see its README.
 
 - **No sessions appear**: run **Argus: Set Up Session Tracking**, check that `node --version` is 24 or newer in a
   terminal, then start a new Claude Code session.
-- **Interrupted sessions, sub-agents or a fix to the hook don't show up after updating Argus**: run **Argus: Set
-  Up Session Tracking** again to install the latest hook.
+- **Argus says session tracking needs updating**: click **Set Up Session Tracking** in the warning. Argus updates
+  the hook script on its own after an upgrade, but a new hook event or a Node that moved needs `settings.json`
+  changed, so it asks first.
 - **Sessions stop updating after a Claude Code or VS Code update**: Argus depends on `claude-vscode.editor.open`
   and Claude Code's session registry file, neither of which is a stable public API. If either changes shape,
   opening sessions and session detection can break until Argus is updated.

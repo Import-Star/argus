@@ -11,6 +11,7 @@ import { createSettingsTab } from "./providers/SettingsTab";
 import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
+import { TrackingMonitor } from "./services/TrackingMonitor";
 import { findChats, readChat, writeChats } from "./services/importChats";
 import { newChat, openSession, openWorktree, routeChatsTo, routeCloseTo } from "./services/openSession";
 import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
@@ -57,7 +58,9 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     rename: (sessionId) => renameSessionPrompt(sessions, sessionId)
   });
   registerDiffReview(context, chips, chat);
-  const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup, chat);
+  const tracking = new TrackingMonitor(context);
+  context.subscriptions.push(tracking);
+  const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup, chat, tracking);
   const sessionsTabHandle = api.registerTab(sessionsTab.tab);
   sessionsTab.attach(sessionsTabHandle);
 
@@ -66,7 +69,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   settingsTab.attach(settingsTabHandle);
   context.subscriptions.push(settingsTabHandle, ...settingsTab.disposables);
 
-  const tree = new SessionTreeProvider(sessions);
+  const tree = new SessionTreeProvider(sessions, tracking);
   const treeView = vscode.window.createTreeView("argusSessions", { treeDataProvider: tree });
   tree.attach(treeView);
   const status = new AttentionStatusBar(sessions);
@@ -207,6 +210,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   register("argus.sessions.installHooks", () => {
     try {
       const result = installHooks(context.extensionPath);
+      tracking.setRemoved(false);
       if (!findNode()) {
         void vscode.window.showWarningMessage("Argus: hooks installed, but Node 24 or newer wasn't found. Install Node 24+ so sessions can report in.");
         return;
@@ -250,6 +254,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   register("argus.sessions.removeHooks", () => {
     try {
       const result = removeHooks();
+      tracking.setRemoved(true);
       void vscode.window.showInformationMessage(
         result.removed > 0 || result.skillRemoved
           ? `Argus: removed ${result.removed} hook(s) from ${result.settingsPath}${result.skillRemoved ? " and the old Rename Session skill" : ""}.`
