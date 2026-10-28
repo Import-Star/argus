@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.5.0
 
 - **Argus chat is now how sessions open**, and no longer needs turning on: the `argus.chat.enabled` setting is gone.
   Opening a card, **New Chat** and notification buttons all open Argus chat. Argus no longer uses the Claude Code
