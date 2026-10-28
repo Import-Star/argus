@@ -2,7 +2,9 @@
 
 First public release.
 
-## Unreleased
+## 0.4.0
+
+Run **Argus: Set Up Session Tracking** again after updating: the session tracking hook changed.
 
 - A **Settings** tab in the Control Center for every Argus setting, including the chat ones, with a toggle,
   dropdown or field for each, **Reset**, and a note when a workspace setting overrides the value. New command:
