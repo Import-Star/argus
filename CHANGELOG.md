@@ -2,6 +2,24 @@
 
 First public release.
 
+## Unreleased
+
+- **Argus chat is now how sessions open**, and no longer needs turning on: the `argus.chat.enabled` setting is gone.
+  Opening a card, **New Chat** and notification buttons all open Argus chat. Argus no longer uses the Claude Code
+  VS Code extension; it runs your installed `claude` directly.
+- Archiving closes the session's Argus chat. Argus no longer looks for or closes Claude Code extension tabs.
+- A finished reply counts as read when its Argus chat is in front of you, instead of when a Claude Code tab is.
+- Opening a session that is still running elsewhere (a terminal, say) warns that two processes would share its
+  transcript.
+- **Argus: Install Claude Code**: when `claude` isn't installed, Argus offers to run Anthropic's official installer in
+  a terminal, then opens `claude` once so you can sign in. Argus asks at startup (once per version) and whenever a
+  chat can't start. It no longer falls back to the copy of `claude` inside the Claude Code extension.
+- Review's **This session** and **Last turn**, and the changed files in a chat's details pane, find changes in a git
+  repo nested inside the session's folder (or outside it) by diffing each file in its own repo. They used to show
+  no changes for those files.
+- **Changed files** in the details pane start collapsed.
+- The **Text only** button has a solid background, so chat text no longer shows through it.
+
 ## 0.4.2
 
 - Argus keeps the session tracking hook up to date by itself: after an update it replaces the hook script in

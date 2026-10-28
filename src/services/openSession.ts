@@ -6,7 +6,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type ChatRoute = (sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn) => Promise<void>;
 let chatRoute: ChatRoute | undefined;
 
-// Set while Argus chat (argus.chat.enabled) is on: sessions then open in Argus's own chat instead of Claude Code's.
+// Set once Argus chat has loaded: every session opens there.
 export function routeChatsTo(route: ChatRoute | undefined): void {
   chatRoute = route;
 }
@@ -17,35 +17,17 @@ export function routeCloseTo(close: ((sessionId: string) => boolean) | undefined
   chatClose = close;
 }
 
-// True when the session lives in an Argus chat and its tab was closed.
+// True when the session's Argus chat was open and is now closed.
 export function closeChatSession(sessionId: string): boolean {
   return chatClose?.(sessionId) ?? false;
 }
 
 export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
-  if (chatRoute) {
-    return chatRoute(sessionId, prompt, column);
+  if (!chatRoute) {
+    void vscode.window.showErrorMessage("Argus: chat hasn't started. Reload the window, or check the Argus output for why.");
+    return;
   }
-  await openClaudeCodeTab(sessionId, prompt, column);
-}
-
-// Always the Claude Code extension's tab, even while Argus chat is on: for reaching a tab that is already open there.
-// Args: sessionId, initialPrompt, viewColumn, group, fullEditor, options.
-// A programmatic value other than "honor-preferred-location" always opens an editor tab, never the sidebar.
-export async function openClaudeCodeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
-  const target = column ?? vscode.window.tabGroups.activeTabGroup.viewColumn;
-  try {
-    await vscode.commands.executeCommand("claude-vscode.editor.open", sessionId, prompt, target, undefined, undefined, {
-      programmatic: "argus"
-    });
-  } catch (error) {
-    const installed = vscode.extensions.getExtension("anthropic.claude-code");
-    void vscode.window.showErrorMessage(
-      installed
-        ? `Argus: could not open a Claude Code tab: ${error instanceof Error ? error.message : String(error)}`
-        : "Argus: the Claude Code extension (anthropic.claude-code) is required to open sessions."
-    );
-  }
+  await chatRoute(sessionId, prompt, column);
 }
 
 export async function newChat(column?: vscode.ViewColumn): Promise<void> {
@@ -71,6 +53,6 @@ export async function openSession(card: SessionCard, column?: vscode.ViewColumn)
     await openClaudeTab(sessionId, undefined, column);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    void vscode.window.showErrorMessage(`Could not open Claude Code session: ${message}`);
+    void vscode.window.showErrorMessage(`Argus: could not open the session: ${message}`);
   }
 }

@@ -5,7 +5,7 @@ import { SessionCard } from "../types";
 type Mode = "all" | "input" | "off";
 
 // Shows a VS Code notification when a session in this window's scope starts waiting on the user, with a button that
-// opens its Claude Code tab. Sessions already waiting when the window opens are not announced.
+// opens its chat. Sessions already waiting when the window opens are not announced.
 export class AttentionNotifier implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly seen = new Set<string>();

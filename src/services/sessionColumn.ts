@@ -89,13 +89,10 @@ export function columnFor(
   return "idle";
 }
 
-// A finished reply in the Claude Code tab in front of you counts as read; permissions and questions still need you.
+// A finished reply in a chat in front of you counts as read; permissions and questions still need you.
 export function seenReplies(
-  cards: readonly { column: SessionColumn; record: Pick<SessionRecord, "sessionId" | "state" | "title"> }[],
-  activeTitle: string | undefined
+  cards: readonly { column: SessionColumn; record: Pick<SessionRecord, "sessionId" | "state"> }[],
+  isViewing: (sessionId: string) => boolean
 ): string[] {
-  if (!activeTitle) {
-    return [];
-  }
-  return cards.filter((card) => card.column === "needs-you" && card.record.state === "done" && card.record.title === activeTitle).map((card) => card.record.sessionId);
+  return cards.filter((card) => card.column === "needs-you" && card.record.state === "done" && isViewing(card.record.sessionId)).map((card) => card.record.sessionId);
 }

@@ -8,6 +8,8 @@ import type { LiveChat } from "../../src/services/sessionColumn";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
 import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, PermissionMode, PermissionRequest, RailSession } from "../../src/chat/protocol";
+import { findClaude } from "../../src/services/claudeCli";
+import { configuredClaude, promptMissingClaude } from "../../src/services/claudeSetup";
 import { BranchCache } from "./branchCache";
 import { ChatPanel } from "./ChatPanel";
 import { hasTranscript, readPanelState } from "./restore";
@@ -63,7 +65,7 @@ export class ChatManager implements vscode.Disposable {
       .map((session) => ({ sessionId: session.sessionId, busy: session.meta.status === "working" || session.meta.status === "needs-you", since: session.meta.statusSince, startedAt: session.processStartedAt }));
   }
 
-  // Archiving a chat closes its tab and stops its process, like closing a Claude Code tab.
+  // Archiving a chat closes its tab and stops its process.
   public closeSession(sessionId: string): boolean {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -476,7 +478,19 @@ export class ChatManager implements vscode.Disposable {
     return this.add(new ChatSession({ cwd, resume: false, ...this.defaults(cwd) }));
   }
 
+  // The SDK's own binary package isn't shipped in the VSIX, so chat needs the user's Claude Code install.
+  private claudeReady(): boolean {
+    if (configuredClaude()) {
+      return true;
+    }
+    void promptMissingClaude();
+    return false;
+  }
+
   private async create(): Promise<ChatSession | undefined> {
+    if (!this.claudeReady()) {
+      return undefined;
+    }
     const folders = vscode.workspace.workspaceFolders ?? [];
     const ask = folders.length > 1 && vscode.workspace.getConfiguration("argus.chat").get<boolean>("askForFolder", false);
     const folder = ask ? await vscode.window.showWorkspaceFolderPick({ placeHolder: "Start the chat in which folder?" }) : folders[0];
@@ -492,6 +506,9 @@ export class ChatManager implements vscode.Disposable {
     if (existing) {
       return existing;
     }
+    if (!this.claudeReady()) {
+      return undefined;
+    }
     const card = this.deps.getCards().find((entry) => entry.record.sessionId === sessionId);
     if (!card) {
       void vscode.window.showWarningMessage(`Argus: no session ${sessionId} on the board.`);
@@ -499,7 +516,7 @@ export class ChatManager implements vscode.Disposable {
     }
     if (card.open) {
       const choice = await vscode.window.showWarningMessage(
-        "This session is open in a Claude Code tab. Opening it here as well means two Claude processes write to the same transcript.",
+        "This session is running in another Claude Code process, such as a terminal. Opening it here as well means two Claude processes write to the same transcript.",
         { modal: true },
         "Open Anyway"
       );
@@ -551,7 +568,7 @@ export class ChatManager implements vscode.Disposable {
     const claude = readClaudeSettings(cwd);
     const remembered = (resumeId && this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY)?.[resumeId]) || {};
     return {
-      claudePath: resolveClaude(config.get<string>("claudePath", "")),
+      claudePath: findClaude(config.get<string>("claudePath", "")),
       additionalDirectories: (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath),
       model: remembered.model ?? claude.model,
       effort: remembered.effort ?? claude.effort,
@@ -594,29 +611,6 @@ export class ChatManager implements vscode.Disposable {
       }
     }
   }
-}
-
-// The SDK's own binary package isn't shipped in the VSIX, so use the user's Claude Code install.
-function resolveClaude(configured: string): string | undefined {
-  if (configured) {
-    return configured;
-  }
-  const name = process.platform === "win32" ? "claude.exe" : "claude";
-  try {
-    const found = execFileSync(process.platform === "win32" ? "where" : "which", [name], { encoding: "utf8" }).split(/\r?\n/)[0].trim();
-    if (found) {
-      return found;
-    }
-  } catch {
-    // Not on PATH; try the usual install folder and the Claude Code extension's copy.
-  }
-  const local = path.join(os.homedir(), ".local", "bin", name);
-  if (fs.existsSync(local)) {
-    return local;
-  }
-  const extension = vscode.extensions.getExtension("anthropic.claude-code");
-  const bundled = extension && path.join(extension.extensionPath, "resources", "native-binary", name);
-  return bundled && fs.existsSync(bundled) ? bundled : undefined;
 }
 
 function statusOf(column: string): ChatStatus {

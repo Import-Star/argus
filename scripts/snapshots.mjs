@@ -35,6 +35,8 @@ async function openIn(page, label) {
 }
 
 async function reviewSteps(page, { then }) {
+  // Changed files start folded.
+  await page.locator(".det-fold > summary").first().click();
   await page.locator(".det-file").first().click();
   for (const [line, text] of [[5, "Should subtract reject NaN inputs like add does in the validator?"], [6, "Why not reuse add(a, -b) here?"]]) {
     const row = page.locator(`[data-line="src/math.ts:new:${line}"]`);

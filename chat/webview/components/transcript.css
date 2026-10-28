@@ -447,12 +447,13 @@
   font-size: 11px;
   padding: 2px 10px;
   border-radius: 999px;
-  background: var(--row);
+  /* It floats over the transcript, and theme colours can be see-through, so lay them over the solid editor colour. */
+  background: linear-gradient(var(--row), var(--row)), var(--vscode-editor-background);
   color: var(--muted);
 }
 
 .tr-pill[aria-pressed="true"] {
-  background: var(--coral-soft);
+  background: linear-gradient(var(--coral-soft), var(--coral-soft)), var(--vscode-editor-background);
   border-color: var(--accent);
   color: var(--strong);
 }

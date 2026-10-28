@@ -234,3 +234,59 @@ export async function fileLines(folder: string, scope: Scope, rel: string): Prom
       : await fs.readFile(path.join(folder, rel), "utf8");
   return text.replace(/\n$/, "").split("\n");
 }
+
+// The repo a file or folder belongs to: a session's files can sit in a repo nested inside its folder, or outside it.
+async function repoRoot(start: string): Promise<string | undefined> {
+  let dir = start;
+  // Ask from the nearest existing folder: the path itself, the file's folder, or, for a deleted file, further up.
+  while (!(await fs.stat(dir).then((stat) => stat.isDirectory(), () => false))) {
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    dir = parent;
+  }
+  try {
+    return path.resolve((await git(dir, ["rev-parse", "--show-toplevel"])).trim());
+  } catch {
+    return undefined;
+  }
+}
+
+export interface TouchedFile extends DiffFile {
+  // The repo the file is in, and its path there; `path` is relative to the folder the diff was asked for.
+  root: string;
+  rel: string;
+}
+
+// The changes to `touched` (absolute paths), each diffed in its own repo against that repo's base, with paths shown
+// relative to `folder`. Files in no repo, or whose repo can't be diffed, are left out.
+export async function loadTouchedDiff(folder: string, touched: string[], baseRef: string, contextLines: number): Promise<{ base?: string; files: TouchedFile[] }> {
+  const byRoot = new Map<string, Set<string>>();
+  for (const file of new Set(touched.map((entry) => path.resolve(folder, entry)))) {
+    const root = await repoRoot(file);
+    if (root) {
+      const rels = byRoot.get(root) ?? new Set<string>();
+      rels.add(path.relative(root, file).split(path.sep).join("/"));
+      byRoot.set(root, rels);
+    }
+  }
+  const home = await repoRoot(folder);
+  let base: string | undefined;
+  const files: TouchedFile[] = [];
+  for (const [root, rels] of byRoot) {
+    const result = await loadDiff(root, "all", baseRef, contextLines).catch(() => undefined);
+    if (!result) {
+      continue;
+    }
+    if (root === home || base === undefined) {
+      base = result.base;
+    }
+    for (const file of result.files.filter((entry) => rels.has(entry.path))) {
+      const shown = path.relative(folder, path.join(root, file.path)).split(path.sep).join("/");
+      files.push({ ...file, path: shown, root, rel: file.path });
+    }
+  }
+  files.sort((a, b) => a.path.localeCompare(b.path));
+  return { base, files };
+}

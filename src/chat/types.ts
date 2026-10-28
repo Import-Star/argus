@@ -15,7 +15,7 @@ export interface ChatDeps {
   rename(sessionId: string): Promise<void>;
 }
 
-// What the core sees of the chat bundle (out/chat/host.js). Loaded only while argus.chat.enabled is on.
+// What the core sees of the chat bundle (out/chat/host.js).
 export interface ChatHost extends vscode.Disposable {
   open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn): Promise<void>;
   openGrid(sessionIds?: string[], groupId?: string): void;

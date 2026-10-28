@@ -153,6 +153,10 @@
       {
         "command": "argus.chat.openGrid",
         "title": "Argus: Open Chats Side by Side"
+      },
+      {
+        "command": "argus.chat.installClaude",
+        "title": "Argus: Install Claude Code"
       }
     ],
     "configuration": {
@@ -242,15 +246,10 @@
           "minimum": 0,
           "description": "Unchanged lines shown around each change in the diff review."
         },
-        "argus.chat.enabled": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "Open Claude Code sessions in Argus's own chat (beta) instead of the Claude Code extension's tab. Runs your installed `claude` through the Claude Agent SDK."
-        },
         "argus.chat.claudePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then the Claude Code extension's copy."
+          "markdownDescription": "Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, where Claude Code's installer puts it. **Argus: Install Claude Code** installs it."
         },
         "argus.chat.askForFolder": {
           "type": "boolean",
@@ -360,12 +359,8 @@
       ],
       "commandPalette": [
         {
-          "command": "argus.chat.new",
-          "when": "config.argus.chat.enabled"
-        },
-        {
           "command": "argus.chat.openGrid",
-          "when": "config.argus.chat.enabled && config.argus.chat.experimentalMultiAgent"
+          "when": "config.argus.chat.experimentalMultiAgent"
         }
       ]
     },

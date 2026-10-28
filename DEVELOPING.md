@@ -85,7 +85,7 @@ src/services/
   TranscriptIndex.ts              reads transcripts incrementally for per-card token use and transcript search
   HookInstaller.ts                edits ~/.claude/settings.json, copies the hook script
   GhPrSyncService.ts              PR state through the gh CLI, exposed to plugins as api.prs
-  openSession.ts                  opens Claude Code tabs via claude-vscode.editor.open
+  openSession.ts                  opens sessions in Argus chat
   archiveSession.ts               archive (one session or a batch) plus plugin-supplied cleanup (registerArchiveCleanup)
   importChats.ts                  builds session records from existing Claude Code transcripts (Import Existing Claude Chats)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse

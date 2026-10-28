@@ -12,6 +12,7 @@ import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSe
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
 import { TrackingMonitor } from "./services/TrackingMonitor";
+import { registerClaudeSetup } from "./services/claudeSetup";
 import { findChats, readChat, writeChats } from "./services/importChats";
 import { newChat, openSession, openWorktree, routeChatsTo, routeCloseTo } from "./services/openSession";
 import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
@@ -122,9 +123,11 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     chat.onDidChange((host) => {
       routeChatsTo(host && ((sessionId, prompt, column) => host.open(sessionId, prompt, column)));
       routeCloseTo(host && ((sessionId) => host.closeSession(sessionId)));
+      sessions.setViewing(host && ((sessionId) => host.isViewing(sessionId)));
     }),
     { dispose: () => { routeChatsTo(undefined); routeCloseTo(undefined); } }
   );
+  registerClaudeSetup(context);
   chat.apply();
   register("argus.chat.new", () => chat.host?.open());
   register("argus.chat.openGrid", () => chat.host?.openGrid());

@@ -97,16 +97,16 @@ describe("existingWorktrees", () => {
 });
 
 describe("seenReplies", () => {
-  const card = (sessionId: string, column: "needs-you" | "idle", state: SessionRecord["state"], title?: string) => ({ column, record: { sessionId, state, title } });
-  it("marks finished replies in the active tab's chat", () => {
-    const cards = [card("a", "needs-you", "done", "Fix login"), card("b", "needs-you", "done", "Other"), card("c", "idle", "done", "Fix login")];
-    assert.deepEqual(seenReplies(cards, "Fix login"), ["a"]);
+  const card = (sessionId: string, column: "needs-you" | "idle", state: SessionRecord["state"]) => ({ column, record: { sessionId, state } });
+  it("marks finished replies in the chats in front of you", () => {
+    const cards = [card("a", "needs-you", "done"), card("b", "needs-you", "done"), card("c", "idle", "done")];
+    assert.deepEqual(seenReplies(cards, (id) => id !== "b"), ["a"]);
   });
   it("leaves permissions, questions and interrupted sessions alone", () => {
-    const cards = [card("a", "needs-you", "permission", "T"), card("b", "needs-you", "question", "T"), card("c", "needs-you", "working", "T")];
-    assert.deepEqual(seenReplies(cards, "T"), []);
+    const cards = [card("a", "needs-you", "permission"), card("b", "needs-you", "question"), card("c", "needs-you", "working")];
+    assert.deepEqual(seenReplies(cards, () => true), []);
   });
-  it("does nothing without an active Claude tab", () => {
-    assert.deepEqual(seenReplies([card("a", "needs-you", "done", "T")], undefined), []);
+  it("does nothing when no chat is in front", () => {
+    assert.deepEqual(seenReplies([card("a", "needs-you", "done")], () => false), []);
   });
 });
