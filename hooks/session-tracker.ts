@@ -17,6 +17,7 @@ interface SessionRecord {
   state: SessionState;
   title?: string;
   titleSource?: "user";
+  titled?: boolean;
   lastPrompt?: string;
   pending?: string;
   lastMessage?: string;
@@ -301,15 +302,18 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       }
       record.lastMessageAt = now;
       if (record.titleSource !== "user") {
-        record.title = chatTitle(input.transcript_path ?? record.transcriptPath) ?? record.title;
+        const title = chatTitle(input.transcript_path ?? record.transcriptPath);
+        record.title = title ?? record.title;
+        record.titled ||= title !== undefined;
       }
       setState(record, "done", now);
       return;
     case "SessionEnd":
       record.endReason = input.reason;
       record.subagents = undefined;
-      // Keep "working" so the board can show a session closed mid-turn as interrupted.
-      if (record.state !== "working") {
+      // Keep "working" so the board can show a session closed mid-turn as interrupted, and "done" so an unread
+      // reply still needs you after Argus stops a chat whose tab was closed.
+      if (record.state !== "working" && record.state !== "done") {
         setState(record, "ended", now);
       }
       return;

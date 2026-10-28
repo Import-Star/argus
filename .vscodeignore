@@ -13,3 +13,6 @@ test/**
 assets/**
 .github/**
 plugins/**
+chat/**
+scripts/**
+out/snapshots/**

@@ -64,6 +64,14 @@ describe("columnFor", () => {
     const pr = { url: "u", state: "OPEN" } as PrSummary;
     assert.equal(column(record({ prs: ["u"] }), { prs: [pr], read: true }), "pr-open");
   });
+  it("keeps a PR merged since the last prompt in pr-open", () => {
+    const pr = { url: "u", state: "MERGED", closedAt: new Date(2_000).toISOString() } as PrSummary;
+    assert.equal(column(record({ prs: ["u"], lastPromptAt: 1_000 }), { prs: [pr], read: true }), "pr-open");
+  });
+  it("moves a merged PR to idle once the user prompts again", () => {
+    const pr = { url: "u", state: "MERGED", closedAt: new Date(2_000).toISOString() } as PrSummary;
+    assert.equal(column(record({ prs: ["u"], lastPromptAt: 3_000 }), { prs: [pr], read: true }), "idle");
+  });
   it("puts an idle session with a timer in scheduled, ahead of pr-open", () => {
     const pr = { url: "u", state: "OPEN" } as PrSummary;
     assert.equal(column(record({ prs: ["u"] }), { prs: [pr], read: true, scheduled: true }), "scheduled");

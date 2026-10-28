@@ -1,0 +1,13 @@
+{
+  "messages": [
+    {
+      "type": "queue",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "items": [
+        { "id": "q1", "text": "Also run the migrations check before you finish", "images": 0, "sent": true },
+        { "id": "q2", "text": "Use the existing rounding helper in src/money.ts instead of Math.round, and add a test for half-cent values", "images": 1, "sent": false },
+        { "id": "q3", "text": "Then open a draft PR against main", "images": 0, "sent": false }
+      ]
+    }
+  ]
+}

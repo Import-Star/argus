@@ -11,7 +11,7 @@ export class AttentionNotifier implements vscode.Disposable {
   private readonly seen = new Set<string>();
   private seeded = false;
 
-  public constructor(private readonly store: SessionStore) {
+  public constructor(private readonly store: SessionStore, private readonly isViewing: (sessionId: string) => boolean = () => false) {
     this.disposables.push(store.onDidChange((cards) => this.check(cards)));
   }
 
@@ -35,7 +35,8 @@ export class AttentionNotifier implements vscode.Disposable {
     for (const card of fresh) {
       const input = card.record.state === "permission" || card.record.state === "question";
       // The user usually caused the interrupt (Esc), so a popup would only repeat it back to them.
-      if (card.interrupted || mode === "off" || (mode === "input" && !input)) {
+      // A finished chat that is already on screen needs no popup; prompts still show because they need an answer.
+      if (card.interrupted || mode === "off" || (mode === "input" && !input) || (!input && this.isViewing(card.record.sessionId))) {
         continue;
       }
       void this.notify(card, input);

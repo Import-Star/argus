@@ -2,6 +2,42 @@
 
 First public release.
 
+## Unreleased
+
+- A **Settings** tab in the Control Center for every Argus setting, including the chat ones, with a toggle,
+  dropdown or field for each, **Reset**, and a note when a workspace setting overrides the value. New command:
+  **Argus: Settings**.
+- **Argus chat (beta, off by default).** Turn on `argus.chat.enabled` to open Claude Code sessions in Argus's own
+  chat panel instead of the Claude Code extension's tab. It runs your installed `claude` through the Claude Agent
+  SDK, so sessions, settings and hooks are the same ones Claude Code uses. Permission prompts, questions and plan
+  approvals show in the chat. New commands: **Argus: New Chat** and **Argus: Open Chats Side by Side**. New
+  setting `argus.chat.claudePath`. New chats take model, effort and permission mode from Claude Code's own settings.
+- With chat on, Control Center Sessions cards waiting on a permission or question from an Argus chat can be
+  answered in place (**Allow once**, **Deny**, or pick an option and **Send answer**), and **add to grid** puts a
+  card's chat in the side-by-side view.
+- In a chat: **Rewind to here** restores files and the conversation to a message; **Fork from here** starts a new
+  chat from any message; search with Cmd/Ctrl+F, including folded tool output; **Ask aside** (Cmd/Ctrl+;) asks a
+  side question without touching the transcript; a queue to edit, reorder or send queued messages now; cost per
+  turn under each reply; copy buttons on code blocks and replies; a `/` slash command menu; and pasting or dropping
+  files. The details pane shows plan usage, background shells, monitors and agents (with output and stop), and the
+  worktrees linked to the session.
+- Review changes over a chat: This session, All vs main, Last turn, Uncommitted and PR tabs, with line comments sent
+  to Claude. Unchanged lines expand on click. PR diffs are read from your local clone, with `gh` as the fallback.
+  Diff chips on Sessions cards open this review; the **Argus: Review Worktree Diff** command is removed.
+- A chat's name is sent to Claude Code with `/rename`, so `/resume` and other sessions show the same title.
+- Chats with no open tab keep running until idle for `argus.chat.backgroundIdleMinutes` (default 60), so timers
+  keep firing. A reply that finished after its tab closed still shows in Needs you.
+- New settings: `argus.chat.textOnlyDefault` opens chats in Text only, and `argus.chat.hiddenModels` leaves models
+  out of the model picker. The Settings tab has a search box.
+- No "has finished" popup for a chat whose tab is already in front of you.
+- **Agents (experimental).** Turn on `argus.chat.experimentalMultiAgent` for **+ Agent** in a chat header, which
+  starts another chat in the same folder and opens the group side by side. The group shares one Sessions card: it
+  sits in its most urgent member's column, lists each agent, and a click opens them all in the grid. Archiving the
+  card archives every agent. With the setting off, forks open in their own tab and each agent has its own card.
+- Sessions cards stay in the PR column while a PR merged or closed after the last prompt, so newly finished work is
+  easy to spot. The board's refresh button spins while PR states refresh.
+- Sessions cards no longer show the context, used and compacted token line.
+
 ## 0.3.0
 
 - A **Scheduled** column and timer badges for sessions waiting on a wakeup, a cron job, or a background command,

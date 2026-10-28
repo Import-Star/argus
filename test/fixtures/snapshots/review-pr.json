@@ -1,0 +1,293 @@
+{
+  "messages": [
+    {
+      "type": "changes",
+      "sessionId": "44444444-0000-4000-8000-000000000001",
+      "scope": "pr",
+      "prUrl": "https://github.com/acme/orders/pull/412",
+      "base": "main",
+      "files": [
+        {
+          "path": "src/math.ts",
+          "added": 4,
+          "removed": 1,
+          "status": "modified"
+        },
+        {
+          "path": "README.md",
+          "added": 2,
+          "removed": 0,
+          "status": "modified"
+        }
+      ]
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "44444444-0000-4000-8000-000000000001",
+      "scope": "pr",
+      "prUrl": "https://github.com/acme/orders/pull/412",
+      "diff": {
+        "path": "src/math.ts",
+        "lines": [
+          {
+            "kind": "gap",
+            "text": "30 unchanged lines",
+            "lines": [
+              {
+                "oldNo": 1,
+                "newNo": 1,
+                "text": "// Arithmetic helpers for the orders service."
+              },
+              {
+                "oldNo": 2,
+                "newNo": 2,
+                "text": ""
+              },
+              {
+                "oldNo": 3,
+                "newNo": 3,
+                "text": "export type Operand = number;"
+              },
+              {
+                "oldNo": 4,
+                "newNo": 4,
+                "text": ""
+              },
+              {
+                "oldNo": 5,
+                "newNo": 5,
+                "text": "const PRECISION = 2;"
+              },
+              {
+                "oldNo": 6,
+                "newNo": 6,
+                "text": ""
+              },
+              {
+                "oldNo": 7,
+                "newNo": 7,
+                "text": "export function round(value: number): number {"
+              },
+              {
+                "oldNo": 8,
+                "newNo": 8,
+                "text": "  return Number(value.toFixed(PRECISION));"
+              },
+              {
+                "oldNo": 9,
+                "newNo": 9,
+                "text": "}"
+              },
+              {
+                "oldNo": 10,
+                "newNo": 10,
+                "text": ""
+              },
+              {
+                "oldNo": 11,
+                "newNo": 11,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 12,
+                "newNo": 12,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 13,
+                "newNo": 13,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 14,
+                "newNo": 14,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 15,
+                "newNo": 15,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 16,
+                "newNo": 16,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 17,
+                "newNo": 17,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 18,
+                "newNo": 18,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 19,
+                "newNo": 19,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 20,
+                "newNo": 20,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 21,
+                "newNo": 21,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 22,
+                "newNo": 22,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 23,
+                "newNo": 23,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 24,
+                "newNo": 24,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 25,
+                "newNo": 25,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 26,
+                "newNo": 26,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 27,
+                "newNo": 27,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 28,
+                "newNo": 28,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 29,
+                "newNo": 29,
+                "text": "// ---"
+              },
+              {
+                "oldNo": 30,
+                "newNo": 30,
+                "text": "// ---"
+              }
+            ]
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 31,
+            "newNo": 31,
+            "text": "export function add(a: number, b: number): number {"
+          },
+          {
+            "kind": "del",
+            "oldNo": 32,
+            "text": "  return a+b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 32,
+            "text": "  return a + b;"
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 33,
+            "newNo": 33,
+            "text": "}"
+          },
+          {
+            "kind": "gap",
+            "text": "4 unchanged lines",
+            "lines": [
+              {
+                "oldNo": 34,
+                "newNo": 34,
+                "text": ""
+              },
+              {
+                "oldNo": 35,
+                "newNo": 35,
+                "text": "/** Multiplies two operands. */"
+              },
+              {
+                "oldNo": 36,
+                "newNo": 36,
+                "text": "export function multiply(a: number, b: number): number {"
+              },
+              {
+                "oldNo": 37,
+                "newNo": 37,
+                "text": "  return a * b;"
+              }
+            ]
+          },
+          {
+            "kind": "ctx",
+            "oldNo": 38,
+            "newNo": 38,
+            "text": "}"
+          },
+          {
+            "kind": "add",
+            "newNo": 39,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 40,
+            "text": "export function subtract(a: number, b: number): number {"
+          },
+          {
+            "kind": "add",
+            "newNo": 41,
+            "text": "  return a - b;"
+          },
+          {
+            "kind": "add",
+            "newNo": 42,
+            "text": "}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "44444444-0000-4000-8000-000000000001",
+      "scope": "pr",
+      "prUrl": "https://github.com/acme/orders/pull/412",
+      "diff": {
+        "path": "README.md",
+        "lines": [
+          {
+            "kind": "ctx",
+            "oldNo": 1,
+            "newNo": 1,
+            "text": "# orders"
+          },
+          {
+            "kind": "add",
+            "newNo": 2,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 3,
+            "text": "Includes add and subtract helpers."
+          }
+        ]
+      }
+    }
+  ]
+}

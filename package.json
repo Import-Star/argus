@@ -38,7 +38,9 @@
   "main": "./out/extension.js",
   "activationEvents": [
     "onStartupFinished",
-    "onWebviewPanel:argusControlCenter"
+    "onWebviewPanel:argusControlCenter",
+    "onWebviewPanel:argusChat",
+    "onWebviewPanel:argusChatGrid"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -55,6 +57,10 @@
       {
         "command": "argus.openControlCenter",
         "title": "Argus: Open Control Center"
+      },
+      {
+        "command": "argus.openSettings",
+        "title": "Argus: Settings"
       },
       {
         "command": "argus.welcome",
@@ -141,8 +147,12 @@
         "title": "Argus: Reset Plugin Trust"
       },
       {
-        "command": "argus.diffReview.pick",
-        "title": "Argus: Review Worktree Diff"
+        "command": "argus.chat.new",
+        "title": "Argus: New Chat"
+      },
+      {
+        "command": "argus.chat.openGrid",
+        "title": "Argus: Open Chats Side by Side"
       }
     ],
     "configuration": {
@@ -231,6 +241,45 @@
           "default": 3,
           "minimum": 0,
           "description": "Unchanged lines shown around each change in the diff review."
+        },
+        "argus.chat.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Open Claude Code sessions in Argus's own chat (beta) instead of the Claude Code extension's tab. Runs your installed `claude` through the Claude Agent SDK."
+        },
+        "argus.chat.claudePath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then the Claude Code extension's copy."
+        },
+        "argus.chat.askForFolder": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "In a window with several workspace folders, ask which folder each new Argus chat starts in. Off: new chats start in the first workspace folder, like the Claude Code extension."
+        },
+        "argus.chat.experimentalMultiAgent": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Experiment: several agents on one task, shown side by side in one tab. Adds **+ Agent**, the board's **add to grid**, and opening a group's card as a grid. Off: forks open in their own tab."
+        },
+        "argus.chat.textOnlyDefault": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Open chats in Text only view (your messages and Claude's replies, tool calls hidden). The Text only button in a chat still switches it, and each chat remembers its own choice."
+        },
+        "argus.chat.hiddenModels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Models to leave out of the chat's model picker, by name as shown (e.g. `Haiku 4.5`) or id (e.g. `claude-opus-4-6`, `haiku`). A chat's current model always stays listed. Applies to chats opened after the change."
+        },
+        "argus.chat.backgroundIdleMinutes": {
+          "type": "number",
+          "default": 60,
+          "minimum": 0,
+          "markdownDescription": "How long a chat with no open tab keeps its Claude process after it goes idle. While it runs, other agents can message it and its timers keep firing. A chat that is working or waiting on you is never stopped. `0` stops it as soon as its turn ends."
         }
       }
     },
@@ -308,6 +357,16 @@
           "when": "view == argusSessions && viewItem == worktree",
           "group": "inline@1"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "argus.chat.new",
+          "when": "config.argus.chat.enabled"
+        },
+        {
+          "command": "argus.chat.openGrid",
+          "when": "config.argus.chat.enabled && config.argus.chat.experimentalMultiAgent"
+        }
       ]
     },
     "viewsWelcome": [
@@ -318,18 +377,28 @@
     ]
   },
   "scripts": {
-    "compile": "tsc -p ./ && tsc -p tsconfig.hooks.json",
+    "compile": "tsc -p ./ && tsc -p tsconfig.hooks.json && node scripts/build-chat.mjs && tsc -p chat/tsconfig.json",
     "watch": "tsc -watch -p ./",
     "vscode:prepublish": "npm run compile",
     "vscode:uninstall": "node ./out/uninstall.js",
     "package:vsix": "npx @vscode/vsce package --no-dependencies",
     "publish:store": "npx @vscode/vsce publish --no-dependencies",
-    "test": "tsc -p tsconfig.test.json && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/*.test.ts"
+    "test": "tsc -p tsconfig.test.json && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/*.test.ts",
+    "watch:chat": "node scripts/build-chat.mjs --watch",
+    "snapshots": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
     "@types/vscode": "~1.90.0",
     "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.25.12",
+    "playwright": "1.55.0",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.304",
+    "highlight.js": "^11.12.0",
+    "marked": "^18.1.1",
+    "preact": "^10.29.8"
   }
 }

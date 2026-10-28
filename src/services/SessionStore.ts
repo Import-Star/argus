@@ -6,7 +6,8 @@ import { PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord
 import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
-import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, RegistryEntry } from "./sessionColumn";
+import { addToGroup, CardGroup, groupCards, GroupOf, pruneGroups, removeFromGroup } from "./sessionGroups";
+import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, withLiveChats } from "./sessionColumn";
 import { windowFilter } from "./windowScope";
 
 const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
@@ -32,9 +33,12 @@ export class SessionStore implements vscode.Disposable {
   private readonly emitter = new vscode.EventEmitter<SessionCard[]>();
   public readonly onDidChange = this.emitter.event;
   private cards: SessionCard[] = [];
+  private groupOf: GroupOf = {};
+  private groups: CardGroup<SessionCard>[] = [];
   private prByUrl = new Map<string, PrSummary>();
   private readonly prsLookedUp = new Set<string>();
   public prsRefreshedAt?: number;
+  public prsRefreshing = false;
   private watchers: fs.FSWatcher[] = [];
   private debounce?: NodeJS.Timeout;
   private focusListener?: vscode.Disposable;
@@ -44,6 +48,7 @@ export class SessionStore implements vscode.Disposable {
   private readonly transcripts = new TranscriptIndex();
   private usageScan?: Promise<void>;
   private usageRescan = false;
+  private liveChats: () => LiveChat[] = () => [];
 
   public constructor(private readonly prSync: GhPrSyncService) {
     fs.mkdirSync(SESSIONS_DIR, { recursive: true });
@@ -81,8 +86,33 @@ export class SessionStore implements vscode.Disposable {
     void this.refreshPrs();
   }
 
+  public setLiveChats(provider: (() => LiveChat[]) | undefined): void {
+    this.liveChats = provider ?? (() => []);
+    this.scheduleRefresh();
+  }
+
   public getCards(): SessionCard[] {
     return this.cards;
+  }
+
+  public getGroupOf(): GroupOf {
+    return this.groupOf;
+  }
+
+  public getGroups(): CardGroup<SessionCard>[] {
+    return this.groups;
+  }
+
+  public addToGroup(newSessionId: string, existingSessionId: string): void {
+    this.mutateBoardState((state) => {
+      state.groupOf = addToGroup(state.groupOf, newSessionId, existingSessionId);
+    });
+  }
+
+  public removeFromGroup(sessionId: string): void {
+    this.mutateBoardState((state) => {
+      state.groupOf = removeFromGroup(state.groupOf, sessionId);
+    });
   }
 
   public needsYou(): SessionCard[] {
@@ -114,6 +144,8 @@ export class SessionStore implements vscode.Disposable {
         return byColumn !== 0 ? byColumn : (b.record.lastMessageAt ?? b.record.startedAt) - (a.record.lastMessageAt ?? a.record.startedAt);
       });
 
+    this.groupOf = state.groupOf;
+    this.groups = groupCards(this.cards, state.groupOf);
     this.emitter.fire(this.cards);
     this.scanUsage();
     this.lookUpNewPrs(records);
@@ -163,7 +195,9 @@ export class SessionStore implements vscode.Disposable {
       }
     }
     if (urls.size > 0) {
-      const fresh = await this.prSync.summarize([...urls], true);
+      this.prsRefreshing = true;
+      this.refresh();
+      const fresh = await this.prSync.summarize([...urls], true).finally(() => (this.prsRefreshing = false));
       const failed: string[] = [];
       for (const url of urls) {
         const summary = fresh.get(url);
@@ -319,6 +353,7 @@ export class SessionStore implements vscode.Disposable {
     } catch {
       return;
     }
+    const removed = new Set<string>();
     for (const file of files) {
       const sessionId = file.replace(/\.json$/, "");
       if (registry.has(sessionId)) {
@@ -329,10 +364,16 @@ export class SessionStore implements vscode.Disposable {
         const record = JSON.parse(fs.readFileSync(full, "utf8")) as SessionRecord;
         if (record.updatedAt < cutoff) {
           fs.rmSync(full, { force: true });
+          removed.add(sessionId);
         }
       } catch {
         // Unreadable record; leave it rather than guess.
       }
+    }
+    if (Object.keys(this.readBoardState().groupOf).some((id) => removed.has(id))) {
+      this.mutateBoardState((state) => {
+        state.groupOf = pruneGroups(state.groupOf, removed);
+      });
     }
   }
 
@@ -343,15 +384,15 @@ export class SessionStore implements vscode.Disposable {
         map.set(entry.sessionId, entry);
       }
     }
-    return map;
+    return withLiveChats(map, this.liveChats(), process.pid);
   }
 
   private readBoardState(): SessionBoardState {
     try {
       const parsed = JSON.parse(fs.readFileSync(BOARD_STATE_FILE, "utf8")) as Partial<SessionBoardState>;
-      return { archived: parsed.archived ?? {}, readAt: parsed.readAt ?? {} };
+      return { archived: parsed.archived ?? {}, readAt: parsed.readAt ?? {}, groupOf: parsed.groupOf ?? {} };
     } catch {
-      return { archived: {}, readAt: {} };
+      return { archived: {}, readAt: {}, groupOf: {} };
     }
   }
 

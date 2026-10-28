@@ -1,0 +1,489 @@
+{
+  "messages": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "11111111-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "groups",
+      "groups": [
+        {
+          "id": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "members": [
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000001",
+              "title": "Add subtract to math.ts",
+              "status": "working"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000002",
+              "title": "Fix flaky MFA test",
+              "status": "needs-you"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000003",
+              "title": "Charts ECS dev rollout",
+              "status": "working"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rail",
+      "sessions": [
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "column": "working",
+          "activity": "Editing src/math.ts",
+          "since": "@now-134000",
+          "repo": "orders"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000002",
+          "title": "Fix flaky MFA test",
+          "column": "needs-you",
+          "activity": "Waiting on permission: Bash",
+          "since": "@now-540000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000003",
+          "title": "Charts ECS dev rollout",
+          "column": "working",
+          "activity": "Running tests",
+          "since": "@now-840000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r4",
+          "title": "Review PR 11215",
+          "column": "needs-you",
+          "activity": "Question for you",
+          "since": "@now-1860000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "r5",
+          "title": "Update Redis alerts runbook",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-7200000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r6",
+          "title": "Orders leader election notes",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-36000000",
+          "repo": "orders"
+        }
+      ]
+    },
+    {
+      "type": "card",
+      "card": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "worktree": "/work/orders",
+        "worktrees": [
+          {
+            "name": "orders",
+            "path": "/work/orders",
+            "branch": "feat/subtract"
+          },
+          {
+            "name": "wt-sg",
+            "path": "/work/worktrees/wt-sg",
+            "branch": "spike/skeleton-gen"
+          }
+        ],
+        "prs": [
+          {
+            "key": "acme/orders#412",
+            "title": "Add subtract helper",
+            "url": "https://github.com/acme/orders/pull/412",
+            "state": "OPEN",
+            "isDraft": false,
+            "reviewDecision": "REVIEW_REQUIRED",
+            "checks": [
+              {
+                "name": "build",
+                "status": "COMPLETED",
+                "conclusion": "SUCCESS"
+              },
+              {
+                "name": "lint",
+                "status": "IN_PROGRESS"
+              }
+            ]
+          }
+        ],
+        "usedTokens": 48210,
+        "compactions": 0
+      }
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/subtract-fn",
+        "status": "idle",
+        "statusSince": "@now-134000",
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "default",
+            "displayName": "Default (recommended)",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "opus",
+            "displayName": "Opus 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "fable",
+            "displayName": "Fable 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "sonnet",
+            "displayName": "Sonnet 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "haiku",
+            "displayName": "Haiku 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-haiku-4-5-20251001",
+            "displayName": "Haiku 4.5",
+            "efforts": []
+          },
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-5",
+            "displayName": "Opus 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-fable-5",
+            "displayName": "Fable 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-8",
+            "displayName": "Opus 4.8",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-7",
+            "displayName": "Opus 4.7",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-6",
+            "displayName": "Opus 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-sonnet-4-6",
+            "displayName": "Sonnet 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-mythos-5-1",
+            "displayName": "Mythos 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "lastResponseAt": "@now-150000",
+        "cacheTtlMs": 300000,
+        "title": "Add subtract to math.ts"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000201",
+        "message": {
+          "role": "user",
+          "content": "Start the API in the background, watch the deploy, and have an agent audit fee rounding."
+        },
+        "origin": {
+          "kind": "human"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000202",
+        "message": {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "Started the dev server and a deploy monitor, and handed fee rounding to an agent."
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_bg1",
+              "name": "Agent",
+              "input": {
+                "subagent_type": "general-purpose",
+                "description": "Audit fee rounding"
+              }
+            },
+            {
+              "type": "tool_use",
+              "id": "toolu_fg1",
+              "name": "Agent",
+              "input": {
+                "subagent_type": "Explore",
+                "description": "Find fee callers"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000101",
+        "task_id": "b0",
+        "description": "yarn test --watch",
+        "task_type": "local_bash",
+        "is_backgrounded": true,
+        "timestamp": "2026-10-21T09:40:00Z"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000102",
+        "task_id": "b1",
+        "description": "yarn workspace api dev",
+        "task_type": "local_bash",
+        "is_backgrounded": true,
+        "timestamp": "2026-10-21T09:47:56Z"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000103",
+        "task_id": "b2",
+        "description": "Watch deploy status in #deploys",
+        "task_type": "monitor",
+        "timestamp": "2026-10-21T09:55:00Z"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_started",
+        "uuid": "00000000-0000-4000-8000-000000000104",
+        "task_id": "b3",
+        "tool_use_id": "toolu_bg1",
+        "description": "Audit fee rounding",
+        "task_type": "local_agent",
+        "subagent_type": "general-purpose",
+        "is_backgrounded": true,
+        "timestamp": "2026-10-21T09:58:30Z"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "task_notification",
+        "uuid": "00000000-0000-4000-8000-000000000105",
+        "task_id": "b0",
+        "status": "completed",
+        "output_file": "/tmp/b0.out",
+        "summary": "yarn test --watch exited",
+        "timestamp": "2026-10-21T09:44:00Z"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "system",
+        "subtype": "background_tasks_changed",
+        "uuid": "00000000-0000-4000-8000-000000000106",
+        "tasks": [
+          {
+            "task_id": "b1",
+            "task_type": "local_bash",
+            "description": "yarn workspace api dev"
+          },
+          {
+            "task_id": "b2",
+            "task_type": "monitor",
+            "description": "Watch deploy status in #deploys"
+          },
+          {
+            "task_id": "b3",
+            "task_type": "local_agent",
+            "subagent_type": "general-purpose",
+            "description": "Audit fee rounding"
+          }
+        ],
+        "timestamp": "2026-10-21T09:58:31Z"
+      }
+    },
+    {
+      "type": "usage",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "usage": {
+        "windows": [
+          {
+            "key": "five_hour",
+            "label": "5-hour",
+            "percent": 62,
+            "resetsAt": "@now+8040000"
+          },
+          {
+            "key": "seven_day",
+            "label": "Weekly",
+            "percent": 84,
+            "resetsAt": "@now+190000000"
+          }
+        ]
+      }
+    },
+    {
+      "type": "taskOutput",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "taskId": "b1",
+      "output": "$ yarn workspace api dev\nlistening on :3000\nGET /health 200 2ms\nGET /orders 200 14ms\nPOST /orders 201 31ms"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import { promisify } from "util";
 import * as vscode from "vscode";
 import { CleanupItem, SessionCard } from "../types";
 import { output } from "./log";
-import { openClaudeTab } from "./openSession";
+import { closeChatSession, openClaudeTab } from "./openSession";
 import { isClaudeTab, SessionStore } from "./SessionStore";
 
 const execFileAsync = promisify(execFile);
@@ -75,6 +75,9 @@ function activeClaudeTabTitled(title: string): Promise<vscode.Tab | undefined> {
 // Tabs carry no session id, so the title only tells us a tab may be open; reopening the session brings its tab to
 // the front, but Claude doesn't wait for that, so watch for the switch instead of reading the active tab.
 async function closeChatTab(card: SessionCard): Promise<void> {
+  if (closeChatSession(card.record.sessionId)) {
+    return;
+  }
   const title = card.record.title;
   const match = vscode.window.tabGroups.all.flatMap((group) => group.tabs).find((tab) => isClaudeTab(tab) && tab.label === title);
   if (!title || !match) {

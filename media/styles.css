@@ -97,6 +97,15 @@ button.link { border: 0; background: none; padding: 0; color: var(--dim); font-s
 .glyph.ok { color: var(--green); }
 .glyph.bad { color: var(--danger); }
 @keyframes pulse { 50% { opacity: 0.3; } }
+.agents { margin: 6px 0 0 20px; display: flex; flex-direction: column; gap: 2px; }
+.agents-head { color: var(--muted); }
+.agent { display: flex; align-items: baseline; gap: 8px; width: 100%; min-width: 0; padding: 2px 6px; border: 0; border-radius: 4px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.agent:hover { background: var(--row-hover); }
+.agent-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-act { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.agent.col-needs-you .agent-act { color: var(--coral); }
+.agent.col-archived { opacity: 0.6; }
+.agent-who { margin: 7px 0 -4px 20px; color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0 20px; }
 .chip { padding: 1px 6px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--muted); font: inherit; font-size: 11px; cursor: pointer; }
 .chip.pr-open { color: var(--green); border-color: color-mix(in srgb, var(--green) 45%, transparent); }
@@ -134,7 +143,6 @@ button.link { border: 0; background: none; padding: 0; color: var(--dim); font-s
 .last::before { content: "⏺ "; color: var(--dim); }
 .chip.wt { color: var(--blue); border-color: color-mix(in srgb, var(--blue) 45%, transparent); }
 .last.hit::before { content: "⌕ "; }
-.usage { margin: 5px 0 0 20px; color: var(--dim); }
 button.icon.on { border-color: var(--coral); color: var(--coral); }
 .sboard.lanes { gap: 0 14px; }
 .lanes .scol h2 { margin-bottom: 0; }
@@ -172,3 +180,22 @@ body.welcome { max-width: 760px; margin: 0 auto; padding: 24px 24px 40px; line-h
 .welcome-meta { color: var(--muted); font-size: 12px; }
 .welcome-warn { color: var(--amber); }
 .welcome-foot { margin-top: 20px; text-align: center; }
+
+/* ── Chat answers on board cards ─────────────────────────────────────────── */
+
+.pending { margin: 7px 0 2px 20px; padding: 8px 10px; border: 1px solid var(--coral); border-radius: 6px; background: var(--coral-soft); display: flex; flex-direction: column; gap: 8px; cursor: default; }
+.pending-title { font-weight: 600; }
+.pending-code { padding: 6px 8px; border-radius: 5px; background: var(--bg); word-break: break-all; max-height: 120px; overflow-y: auto; }
+.pending-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.pending-actions button { font-size: 12px; padding: 4px 10px; }
+.pending-actions button:disabled { opacity: 0.5; cursor: default; }
+.pending-q { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.pending-q legend { padding: 0 0 6px; font-weight: 600; line-height: 1.4; }
+.pending-opt { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--row); cursor: pointer; }
+.pending-opt.on { border-color: var(--coral); background: var(--coral-soft); }
+.pending-opt input { margin: 2px 0 0; accent-color: var(--coral); }
+.pending-label { display: block; font-weight: 600; }
+.pending-desc { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+#refresh-sessions.refreshing { cursor: default; }
+#refresh-sessions.refreshing .refresh-glyph { display: inline-block; animation: spin 0.8s linear infinite; }

@@ -22,4 +22,5 @@ export type {
 export interface SessionBoardState {
   archived: Record<string, number>;
   readAt: Record<string, number>;
+  groupOf: Record<string, string>;
 }

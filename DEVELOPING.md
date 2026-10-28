@@ -78,6 +78,7 @@ src/providers/
   ControlCenter.ts                Control Center webview panel: hosts every registered tab
   WelcomePanel.ts                 Welcome page: session tracking status and setup, how plugins work
   SessionsTab.ts                  the core's own tab (Sessions, larger), built on registerTab
+  SettingsTab.ts                  the Settings tab: package.json settings in, user-level edits out
   UsageStatusBar.ts               Claude plan usage status bar item
 src/services/
   SessionStore.ts                 merges hook records + Claude Code's session registry into cards and columns
@@ -89,11 +90,13 @@ src/services/
   importChats.ts                  builds session records from existing Claude Code transcripts (Import Existing Claude Chats)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse
   UsageService.ts                 Claude plan usage, reads from Anthropic's OAuth endpoint
+  settingsSchema.ts               turns package.json contributes.configuration plus current values into Settings tab groups
   PluginHost.ts                   finds, loads and reloads plugin folders; owns their lifetime
   PluginConfig.ts                 a plugin's slice of argus.plugins.config
 hooks/session-tracker.ts         runs inside Claude Code hooks, writes session JSON
 media/host.js, styles.css        Control Center webview shell: tab switching, shared CSS classes, timers
 media/sessions.js                the Sessions tab: board, search, keyboard shortcuts, multi-select
+media/settings.js, settings.css  the Settings tab
 media/welcome.js                 Welcome page buttons
 ```
 

@@ -38,12 +38,12 @@ export interface DiffResult {
   mergeBase: string;
   scope: Scope | "pr";
   files: DiffFile[];
-  pr?: { number: number; title: string; url: string; repo: string; headSha: string };
+  pr?: { number: number; title: string; url: string; repo: string; headSha: string; local: boolean };
 }
 
 const MAX_UNTRACKED_BYTES = 512 * 1024;
 
-async function git(folder: string, args: string[], okCodes: number[] = [0]): Promise<string> {
+export async function git(folder: string, args: string[], okCodes: number[] = [0]): Promise<string> {
   try {
     const { stdout } = await execFileAsync("git", ["-C", folder, "-c", "core.quotepath=false", ...args], { maxBuffer: 64 * 1024 * 1024 });
     return stdout;
@@ -82,7 +82,7 @@ export async function detectBase(folder: string, configured: string): Promise<st
       return ref;
     }
   }
-  throw new Error("Could not find a base branch. Set one in the Base field or argus.plugins.config.diff-review.baseRef.");
+  throw new Error("Could not find a base branch. Set argus.diffReview.baseRef.");
 }
 
 function diffArgs(scope: Scope, mergeBase: string): string[] {

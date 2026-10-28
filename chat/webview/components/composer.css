@@ -1,0 +1,291 @@
+.chat-composer {
+  --cmp-line: color-mix(in srgb, var(--text) 22%, transparent);
+  --cmp-h: 28px;
+  padding: 12px 24px 18px;
+  max-width: 820px;
+  width: 100%;
+  margin: 0 auto;
+  container-type: inline-size;
+}
+
+.chat-composer[data-compact] {
+  padding: 6px 8px 8px;
+  max-width: none;
+}
+
+.cmp-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--cmp-line);
+  border-radius: 10px;
+  background: var(--input);
+}
+
+.chat-composer[data-compact] .cmp-box {
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.cmp-box:focus-within {
+  border-color: var(--accent);
+}
+
+.cmp-input {
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--strong);
+  font: inherit;
+  font-size: 13.5px;
+  line-height: 1.5;
+  padding: 0;
+  display: block;
+  width: 100%;
+  min-height: 3em;
+  overflow-y: auto;
+}
+
+.chat-composer[data-compact] .cmp-input {
+  min-height: 0;
+}
+
+.cmp-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cmp-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 5px;
+  min-width: 0;
+}
+
+.cmp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.cmp-chip button {
+  padding: 0 0 0 2px;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.cmp-image {
+  padding: 2px;
+}
+
+.cmp-image img {
+  height: 36px;
+  max-width: 64px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.cmp-icon {
+  width: var(--cmp-h);
+  height: var(--cmp-h);
+  padding: 0;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cmp-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: var(--cmp-h);
+  max-width: 100%;
+  padding: 0 8px;
+  border: 1px solid var(--cmp-line);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.cmp-pill:hover,
+.cmp-pill:focus-within {
+  border-color: var(--accent);
+}
+
+.cmp-pill svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.cmp-pill-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmp-pill select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.cmp-pill option {
+  background: var(--vscode-dropdown-background, var(--bg));
+  color: var(--vscode-dropdown-foreground, var(--text));
+}
+
+.cmp-effort {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: var(--cmp-h);
+  border: 1px solid var(--cmp-line);
+  border-radius: 999px;
+  padding: 2px 2px 2px 8px;
+  white-space: nowrap;
+}
+
+.chat-composer[data-compact] .cmp-effort {
+  padding-left: 2px;
+}
+
+.cmp-effort-label {
+  color: var(--muted);
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.cmp-effort button {
+  height: 100%;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.cmp-effort button:hover {
+  color: var(--text);
+}
+
+.cmp-effort button.on {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.cmp-end {
+  flex: none;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cmp-send,
+.cmp-stop {
+  width: var(--cmp-h);
+  height: var(--cmp-h);
+  padding: 0;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cmp-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cmp-stop {
+  background: var(--strong);
+  border-color: var(--strong);
+}
+
+.cmp-stop span {
+  width: 10px;
+  height: 10px;
+  background: var(--bg);
+  border-radius: 2px;
+}
+
+.cmp-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 4px);
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--vscode-quickInput-background, var(--row));
+  padding: 4px;
+  z-index: 5;
+}
+
+.cmp-option {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmp-option.active {
+  background: var(--coral-soft);
+  color: var(--strong);
+}
+
+@container (max-width: 640px) {
+  .cmp-effort-label {
+    display: none;
+  }
+
+  .cmp-effort {
+    padding-left: 2px;
+  }
+}
+
+.cmp-command {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cmp-hint {
+  color: var(--muted);
+}
+
+.cmp-desc {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmp-note {
+  color: var(--muted);
+  font-size: 12px;
+}
