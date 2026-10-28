@@ -29,6 +29,7 @@ interface GhPrNode {
   url?: string;
   state?: string;
   isDraft?: boolean;
+  closedAt?: string | null;
   reviewDecision?: string;
   reviews?: { nodes?: GhReview[] };
   commits?: { nodes?: Array<{ commit?: { statusCheckRollup?: { contexts?: { nodes?: GhStatusCheck[] } } | null } }> };
@@ -40,7 +41,7 @@ interface GhBatchResponse {
 }
 
 const BATCH_SIZE = 50;
-const PR_FIELDS = `title url state isDraft reviewDecision
+const PR_FIELDS = `title url state isDraft closedAt reviewDecision
   reviews(last: 100) { nodes { state author { login } } }
   commits(last: 1) { nodes { commit { statusCheckRollup { contexts(first: 100) { nodes {
     ... on CheckRun { name status conclusion }
@@ -176,6 +177,7 @@ export class GhPrSyncService {
         url: ref.url,
         state: node.state ?? "unknown",
         isDraft: Boolean(node.isDraft),
+        closedAt: node.closedAt ?? undefined,
         reviewDecision: node.reviewDecision ?? undefined,
         reviewers: this.dedupeReviewers(node.reviews?.nodes),
         checks: this.mapChecks(node.commits?.nodes?.[0]?.commit?.statusCheckRollup?.contexts?.nodes),

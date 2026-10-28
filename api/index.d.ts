@@ -80,6 +80,7 @@ export interface PrSummary {
   url: string; // canonical https://github.com/owner/repo/pull/number
   state: string; // OPEN | MERGED | CLOSED | unknown
   isDraft: boolean;
+  closedAt?: string; // ISO time the PR was merged or closed
   reviewDecision?: string;
   reviewers: PrReviewer[];
   checks: PrCheck[];

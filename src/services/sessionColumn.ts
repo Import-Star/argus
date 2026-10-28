@@ -59,7 +59,8 @@ export function columnFor(
   interrupted: boolean,
   scheduled = false
 ): SessionColumn | undefined {
-  const anyPrOpen = prs.some((pr) => pr.state === "OPEN");
+  // A PR merged or closed since the last prompt keeps the card in the PR column until the user messages it again.
+  const anyPrOpen = prs.some((pr) => pr.state === "OPEN" || (pr.closedAt !== undefined && Date.parse(pr.closedAt) > (record.lastPromptAt ?? 0)));
   const closed = !registry;
 
   if (closed && !record.lastPrompt && !record.title) {
