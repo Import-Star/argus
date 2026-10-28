@@ -47,6 +47,12 @@ async function reviewSteps(page, { then }) {
   await page.evaluate((messages) => window.__harness.play(messages), then);
 }
 
+// Diagrams draw after Mermaid's bundle loads, so wait for both, and for the broken one to fall back to code.
+async function mermaidSteps(page) {
+  await page.locator(".mermaid-diagram:not([hidden]) svg").nth(1).waitFor();
+  await page.locator(".mermaid-error:not([hidden])").waitFor();
+}
+
 async function planSteps(page) {
   await openIn(page, "Open plan");
   await page.locator(".plan-pane").waitFor();
@@ -174,6 +180,7 @@ const SCREENS = [
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
   { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
   { name: "aside", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: asideSteps, expect: { panel: ".aside-panel", questions: ".aside-question", answer: ".aside-answer pre", streaming: ".aside-answer[aria-busy=\"true\"]", form: ".aside-form button" } },
+  { name: "mermaid", html: "mermaid.html", steps: mermaidSteps, expect: { diagrams: ".mermaid-diagram:not([hidden]) svg", toggle: ".mermaid-toggle:not([hidden])", error: ".mermaid-error:not([hidden])", fallback: ".mermaid-block[data-state=error] .code-block" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } }
 ];
 

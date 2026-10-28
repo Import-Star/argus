@@ -210,3 +210,40 @@ code,
   opacity: 1;
   color: var(--vscode-testing-iconPassed, #3fb950);
 }
+
+/* ```mermaid blocks: drawn as a diagram, with the source one click away. */
+.mermaid-block {
+  position: relative;
+  margin: 8px 0;
+}
+
+.mermaid-block [hidden] {
+  display: none !important;
+}
+
+.mermaid-diagram {
+  overflow-x: auto;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--vscode-editor-background);
+}
+
+.mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.mermaid-toggle {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.mermaid-error {
+  margin-bottom: 4px;
+  font-size: 11px;
+  color: var(--vscode-errorForeground);
+}
