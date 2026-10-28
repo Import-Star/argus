@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.4.1
 
 - Argus chat on Windows: files a session edited show relative to the project in Details and Review, and files
   dropped from Explorer attach with their real path.
