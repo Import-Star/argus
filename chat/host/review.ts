@@ -1,10 +1,11 @@
 import { readFileSync } from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { REVIEW_PROMPT_START, type ChangeScope, type DiffComment, type DiffLine, type FileChange, type FileDiff } from "../../src/chat/protocol";
+import { REVIEW_PROMPT_START, type ChangeScope, type DiffComment, type FileChange, type FileDiff } from "../../src/chat/protocol";
 import { fileLines, loadDiff, type DiffFile } from "../../src/diffReview/git";
 import { loadPrDiff, prFileLines } from "../../src/diffReview/pr";
 import type { ChatSession } from "./ChatSession";
+import { withGaps } from "./diffGaps";
 
 type PrRef = NonNullable<Awaited<ReturnType<typeof loadPrDiff>>["pr"]>;
 const posix = (file: string) => file.split(path.sep).join("/");
@@ -42,26 +43,6 @@ export async function listChanges(session: ChatSession, scope: ChangeScope, edit
   }
 }
 
-const MAX_GAP_LINES = 2000;
-
-export function gap(from: number, to: number, offset: number, content: string[]): DiffLine[] {
-  const count = to - from + 1;
-  if (count <= 0) return [];
-  const text = `${count} unchanged ${count === 1 ? "line" : "lines"}`;
-  if (count > MAX_GAP_LINES || content.length < to) return [{ kind: "gap", text }];
-  const lines = content.slice(from - 1, to).map((line, index) => ({ oldNo: from + index + offset, newNo: from + index, text: line }));
-  return [{ kind: "gap", text, lines }];
-}
-
-export function hunkRange(header: string): { start: number; end: number; offset: number } {
-  const match = header.match(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
-  const oldCount = match?.[2] === undefined ? 1 : Number(match[2]);
-  const count = match?.[4] === undefined ? 1 : Number(match[4]);
-  const oldStart = Number(match?.[1] ?? 1) + (oldCount === 0 ? 1 : 0);
-  const start = Number(match?.[3] ?? 1) + (count === 0 ? 1 : 0);
-  return { start, end: start + count - 1, offset: oldStart - start };
-}
-
 export async function fileDiff(session: ChatSession, scope: ChangeScope, file: string, edited?: string[], prUrl?: string, worktree?: string): Promise<FileDiff> {
   const { files, pr } = await loadScope(session, scope, edited, prUrl, worktree, true);
   const found = files.find((candidate) => candidate.path === file);
@@ -70,18 +51,7 @@ export async function fileDiff(session: ChatSession, scope: ChangeScope, file: s
   }
   const source = pr ? prFileLines(session.meta.cwd, pr, found.path) : fileLines(worktree ?? session.meta.cwd, "unstaged", found.path);
   const content = found.status === "deleted" ? [] : await source.catch(() => [] as string[]);
-  const lines: DiffLine[] = [];
-  let previousEnd = 0;
-  let offset = 0;
-  for (const hunk of found.hunks) {
-    const range = hunkRange(hunk.header);
-    lines.push(...gap(previousEnd + 1, range.start - 1, range.offset, content));
-    lines.push(...hunk.lines.map((line) => ({ kind: line.type, oldNo: line.old, newNo: line.new, text: line.text })));
-    previousEnd = range.end;
-    offset = range.offset;
-  }
-  lines.push(...gap(previousEnd + 1, content.length, offset, content));
-  return { path: file, lines };
+  return { path: file, lines: withGaps(found.hunks, content) };
 }
 
 function lineText(cwd: string, file: string, line: number): string | undefined {
