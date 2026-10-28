@@ -17,6 +17,7 @@ First public release.
   stall VS Code with several chats open.
 - Chats keep their Scheduled timers between turns before Claude Code lists them as open.
 - The board's refresh spinner stops when a PR lookup fails.
+- The Control Center tab shows the Argus icon, like the chat and Welcome tabs.
 
 ## 0.4.0
 

@@ -106,6 +106,7 @@ export class ControlCenter implements vscode.Disposable {
 
   private attachPanel(panel: vscode.WebviewPanel): void {
     this.panel = panel;
+    this.panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, "media", "icon.png");
     this.panel.webview.html = this.getHtml(this.panel.webview);
 
     this.panel.onDidChangeViewState(() => this.notifyVisibility());
