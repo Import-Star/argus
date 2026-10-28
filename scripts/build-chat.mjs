@@ -30,8 +30,20 @@ const webview = {
   logLevel: "warning"
 };
 
+// Mermaid is large, so it is its own bundle, loaded only when a reply contains a diagram.
+const mermaid = {
+  entryPoints: ["chat/webview/mermaidEntry.ts"],
+  outfile: "out/chat/mermaid.js",
+  bundle: true,
+  platform: "browser",
+  format: "iife",
+  target: "es2022",
+  minify: true,
+  logLevel: "warning"
+};
+
 if (watch) {
-  await Promise.all([host, webview].map(async (options) => (await context(options)).watch()));
+  await Promise.all([host, webview, mermaid].map(async (options) => (await context(options)).watch()));
 } else {
-  await Promise.all([build(host), build(webview)]);
+  await Promise.all([build(host), build(webview), build(mermaid)]);
 }

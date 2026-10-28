@@ -103,6 +103,9 @@ board; opening one while it is running there warns you first, since two processe
   asks a side question without adding it to the transcript. Queued messages can be edited, reordered or sent now.
   Each reply shows its turn's cost, and code blocks and replies have copy buttons. Type `/` for the session's
   slash commands, and paste or drop files to attach them.
+- ` ```mermaid ` blocks in replies are drawn as diagrams in your theme's colours, with **Show source** to see the
+  code. A block that doesn't parse stays as code, with the error above it. Mermaid loads the first time a reply has
+  a diagram.
 - The details pane shows plan usage, background shells, monitors and agents (with their output and a stop
   button), and the worktrees linked to the session.
 - A chat's name is sent to Claude Code with `/rename`, so `/resume` and other sessions show the same title.

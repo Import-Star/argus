@@ -2,6 +2,12 @@
 
 First public release.
 
+## Unreleased
+
+- Argus chat draws ` ```mermaid ` blocks as diagrams (Mermaid 12.2.0, strict security level), with **Show source**
+  to switch to the code. A block that doesn't parse stays as code with the error shown. Mermaid loads only when a
+  reply has a diagram; it adds about 1.4 MB to the extension download.
+
 ## 0.5.0
 
 - **Argus chat is now how sessions open**, and no longer needs turning on: the `argus.chat.enabled` setting is gone.

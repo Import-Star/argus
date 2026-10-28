@@ -10,9 +10,14 @@ const marked = new Marked({
   gfm: true,
   renderer: {
     html: ({ text }: Tokens.HTML | Tokens.Tag) => escapeHtml(text),
-    code: ({ text, lang }: Tokens.Code) => {
+    code: ({ text, lang, raw }: Tokens.Code) => {
       const language = lang?.trim().split(/\s+/)[0] || undefined;
-      return `<div class="code-block"><button type="button" class="copy-btn" title="Copy code" aria-label="Copy code">${COPY_ICON}</button><pre><code class="hljs">${highlightCode(text, language)}</code></pre></div>\n`;
+      const block = `<div class="code-block"><button type="button" class="copy-btn" title="Copy code" aria-label="Copy code">${COPY_ICON}</button><pre><code class="hljs">${highlightCode(text, language)}</code></pre></div>`;
+      // Drawn by mermaid.ts once the closing fence has streamed in; until then, and if it fails to parse, it's code.
+      if (language?.toLowerCase() === "mermaid" && /(```|~~~)\s*$/.test(raw)) {
+        return `<div class="mermaid-block" data-source="${escapeHtml(text)}"><div class="mermaid-diagram" hidden></div><div class="mermaid-error" hidden></div>${block}<button type="button" class="mermaid-toggle" hidden>Show source</button></div>\n`;
+      }
+      return `${block}\n`;
     },
     image: ({ text }: Tokens.Image) => escapeHtml(text),
     link(this, { href, title, tokens }: Tokens.Link) {
