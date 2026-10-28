@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.4.2
 
 - Argus keeps the session tracking hook up to date by itself: after an update it replaces the hook script in
   `~/.claude/argus` on startup, so there's no need to run **Set Up Session Tracking** again. It never replaces a
