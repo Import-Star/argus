@@ -51,7 +51,7 @@ These run `npm install`, `npm run compile` and `npm run package:vsix`, then
 After either script, run `Developer: Reload Window`. If you also installed Argus from the Marketplace, disable
 one copy so the two do not both register the same commands.
 
-Run **Argus: Set Up Session Tracking** once per machine. Re-run it after changing `hooks/session-tracker.ts`, because it is copied out to `~/.claude` on install.
+Run **Argus: Set Up Session Tracking** once per machine. After you change `hooks/session-tracker.ts`, reload the window: Argus copies the new script to `~/.claude/argus` on startup. Re-run setup only when you change which events are hooked (`EVENTS` in `HookInstaller.ts`); Argus shows a warning when that's needed.
 
 ## Working with an agent
 

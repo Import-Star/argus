@@ -28,6 +28,7 @@
         archiving: new Set(),
         refreshedAt: undefined,
         refreshing: false,
+        tracking: "",
         query: saved.query || "",
         selected: undefined,
         // Sessions picked for a bulk action (ctrl/cmd-click, shift-click or x), and the last one picked.
@@ -65,6 +66,7 @@
         this.state.archiving = new Set(message.archiving || []);
         this.state.chat = Boolean(message.chat);
         this.state.multiAgent = Boolean(message.multiAgent);
+        this.state.tracking = typeof message.tracking === "string" ? message.tracking : "";
         const ids = new Set(this.state.cards.map((card) => card.record.sessionId));
         for (const id of this.state.picked) if (!ids.has(id)) this.state.picked.delete(id);
         this.render();
@@ -527,6 +529,7 @@
           <button id="group-repo" class="icon${this.state.groupByRepo ? " on" : ""}" title="Group by repo (g)">⊞ by repo</button>
           <button id="refresh-sessions" class="icon${this.state.refreshing ? " refreshing" : ""}" title="${this.state.refreshing ? "Refreshing PR states…" : "Refresh PR states"}" aria-busy="${this.state.refreshing}" ${this.state.refreshing ? "disabled" : ""}><span class="refresh-glyph">↻</span></button>
         </div>
+        ${this.state.tracking ? `<div class="tracking-notice" role="status"><span>⚠ ${esc(this.state.tracking)}</span><button id="set-up-tracking" class="primary">Set Up Session Tracking</button></div>` : ""}
         ${this.bulkBar()}
         ${this.statusLine()}
         ${this.renderBoard()}
@@ -676,6 +679,7 @@
         this.render();
       });
       this.root.querySelector("#refresh-sessions")?.addEventListener("click", () => this.ctx.post({ type: "refreshSessions" }));
+      this.root.querySelector("#set-up-tracking")?.addEventListener("click", () => this.ctx.post({ type: "setUpTracking" }));
     }
   });
 

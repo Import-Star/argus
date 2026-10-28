@@ -2,6 +2,15 @@
 
 First public release.
 
+## Unreleased
+
+- Argus keeps the session tracking hook up to date by itself: after an update it replaces the hook script in
+  `~/.claude/argus` on startup, so there's no need to run **Set Up Session Tracking** again. It never replaces a
+  script written by a newer Argus.
+- When session tracking does need you (it's off, a new Argus hooks more events, or the Node it was set up with is
+  gone), the Sessions sidebar and the Control Center show a warning with a **Set Up Session Tracking** button, and
+  a broken setup gets one notification per Argus version. Removing tracking on purpose turns the warning off.
+
 ## 0.4.1
 
 - Argus chat on Windows: files a session edited show relative to the project in Details and Review, and files

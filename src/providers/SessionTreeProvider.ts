@@ -1,9 +1,10 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { COLUMN_LABEL, COLUMN_ORDER, formatElapsed, SessionStore } from "../services/SessionStore";
+import type { TrackingMonitor } from "../services/TrackingMonitor";
 import { SessionCard, SessionColumn } from "../types";
 
-type Node = { kind: "group"; column: SessionColumn } | { kind: "session"; card: SessionCard } | { kind: "worktree"; folder: string };
+type Node = { kind: "tracking"; message: string } | { kind: "group"; column: SessionColumn } | { kind: "session"; card: SessionCard } | { kind: "worktree"; folder: string };
 
 const ICON: Record<SessionColumn, vscode.ThemeIcon> = {
   "needs-you": new vscode.ThemeIcon("bell-dot", new vscode.ThemeColor("notificationsWarningIcon.foreground")),
@@ -21,8 +22,11 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
   private readonly tick: NodeJS.Timeout;
   private view?: vscode.TreeView<Node>;
 
-  public constructor(private readonly store: SessionStore) {
-    this.disposables.push(store.onDidChange(() => this.render()));
+  public constructor(
+    private readonly store: SessionStore,
+    private readonly tracking: TrackingMonitor
+  ) {
+    this.disposables.push(store.onDidChange(() => this.render()), tracking.onDidChange(() => this.render()));
     this.tick = setInterval(() => this.emitter.fire(undefined), 30_000);
   }
 
@@ -34,7 +38,10 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
   public getChildren(element?: Node): Node[] {
     const cards = this.store.getCards();
     if (!element) {
-      return COLUMN_ORDER.filter((column) => cards.some((card) => card.column === column)).map((column) => ({ kind: "group", column }));
+      const groups: Node[] = COLUMN_ORDER.filter((column) => cards.some((card) => card.column === column)).map((column) => ({ kind: "group", column }));
+      const message = this.tracking.message;
+      // With tracking off and no cards, the view's welcome text already offers setup.
+      return message && groups.length > 0 ? [{ kind: "tracking", message }, ...groups] : groups;
     }
     if (element.kind === "group") {
       return cards.filter((card) => card.column === element.column).map((card) => ({ kind: "session", card }));
@@ -46,6 +53,13 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
   }
 
   public getTreeItem(node: Node): vscode.TreeItem {
+    if (node.kind === "tracking") {
+      const item = new vscode.TreeItem(node.message);
+      item.iconPath = new vscode.ThemeIcon("warning", new vscode.ThemeColor("notificationsWarningIcon.foreground"));
+      item.tooltip = `${node.message} Click to run Set Up Session Tracking.`;
+      item.command = { command: "argus.sessions.installHooks", title: "Set Up Session Tracking" };
+      return item;
+    }
     if (node.kind === "group") {
       const count = this.store.getCards().filter((card) => card.column === node.column).length;
       const item = new vscode.TreeItem(

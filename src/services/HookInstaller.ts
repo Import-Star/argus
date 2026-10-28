@@ -87,14 +87,113 @@ function fromLoginShell(): string | undefined {
 
 // Copied out of the extension folder so version bumps don't break the path in settings.json.
 function installScript(extensionPath: string): string {
-  fs.mkdirSync(ARGUS_DIR, { recursive: true });
-  fs.copyFileSync(path.join(extensionPath, "hooks", SCRIPT), INSTALLED_SCRIPT);
-  // An earlier build ran a compiled copy of the script; drop it.
-  fs.rmSync(path.join(ARGUS_DIR, "session-tracker.js"), { force: true });
-  // Marks the hook as an ES module so Node skips the slow "detect module syntax" reparse and its warning.
-  fs.writeFileSync(path.join(ARGUS_DIR, "package.json"), `${JSON.stringify({ private: true, type: "module" }, null, 2)}\n`);
+  copyScript(path.join(extensionPath, "hooks", SCRIPT), ARGUS_DIR, extensionVersion(extensionPath));
   // Node 24+ runs TypeScript natively, so the hook ships as source.
   return `"${findNode() ?? "node"}" --no-warnings "${INSTALLED_SCRIPT}"`;
+}
+
+function extensionVersion(extensionPath: string): string {
+  try {
+    return String((JSON.parse(fs.readFileSync(path.join(extensionPath, "package.json"), "utf8")) as { version?: unknown }).version ?? "0.0.0");
+  } catch {
+    return "0.0.0";
+  }
+}
+
+// Writes through a temp file so a hook running at that moment never reads half a script.
+function copyScript(source: string, dir: string, version: string): void {
+  fs.mkdirSync(dir, { recursive: true });
+  const target = path.join(dir, SCRIPT);
+  const temp = `${target}.${process.pid}.tmp`;
+  fs.copyFileSync(source, temp);
+  fs.renameSync(temp, target);
+  // An earlier build ran a compiled copy of the script; drop it.
+  fs.rmSync(path.join(dir, "session-tracker.js"), { force: true });
+  // Marks the hook as an ES module so Node skips the slow "detect module syntax" reparse and its warning. The version
+  // stops an older Argus (in another VS Code install, say) from replacing a newer script.
+  fs.writeFileSync(path.join(dir, "package.json"), `${JSON.stringify({ private: true, type: "module", version }, null, 2)}\n`);
+}
+
+function newerVersion(a: string, b: string): boolean {
+  const parts = (version: string) => version.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const [x, y] = [parts(a), parts(b)];
+  for (let at = 0; at < Math.max(x.length, y.length); at += 1) {
+    if ((x[at] ?? 0) !== (y[at] ?? 0)) {
+      return (x[at] ?? 0) > (y[at] ?? 0);
+    }
+  }
+  return false;
+}
+
+// Brings the installed hook script in line with this build without touching settings.json. "newer" means a newer
+// Argus installed it, which this build leaves alone.
+export function refreshHookScript(source: string, dir: string, version: string): "updated" | "current" | "newer" {
+  try {
+    if (fs.readFileSync(path.join(dir, SCRIPT), "utf8") === fs.readFileSync(source, "utf8")) {
+      return "current";
+    }
+  } catch {
+    // A missing installed script is just out of date.
+  }
+  let installed = "0.0.0";
+  try {
+    installed = String((JSON.parse(fs.readFileSync(path.join(dir, "package.json"), "utf8")) as { version?: unknown }).version ?? "0.0.0");
+  } catch {
+    // Scripts from before the version marker count as oldest.
+  }
+  if (newerVersion(installed, version)) {
+    return "newer";
+  }
+  copyScript(source, dir, version);
+  return "updated";
+}
+
+export type TrackingProblem = "off" | "partial" | "node-missing";
+
+// What, if anything, needs the user to run Set Up Session Tracking. A stale script doesn't: Argus replaces it.
+export function trackingProblem(settings: { hooks?: Record<string, HookEntry[]> }, exists: (file: string) => boolean = fs.existsSync): TrackingProblem | undefined {
+  const hooked = hookedEvents(settings).length;
+  if (hooked === 0) {
+    return "off";
+  }
+  if (hooked < EVENTS.length) {
+    return "partial";
+  }
+  return hookNodes(settings).some((node) => path.isAbsolute(node) && !exists(node)) ? "node-missing" : undefined;
+}
+
+// The Node executables our hook commands run, from their leading (quoted) word.
+function hookNodes(settings: { hooks?: Record<string, HookEntry[]> }): string[] {
+  const commands = Object.values(settings.hooks ?? {})
+    .flat()
+    .flatMap((entry) => entry.hooks ?? [])
+    .map((hook) => hook.command)
+    .filter((command): command is string => typeof command === "string" && isArgusCommand(command));
+  return [...new Set(commands.map((command) => /^"([^"]+)"/.exec(command)?.[1] ?? command.split(" ")[0]))];
+}
+
+export function readClaudeSettings(): { hooks?: Record<string, HookEntry[]> } {
+  try {
+    return JSON.parse(fs.readFileSync(SETTINGS, "utf8"));
+  } catch {
+    // Missing or unreadable settings: nothing is hooked.
+    return {};
+  }
+}
+
+// On startup and when the window regains focus: replaces a stale hook script, then reports what's left to do.
+export function checkTracking(extensionPath: string): { problem?: TrackingProblem; scriptUpdated: boolean } {
+  const problem = trackingProblem(readClaudeSettings());
+  if (problem === "off") {
+    return { problem, scriptUpdated: false };
+  }
+  let scriptUpdated = false;
+  try {
+    scriptUpdated = refreshHookScript(path.join(extensionPath, "hooks", SCRIPT), ARGUS_DIR, extensionVersion(extensionPath)) === "updated";
+  } catch {
+    // ~/.claude/argus isn't writable: Set Up Session Tracking reports why.
+  }
+  return { problem, scriptUpdated };
 }
 
 // Writes the argus-link-prs skill into ~/.claude/skills, with {{SCRIPT}} replaced by the command that runs the
@@ -217,12 +316,7 @@ export function hookedEvents(settings: { hooks?: Record<string, HookEntry[]> }):
 }
 
 export function trackingStatus(extensionPath: string): TrackingStatus {
-  let settings: { hooks?: Record<string, HookEntry[]> } = {};
-  try {
-    settings = JSON.parse(fs.readFileSync(SETTINGS, "utf8"));
-  } catch {
-    // Missing or unreadable settings: nothing is hooked.
-  }
+  const settings = readClaudeSettings();
   let scriptCurrent = false;
   try {
     scriptCurrent = fs.readFileSync(INSTALLED_SCRIPT, "utf8") === fs.readFileSync(path.join(extensionPath, "hooks", SCRIPT), "utf8");

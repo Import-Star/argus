@@ -7,6 +7,7 @@ import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../chat/multiAgent";
 import { answeredInput, toWirePending, type WirePending } from "../chat/pendingWire";
 import { newChat, openWorktree } from "../services/openSession";
 import { renameSessionPrompt, SessionStore } from "../services/SessionStore";
+import type { TrackingMonitor } from "../services/TrackingMonitor";
 
 interface WireChip {
   text: string;
@@ -33,7 +34,8 @@ type FromWebview =
   | { type: "search"; query: string }
   | { type: "chatRespond"; sessionId: string; id: string; decision: "allow" | "always" | "deny"; answers?: unknown }
   | { type: "addToGrid"; sessionId: string }
-  | { type: "openGrid"; sessionIds: string[]; groupId?: string };
+  | { type: "openGrid"; sessionIds: string[]; groupId?: string }
+  | { type: "setUpTracking" };
 
 // The built-in Sessions tab: registered through the same registerTab API a plugin uses (order 0), so it gets
 // no special treatment from ControlCenter beyond going first.
@@ -42,7 +44,8 @@ export function createSessionsTab(
   sessions: SessionStore,
   chips: SessionChipsRegistry,
   archiveCleanup: ArchiveCleanupRegistry,
-  chat: ChatLoader
+  chat: ChatLoader,
+  tracking: TrackingMonitor
 ): { tab: ArgusTab; attach(handle: TabHandle): void; disposables: vscode.Disposable[] } {
   let handle: TabHandle | undefined;
   const archiving = new Set<string>();
@@ -69,13 +72,14 @@ export function createSessionsTab(
       column: group.column,
       summary: group.summary
     }));
-    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, refreshing: sessions.prsRefreshing, archiving: [...archiving], chat: Boolean(host), multiAgent });
+    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, refreshing: sessions.prsRefreshing, archiving: [...archiving], chat: Boolean(host), multiAgent, tracking: tracking.message });
     handle.setBadge(sessions.needsYou().length || undefined);
   };
 
   let pendingListener = chat.host?.onDidChangePending(() => push());
   const disposables: vscode.Disposable[] = [
     sessions.onDidChange(() => push()),
+    tracking.onDidChange(() => push()),
     chips.onDidRefresh(() => push()),
     chat.onDidChange((host) => {
       pendingListener?.dispose();
@@ -101,6 +105,9 @@ export function createSessionsTab(
           return;
         case "newChat":
           await newChat();
+          return;
+        case "setUpTracking":
+          await vscode.commands.executeCommand("argus.sessions.installHooks");
           return;
         case "refreshSessions":
           await sessions.refreshPrs();
