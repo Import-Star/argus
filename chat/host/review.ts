@@ -2,15 +2,14 @@ import { readFileSync } from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
 import { REVIEW_PROMPT_START, type ChangeScope, type DiffComment, type FileChange, type FileDiff } from "../../src/chat/protocol";
-import { fileLines, loadDiff, type DiffFile } from "../../src/diffReview/git";
+import { fileLines, loadDiff, loadTouchedDiff, type DiffFile, type TouchedFile } from "../../src/diffReview/git";
 import { loadPrDiff, prFileLines } from "../../src/diffReview/pr";
 import type { ChatSession } from "./ChatSession";
 import { withGaps } from "./diffGaps";
 
 type PrRef = NonNullable<Awaited<ReturnType<typeof loadPrDiff>>["pr"]>;
-const posix = (file: string) => file.split(path.sep).join("/");
 
-async function loadScope(session: ChatSession, scope: ChangeScope, edited: string[] = [], prUrl?: string, worktree?: string, reuse = false): Promise<{ base?: string; files: DiffFile[]; pr?: PrRef }> {
+async function loadScope(session: ChatSession, scope: ChangeScope, edited: string[] = [], prUrl?: string, worktree?: string, reuse = false): Promise<{ base?: string; files: (DiffFile | TouchedFile)[]; pr?: PrRef }> {
   const cwd = worktree ?? session.meta.cwd;
   if (scope === "pr") {
     const result = await loadPrDiff(session.meta.cwd, prUrl ?? "", reuse);
@@ -19,13 +18,13 @@ async function loadScope(session: ChatSession, scope: ChangeScope, edited: strin
   const config = vscode.workspace.getConfiguration("argus.diffReview");
   const contextLines = config.get<number>("contextLines", 3);
   const baseRef = scope === "base" || scope === "session" ? config.get<string>("baseRef", "") : "HEAD";
-  const result = await loadDiff(cwd, "all", baseRef, contextLines);
-  const base = scope === "base" || scope === "session" ? result.base : undefined;
   if (scope === "base" || scope === "uncommitted") {
-    return { base, files: result.files };
+    const result = await loadDiff(cwd, "all", baseRef, contextLines);
+    return { base: scope === "base" ? result.base : undefined, files: result.files };
   }
-  const touched = (scope === "turn" ? session.lastTurnFiles() : edited.map((file) => path.resolve(cwd, file))).map(posix);
-  return { base, files: result.files.filter((file) => touched.some((abs) => abs.endsWith(`/${file.path}`))) };
+  // Each file is diffed in its own repo, which may be nested in the session's folder or outside it.
+  const touched = scope === "turn" ? session.lastTurnFiles() : edited;
+  return loadTouchedDiff(cwd, touched, baseRef, contextLines);
 }
 
 export async function listChanges(session: ChatSession, scope: ChangeScope, edited?: string[], prUrl?: string, worktree?: string): Promise<{ base?: string; files: FileChange[]; error?: string }> {
@@ -49,7 +48,8 @@ export async function fileDiff(session: ChatSession, scope: ChangeScope, file: s
   if (!found) {
     return { path: file, lines: [] };
   }
-  const source = pr ? prFileLines(session.meta.cwd, pr, found.path) : fileLines(worktree ?? session.meta.cwd, "unstaged", found.path);
+  const [folder, rel] = "root" in found ? [found.root, found.rel] : [worktree ?? session.meta.cwd, found.path];
+  const source = pr ? prFileLines(session.meta.cwd, pr, found.path) : fileLines(folder, "unstaged", rel);
   const content = found.status === "deleted" ? [] : await source.catch(() => [] as string[]);
   return { path: file, lines: withGaps(found.hunks, content) };
 }

@@ -186,6 +186,16 @@ function Section({ title, children }: { title: string; children: preact.Componen
   );
 }
 
+// Starts closed; the browser keeps it open or closed across re-renders since `open` isn't a prop.
+function FoldedSection({ title, children }: { title: string; children: preact.ComponentChildren }) {
+  return (
+    <details class="det-section det-fold">
+      <summary class="section-label">{title}</summary>
+      {children}
+    </details>
+  );
+}
+
 function isFinishedPr(pr: { state: string }): boolean {
   return pr.state === "MERGED" || pr.state === "CLOSED";
 }
@@ -246,7 +256,7 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
   return (
     <div class="det" role="region" aria-label="Session details">
       {edited.length > 0 && (
-        <Section title={`Changed files · ${edited.length}`}>
+        <FoldedSection title={`Changed files · ${edited.length}`}>
           {changes?.scope === "session" && changes.error && <div class="det-error">{changes.error}</div>}
           {edited.map((file) => {
             const stat = stats.find((entry) => file === entry.path || file.endsWith(`/${entry.path}`) || entry.path.endsWith(`/${file}`));
@@ -258,7 +268,7 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
               </button>
             );
           })}
-        </Section>
+        </FoldedSection>
       )}
       {artifacts.length > 0 && (
         <Section title={`Artifacts · ${artifacts.length}`}>

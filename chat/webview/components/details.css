@@ -11,6 +11,15 @@
   gap: 8px;
 }
 
+.det-fold > summary {
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.det-fold:not([open]) {
+  gap: 0;
+}
+
 .det-note {
   font-size: 12px;
 }
