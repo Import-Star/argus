@@ -22,12 +22,17 @@ export function closeChatSession(sessionId: string): boolean {
   return chatClose?.(sessionId) ?? false;
 }
 
-// Args: sessionId, initialPrompt, viewColumn, group, fullEditor, options.
-// A programmatic value other than "honor-preferred-location" always opens an editor tab, never the sidebar.
 export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
   if (chatRoute) {
     return chatRoute(sessionId, prompt, column);
   }
+  await openClaudeCodeTab(sessionId, prompt, column);
+}
+
+// Always the Claude Code extension's tab, even while Argus chat is on: for reaching a tab that is already open there.
+// Args: sessionId, initialPrompt, viewColumn, group, fullEditor, options.
+// A programmatic value other than "honor-preferred-location" always opens an editor tab, never the sidebar.
+export async function openClaudeCodeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
   const target = column ?? vscode.window.tabGroups.activeTabGroup.viewColumn;
   try {
     await vscode.commands.executeCommand("claude-vscode.editor.open", sessionId, prompt, target, undefined, undefined, {
