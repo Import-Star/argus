@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { EffortLevel, PermissionMode } from "../../../src/chat/protocol";
 import { post, useSession } from "../store";
-import { fenceFile, fileUris, filterCommands, isTextLike, MAX_TEXT_BYTES, uriToPath } from "./composerLogic";
+import { fenceFile, fileUris, filterCommands, isTextLike, MAX_TEXT_BYTES } from "./composerLogic";
+import { uriToPath } from "../sessionFiles";
 import { Queue } from "./Queue";
 import "./composer.css";
 

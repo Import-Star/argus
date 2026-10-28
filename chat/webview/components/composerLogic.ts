@@ -9,20 +9,6 @@ export function isTextLike(file: { name: string; type: string }): boolean {
   return TEXT_TYPE.test(file.type) || TEXT_EXT.test(file.name);
 }
 
-export function uriToPath(uri: string, cwd: string): string | undefined {
-  if (!uri.startsWith("file://")) {
-    return undefined;
-  }
-  let path: string;
-  try {
-    path = decodeURIComponent(new URL(uri).pathname);
-  } catch {
-    return undefined;
-  }
-  const root = cwd.replace(/\/+$/, "");
-  return root && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
-}
-
 export function fileUris(list: string): string[] {
   return list
     .split(/\r?\n/)
