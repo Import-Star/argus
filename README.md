@@ -45,7 +45,8 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
 - A card's title is the session's first prompt. Double-click the title (or use **Rename Chat**) to rename it in
   Argus. Claude Code's `/rename` also works, and changes the name in `/resume` and for other sessions too.
 - Cards show open PRs. A `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to
-  hide them.
+  hide them. A card stays in **PR open** while one of its PRs merged or closed after the session's last prompt,
+  so newly finished work is easy to spot.
 - Keyboard: `/` to search, `j`/`k` to move, `Enter` to open, `e` to archive, `x` to select for bulk actions, `Esc`
   to clear the selection, `n` for a new chat.
 
@@ -65,8 +66,6 @@ installed plugin, and a Settings tab. On top of the sidebar, the Sessions tab ha
 
 - Columns side by side. Press `g` (or click **by repo**) to split them into one row per repo, with repos that
   need you first.
-- Token use on each card: `ctx` is the size of the latest prompt (how full the context is), `used` is new input,
-  cache writes and output summed over the session and its sub-agents, plus how many times it was compacted.
 - Search through every prompt and reply in each session's transcript, archived sessions included, with the
   matching text shown on the card. It starts at three characters.
 - The sub-agents running in each session, by type.
@@ -77,7 +76,7 @@ installed plugin, and a Settings tab. On top of the sidebar, the Sessions tab ha
 ### Settings tab
 
 **Argus: Settings** (`argus.openSettings`) opens the Control Center on a Settings tab that edits every Argus
-setting, Chat first. Toggles, dropdowns (with each option's description), text and number fields save to your
+setting, Chat first, with a search box that filters them. Toggles, dropdowns (with each option's description), text and number fields save to your
 user settings as you change them. **Reset** removes your value, and a note shows when a workspace setting
 overrides it. Object and list settings open `settings.json`; **Open in VS Code Settings** opens the standard
 Settings UI filtered to Argus.
@@ -97,17 +96,32 @@ the Claude Code extension's tab. It runs your installed `claude` through the [Cl
 so it uses your existing Claude Code sign-in, settings and hooks. Sessions started here appear on the board like any other.
 
 - **Argus: New Chat** starts a chat. Opening a card from the board resumes its session in the chat.
-- **Argus: Open Chats Side by Side** shows several chats in a grid, each with its transcript and a message box.
-  Tiles that need you are outlined. Add, remove or expand a tile from its header.
 - Permission requests, questions and plan approvals appear inline in the chat.
 - On the Control Center Sessions tab, a card waiting on a permission or question from an Argus chat expands in
   place: **Allow once**, **Always allow** or **Deny**, or choose an option and **Send answer**. Plan approvals
-  open the chat. **add to grid** on a card adds its chat to the side-by-side view.
+  open the chat.
+- In a chat: **Rewind to here** restores files and the conversation to a message, and **Fork from here** starts a
+  new chat from it. Cmd/Ctrl+F searches the transcript, folded tool output included. **Ask aside** (Cmd/Ctrl+;)
+  asks a side question without adding it to the transcript. Queued messages can be edited, reordered or sent now.
+  Each reply shows its turn's cost, and code blocks and replies have copy buttons. Type `/` for the session's
+  slash commands, and paste or drop files to attach them.
+- The details pane shows plan usage, background shells, monitors and agents (with their output and a stop
+  button), and the worktrees linked to the session.
+- A chat's name is sent to Claude Code with `/rename`, so `/resume` and other sessions show the same title.
+- A chat whose tab you close keeps running until it has been idle for `argus.chat.backgroundIdleMinutes`, so other
+  agents can message it and its timers keep firing. A reply that finishes after its tab closed shows in
+  **Needs you**.
+
+**Agents (experimental).** Turn on `argus.chat.experimentalMultiAgent` to run several agents on one task side by
+side. With it off, forks open in their own tab and each agent has its own card.
+
 - **+ Agent** in a chat's header starts another chat in the same folder (optionally with a first message) and
-  opens the group in the grid. Agents in a group share one Sessions card: it sits in the column of its most urgent
-  agent, lists each agent with its status, and opens them all side by side when clicked (the first agent's chat if
-  chat is off). Archiving the card archives every agent. Groups are stored in `~/.claude/argus/board.json`
-  (`groupOf`).
+  opens the group in a grid. Agents in a group share one Sessions card: it sits in the column of its most urgent
+  agent, lists each agent with its status, and opens them all side by side when clicked. Archiving the card
+  archives every agent. Groups are stored in `~/.claude/argus/board.json` (`groupOf`).
+- **Argus: Open Chats Side by Side** shows several chats in a grid, each with its transcript and a message box.
+  Tiles that need you are outlined. Add, remove or expand a tile from its header. **add to grid** on a Sessions
+  card adds its chat to the grid.
 
 `argus.chat.claudePath` sets the `claude` executable (empty: `claude` on your PATH, then `~/.local/bin`, then the
 Claude Code extension's copy). New chats take their model, effort and permission mode from your Claude Code settings (`model`, `effortLevel`, `permissions.defaultMode`); a reopened chat keeps the model and effort last picked in it.
@@ -197,6 +211,11 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
 | `argus.chat.enabled` | `false` | Open sessions in Argus's own chat (beta) instead of the Claude Code extension's tab. |
 | `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then the Claude Code extension's copy. |
+| `argus.chat.askForFolder` | `false` | In a window with several workspace folders, ask which folder each new chat starts in. Off: the first folder. |
+| `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (tool calls hidden). Each chat remembers its own toggle. |
+| `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name (`Haiku 4.5`) or id. A chat's current model stays listed. |
+| `argus.chat.backgroundIdleMinutes` | `60` | How long a chat with no open tab keeps its Claude process after it goes idle. `0` stops it when its turn ends. |
+| `argus.chat.experimentalMultiAgent` | `false` | Experiment: **+ Agent**, the side-by-side grid and group cards. Off: forks open in their own tab. |
 | `argus.plugins.config` | `{}` | Settings for locally installed plugins, keyed by plugin id. See [Plugins](#plugins). |
 | `argus.plugins.paths` | `[]` | Extra plugin folders to load, on top of everything in `~/.claude/argus/plugins`. |
 
@@ -210,7 +229,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 - **Argus: Import Existing Claude Chats** (`argus.sessions.importChats`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
 - **Argus: New Chat** (`argus.chat.new`, chat enabled only)
-- **Argus: Open Chats Side by Side** (`argus.chat.openGrid`, chat enabled only)
+- **Argus: Open Chats Side by Side** (`argus.chat.openGrid`, chat and `argus.chat.experimentalMultiAgent` only)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)
 - **Argus: Refresh Claude Plan Usage** (`argus.usage.refresh`)
 - **Argus: Reload Plugins** (`argus.plugins.reload`)
