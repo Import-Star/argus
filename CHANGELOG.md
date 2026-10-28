@@ -2,6 +2,22 @@
 
 First public release.
 
+## Unreleased
+
+- Argus chat on Windows: files a session edited show relative to the project in Details and Review, and files
+  dropped from Explorer attach with their real path.
+- A chat whose Claude process ended or crashed starts a new one, resuming the session, when you send the next
+  message. It used to stay on "working" and drop the message.
+- Review: unchanged lines after a file's last change show the right old-side line numbers when expanded.
+- With chat on, archiving a session open in a Claude Code tab closes that tab instead of asking to open the session
+  in Argus chat.
+- A reply that finishes while its Claude Code tab is in front of you counts as read, so the card no longer stays in
+  **Needs you** after the session ends.
+- Argus chat looks up each worktree's branch at most every 10 seconds instead of on every board refresh, which could
+  stall VS Code with several chats open.
+- Chats keep their Scheduled timers between turns before Claude Code lists them as open.
+- The board's refresh spinner stops when a PR lookup fails.
+
 ## 0.4.0
 
 Run **Argus: Set Up Session Tracking** again after updating: the session tracking hook changed.
