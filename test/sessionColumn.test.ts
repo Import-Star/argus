@@ -4,7 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { describe, it } from "node:test";
 import type { PrSummary, SessionRecord } from "../src/types.ts";
-import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, type RegistryEntry } from "../src/services/sessionColumn.ts";
+import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, type RegistryEntry, seenReplies } from "../src/services/sessionColumn.ts";
 
 const NOW = 1_000_000;
 
@@ -93,5 +93,20 @@ describe("existingWorktrees", () => {
     } finally {
       fs.rmSync(dir, { recursive: true });
     }
+  });
+});
+
+describe("seenReplies", () => {
+  const card = (sessionId: string, column: "needs-you" | "idle", state: SessionRecord["state"], title?: string) => ({ column, record: { sessionId, state, title } });
+  it("marks finished replies in the active tab's chat", () => {
+    const cards = [card("a", "needs-you", "done", "Fix login"), card("b", "needs-you", "done", "Other"), card("c", "idle", "done", "Fix login")];
+    assert.deepEqual(seenReplies(cards, "Fix login"), ["a"]);
+  });
+  it("leaves permissions, questions and interrupted sessions alone", () => {
+    const cards = [card("a", "needs-you", "permission", "T"), card("b", "needs-you", "question", "T"), card("c", "needs-you", "working", "T")];
+    assert.deepEqual(seenReplies(cards, "T"), []);
+  });
+  it("does nothing without an active Claude tab", () => {
+    assert.deepEqual(seenReplies([card("a", "needs-you", "done", "T")], undefined), []);
   });
 });

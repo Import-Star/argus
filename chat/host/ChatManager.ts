@@ -8,6 +8,7 @@ import type { LiveChat } from "../../src/services/sessionColumn";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
 import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, PermissionMode, PermissionRequest, RailSession } from "../../src/chat/protocol";
+import { BranchCache } from "./branchCache";
 import { ChatPanel } from "./ChatPanel";
 import { hasTranscript, readPanelState } from "./restore";
 import { ChatSession } from "./ChatSession";
@@ -32,6 +33,7 @@ function gitBranch(folder: string): string | undefined {
 }
 
 export class ChatManager implements vscode.Disposable {
+  private readonly branches = new BranchCache(gitBranch);
   private readonly sessions = new Map<string, ChatSession>();
   private readonly idleTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly panels = new Set<ChatPanel>();
@@ -58,7 +60,7 @@ export class ChatManager implements vscode.Disposable {
   private liveChats(): LiveChat[] {
     return [...this.sessions.values()]
       .filter((session) => session.meta.status !== "ended" && session.meta.status !== "error")
-      .map((session) => ({ sessionId: session.sessionId, busy: session.meta.status === "working" || session.meta.status === "needs-you", since: session.meta.statusSince }));
+      .map((session) => ({ sessionId: session.sessionId, busy: session.meta.status === "working" || session.meta.status === "needs-you", since: session.meta.statusSince, startedAt: session.processStartedAt }));
   }
 
   // Archiving a chat closes its tab and stops its process, like closing a Claude Code tab.
@@ -379,7 +381,7 @@ export class ChatManager implements vscode.Disposable {
 
   private worktreesOf(record: { cwd: string; worktrees?: string[] }, cwdWorktree?: string): CardInfo["worktrees"] {
     const paths = [...(cwdWorktree ? [record.cwd] : []), ...(record.worktrees ?? [])];
-    return [...new Set(paths)].map((folder) => ({ name: path.basename(folder), path: folder, branch: gitBranch(folder) }));
+    return [...new Set(paths)].map((folder) => ({ name: path.basename(folder), path: folder, branch: this.branches.get(folder) }));
   }
 
   public worktreePath(sessionId: string, folder?: string): string | undefined {

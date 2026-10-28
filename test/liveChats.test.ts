@@ -12,16 +12,21 @@ const record = { sessionId: "a", cwd: "/x", startedAt: 1, updatedAt: 1, stateSin
 describe("withLiveChats", () => {
   it("shows a brand-new Argus chat with no prompt, title or registry file", () => {
     assert.equal(columnFor(record, undefined, [], true, false, false), undefined);
-    const registry = withLiveChats(new Map(), [{ sessionId: "a", busy: false, since: 5 }], 99);
+    const registry = withLiveChats(new Map(), [{ sessionId: "a", busy: false, since: 5, startedAt: 2 }], 99);
     assert.equal(columnFor(record, registry.get("a"), [], true, false, false), "idle");
   });
   it("marks a busy chat as working", () => {
-    const registry = withLiveChats(new Map(), [{ sessionId: "a", busy: true, since: 5 }], 99);
+    const registry = withLiveChats(new Map(), [{ sessionId: "a", busy: true, since: 5, startedAt: 2 }], 99);
     assert.equal(columnFor({ ...record, state: "working", updatedAt: 9 }, registry.get("a"), [], true, false, false), "working");
+  });
+  it("dates the entry from the process start, not the last status change", () => {
+    const entry = withLiveChats(new Map(), [{ sessionId: "a", busy: false, since: 50, startedAt: 2 }], 99).get("a");
+    assert.equal(entry?.startedAt, 2);
+    assert.equal(entry?.statusUpdatedAt, 50);
   });
   it("keeps Claude Code's own registry entry", () => {
     const real: RegistryEntry = { pid: 1, sessionId: "a", status: "busy" };
-    assert.equal(withLiveChats(new Map([["a", real]]), [{ sessionId: "a", busy: false, since: 5 }], 99).get("a"), real);
+    assert.equal(withLiveChats(new Map([["a", real]]), [{ sessionId: "a", busy: false, since: 5, startedAt: 2 }], 99).get("a"), real);
   });
 });
 
