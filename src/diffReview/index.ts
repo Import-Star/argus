@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { SessionChipsRegistry } from "../api";
 import type { ChatLoader } from "../chat/loader";
 
-// Diffs open in the chat's review panel, so the chips show only while Argus chat is on.
+// Diffs open in the chat's review panel, so the chips show once Argus chat has loaded.
 export function registerDiffReview(context: vscode.ExtensionContext, chipsRegistry: SessionChipsRegistry, chat: ChatLoader): void {
   const chips = chipsRegistry.register((card) =>
     card.column === "archived" || !chat.host

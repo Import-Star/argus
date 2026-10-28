@@ -122,6 +122,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     chat.onDidChange((host) => {
       routeChatsTo(host && ((sessionId, prompt, column) => host.open(sessionId, prompt, column)));
       routeCloseTo(host && ((sessionId) => host.closeSession(sessionId)));
+      sessions.setViewing(host && ((sessionId) => host.isViewing(sessionId)));
     }),
     { dispose: () => { routeChatsTo(undefined); routeCloseTo(undefined); } }
   );

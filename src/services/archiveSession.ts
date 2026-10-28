@@ -4,8 +4,8 @@ import { promisify } from "util";
 import * as vscode from "vscode";
 import { CleanupItem, SessionCard } from "../types";
 import { output } from "./log";
-import { closeChatSession, openClaudeCodeTab } from "./openSession";
-import { isClaudeTab, SessionStore } from "./SessionStore";
+import { closeChatSession } from "./openSession";
+import { SessionStore } from "./SessionStore";
 
 const execFileAsync = promisify(execFile);
 
@@ -52,45 +52,6 @@ async function removeWorktree(folder: string, force: boolean): Promise<string | 
     return undefined;
   } catch (error) {
     return `${path.basename(folder)}: ${(error as { stderr?: string }).stderr?.trim() || String(error)}`;
-  }
-}
-
-function activeClaudeTabTitled(title: string): Promise<vscode.Tab | undefined> {
-  return new Promise((resolve) => {
-    const done = (tab: vscode.Tab | undefined) => {
-      clearTimeout(timer);
-      listener.dispose();
-      resolve(tab);
-    };
-    const timer = setTimeout(() => done(undefined), 2000);
-    const listener = vscode.window.tabGroups.onDidChangeTabs(({ changed, opened }) => {
-      const tab = [...changed, ...opened].find((candidate) => isClaudeTab(candidate) && candidate.isActive && candidate.label === title);
-      if (tab) {
-        done(tab);
-      }
-    });
-  });
-}
-
-// Tabs carry no session id, so the title only tells us a tab may be open; reopening the session brings its tab to
-// the front, but Claude doesn't wait for that, so watch for the switch instead of reading the active tab.
-async function closeChatTab(card: SessionCard): Promise<void> {
-  if (closeChatSession(card.record.sessionId)) {
-    return;
-  }
-  const title = card.record.title;
-  const match = vscode.window.tabGroups.all.flatMap((group) => group.tabs).find((tab) => isClaudeTab(tab) && tab.label === title);
-  if (!title || !match) {
-    return;
-  }
-  let target: vscode.Tab | undefined = match;
-  if (!match.isActive) {
-    const switched = activeClaudeTabTitled(title);
-    await openClaudeCodeTab(card.record.sessionId, undefined, match.group.viewColumn);
-    target = await switched;
-  }
-  if (target) {
-    await vscode.window.tabGroups.close(target);
   }
 }
 
@@ -149,6 +110,7 @@ export async function archiveManyWithCleanup(sessions: SessionStore, cleanup: Ar
   }
   sessions.setArchivedMany(cards.map((card) => card.record.sessionId), true);
   for (const card of cards) {
-    await closeChatTab(card);
+    // Archiving closes the session's Argus chat and stops its process.
+    closeChatSession(card.record.sessionId);
   }
 }

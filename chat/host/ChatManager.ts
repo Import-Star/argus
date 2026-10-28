@@ -63,7 +63,7 @@ export class ChatManager implements vscode.Disposable {
       .map((session) => ({ sessionId: session.sessionId, busy: session.meta.status === "working" || session.meta.status === "needs-you", since: session.meta.statusSince, startedAt: session.processStartedAt }));
   }
 
-  // Archiving a chat closes its tab and stops its process, like closing a Claude Code tab.
+  // Archiving a chat closes its tab and stops its process.
   public closeSession(sessionId: string): boolean {
     const session = this.sessions.get(sessionId);
     if (!session) {
@@ -499,7 +499,7 @@ export class ChatManager implements vscode.Disposable {
     }
     if (card.open) {
       const choice = await vscode.window.showWarningMessage(
-        "This session is open in a Claude Code tab. Opening it here as well means two Claude processes write to the same transcript.",
+        "This session is running in another Claude Code process, such as a terminal. Opening it here as well means two Claude processes write to the same transcript.",
         { modal: true },
         "Open Anyway"
       );

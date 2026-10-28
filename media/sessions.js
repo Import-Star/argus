@@ -41,7 +41,7 @@
         showDonePrs: new Set(),
         // Sessions whose transcript matches the query, with a snippet. Filled by the extension.
         deep: {},
-        // Whether Argus chat is on, and the answers picked for pending AskUserQuestion requests (key: session|request|question index).
+        // Whether Argus chat has loaded, and the answers picked for pending AskUserQuestion requests (key: session|request|question index).
         chat: false,
         multiAgent: false,
         answers: {}
