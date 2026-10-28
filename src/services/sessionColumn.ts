@@ -15,6 +15,8 @@ export interface LiveChat {
   sessionId: string;
   busy: boolean;
   since: number;
+  // When the chat's Claude process started: timers set before it died with an earlier process.
+  startedAt: number;
 }
 
 // An Argus chat counts as open even when Claude Code's registry has no file for it (yet); a real entry wins.
@@ -22,7 +24,7 @@ export function withLiveChats(registry: Map<string, RegistryEntry>, chats: reado
   const merged = new Map(registry);
   for (const chat of chats) {
     if (!merged.has(chat.sessionId)) {
-      merged.set(chat.sessionId, { pid, sessionId: chat.sessionId, status: chat.busy ? "busy" : "idle", statusUpdatedAt: chat.since, startedAt: chat.since });
+      merged.set(chat.sessionId, { pid, sessionId: chat.sessionId, status: chat.busy ? "busy" : "idle", statusUpdatedAt: chat.since, startedAt: chat.startedAt });
     }
   }
   return merged;
@@ -85,4 +87,15 @@ export function columnFor(
     return "pr-open";
   }
   return "idle";
+}
+
+// A finished reply in the Claude Code tab in front of you counts as read; permissions and questions still need you.
+export function seenReplies(
+  cards: readonly { column: SessionColumn; record: Pick<SessionRecord, "sessionId" | "state" | "title"> }[],
+  activeTitle: string | undefined
+): string[] {
+  if (!activeTitle) {
+    return [];
+  }
+  return cards.filter((card) => card.column === "needs-you" && card.record.state === "done" && card.record.title === activeTitle).map((card) => card.record.sessionId);
 }

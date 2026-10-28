@@ -7,7 +7,7 @@ import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
 import { addToGroup, CardGroup, groupCards, GroupOf, pruneGroups, removeFromGroup } from "./sessionGroups";
-import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, withLiveChats } from "./sessionColumn";
+import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, seenReplies, withLiveChats } from "./sessionColumn";
 import { windowFilter } from "./windowScope";
 
 const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
@@ -41,6 +41,7 @@ export class SessionStore implements vscode.Disposable {
   public prsRefreshing = false;
   private watchers: fs.FSWatcher[] = [];
   private debounce?: NodeJS.Timeout;
+  private markingSeen = false;
   private focusListener?: vscode.Disposable;
   private readonly scopeListeners: vscode.Disposable[] = [];
   private prTimer?: NodeJS.Timeout;
@@ -63,6 +64,7 @@ export class SessionStore implements vscode.Disposable {
     // Lookups fail while the laptop sleeps; refresh as soon as the user is back.
     this.focusListener = vscode.window.onDidChangeWindowState((state) => {
       if (state.focused) {
+        this.markSeenRead();
         void this.refreshPrs();
       }
     });
@@ -144,6 +146,10 @@ export class SessionStore implements vscode.Disposable {
         return byColumn !== 0 ? byColumn : (b.record.lastMessageAt ?? b.record.startedAt) - (a.record.lastMessageAt ?? a.record.startedAt);
       });
 
+    // Marking a reply read refreshes again, and that refresh shows the board.
+    if (this.markSeenRead()) {
+      return;
+    }
     this.groupOf = state.groupOf;
     this.groups = groupCards(this.cards, state.groupOf);
     this.emitter.fire(this.cards);
@@ -197,7 +203,14 @@ export class SessionStore implements vscode.Disposable {
     if (urls.size > 0) {
       this.prsRefreshing = true;
       this.refresh();
-      const fresh = await this.prSync.summarize([...urls], true).finally(() => (this.prsRefreshing = false));
+      // A lookup that throws counts as every PR failing, so the board still redraws and stops the spinner.
+      const fresh = await this.prSync
+        .summarize([...urls], true)
+        .catch((error: unknown) => {
+          output.appendLine(`${new Date().toISOString()} PR lookup failed: ${error instanceof Error ? error.message : String(error)}`);
+          return new Map<string, PrSummary>();
+        })
+        .finally(() => (this.prsRefreshing = false));
       const failed: string[] = [];
       for (const url of urls) {
         const summary = fresh.get(url);
@@ -241,6 +254,26 @@ export class SessionStore implements vscode.Disposable {
     this.mutateBoardState((state) => {
       state.readAt[sessionId] = Date.now();
     });
+  }
+
+  // Switching to a tab marks it read, but a reply that lands while its tab is already in front fires no tab event.
+  private markSeenRead(): boolean {
+    const tab = vscode.window.tabGroups.activeTabGroup.activeTab;
+    const ids = !this.markingSeen && vscode.window.state.focused && isClaudeTab(tab) ? seenReplies(this.cards, tab.label) : [];
+    if (ids.length === 0) {
+      return false;
+    }
+    this.markingSeen = true;
+    try {
+      this.mutateBoardState((state) => {
+        for (const sessionId of ids) {
+          state.readAt[sessionId] = Date.now();
+        }
+      });
+    } finally {
+      this.markingSeen = false;
+    }
+    return true;
   }
 
   // Tabs carry no session id, so match the chat by its title.

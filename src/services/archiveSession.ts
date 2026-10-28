@@ -4,7 +4,7 @@ import { promisify } from "util";
 import * as vscode from "vscode";
 import { CleanupItem, SessionCard } from "../types";
 import { output } from "./log";
-import { closeChatSession, openClaudeTab } from "./openSession";
+import { closeChatSession, openClaudeCodeTab } from "./openSession";
 import { isClaudeTab, SessionStore } from "./SessionStore";
 
 const execFileAsync = promisify(execFile);
@@ -86,7 +86,7 @@ async function closeChatTab(card: SessionCard): Promise<void> {
   let target: vscode.Tab | undefined = match;
   if (!match.isActive) {
     const switched = activeClaudeTabTitled(title);
-    await openClaudeTab(card.record.sessionId, undefined, match.group.viewColumn);
+    await openClaudeCodeTab(card.record.sessionId, undefined, match.group.viewColumn);
     target = await switched;
   }
   if (target) {

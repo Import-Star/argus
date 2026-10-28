@@ -110,6 +110,8 @@ export class ChatSession implements vscode.Disposable {
   private pendingName?: string;
   private sentName?: string;
   private backgroundTasks = 0;
+  // When the current Claude process started; until one starts, when the chat was created.
+  public processStartedAt = Date.now();
   private historyLoaded?: Promise<SDKMessage[]>;
   private aliases = new Map<string, string>();
   private turnFiles = new Set<string>();
@@ -142,6 +144,7 @@ export class ChatSession implements vscode.Disposable {
       return;
     }
     this.backgroundTasks = 0;
+    this.processStartedAt = Date.now();
     const { cwd, resume, claudePath, additionalDirectories, model, effort, permissionMode, log } = this.options;
     this.q = query({
       prompt: this.input,
@@ -406,7 +409,7 @@ export class ChatSession implements vscode.Disposable {
         this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message });
       }
       if (q === this.q) {
-        this.queue.clear();
+        this.retire();
         this.setStatus("ended");
       }
     } catch (error) {
@@ -416,9 +419,17 @@ export class ChatSession implements vscode.Disposable {
       const text = error instanceof Error ? error.message : String(error);
       this.options.log(`session ${this.sessionId}: ${text}`);
       this.update({ error: text });
-      this.queue.clear();
+      this.retire();
       this.setStatus("error");
     }
+  }
+
+  // The process is gone: drop it and its input so the next message starts a new one.
+  private retire(): void {
+    this.q = undefined;
+    this.input.close();
+    this.input = new InputQueue();
+    this.queue.clear();
   }
 
   private track(message: SDKMessage): void {
