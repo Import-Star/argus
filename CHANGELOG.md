@@ -11,6 +11,9 @@ First public release.
 - A finished reply counts as read when its Argus chat is in front of you, instead of when a Claude Code tab is.
 - Opening a session that is still running elsewhere (a terminal, say) warns that two processes would share its
   transcript.
+- **Argus: Install Claude Code**: when `claude` isn't installed, Argus offers to run Anthropic's official installer in
+  a terminal, then opens `claude` once so you can sign in. Argus asks at startup (once per version) and whenever a
+  chat can't start. It no longer falls back to the copy of `claude` inside the Claude Code extension.
 
 ## 0.4.2
 

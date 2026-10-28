@@ -121,8 +121,10 @@ side. With it off, forks open in their own tab and each agent has its own card.
   Tiles that need you are outlined. Add, remove or expand a tile from its header. **add to grid** on a Sessions
   card adds its chat to the grid.
 
-`argus.chat.claudePath` sets the `claude` executable (empty: `claude` on your PATH, then `~/.local/bin`, then the
-Claude Code extension's copy). New chats take their model, effort and permission mode from your Claude Code settings (`model`, `effortLevel`, `permissions.defaultMode`); a reopened chat keeps the model and effort last picked in it.
+`argus.chat.claudePath` sets the `claude` executable (empty: `claude` on your PATH, then `~/.local/bin`, where Claude
+Code's installer puts it). Without Claude Code, Argus offers to install it: **Argus: Install Claude Code** runs
+Anthropic's official installer in a terminal (`irm https://claude.ai/install.ps1 | iex` on Windows,
+`curl -fsSL https://claude.ai/install.sh | bash` elsewhere), then opens `claude` once so you can sign in. New chats take their model, effort and permission mode from your Claude Code settings (`model`, `effortLevel`, `permissions.defaultMode`); a reopened chat keeps the model and effort last picked in it.
 
 ### Claude plan usage
 
@@ -186,7 +188,8 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 ## Requirements
 
 - VS Code 1.90 or newer.
-- [Claude Code](https://docs.claude.com/en/docs/claude-code/setup) installed and signed in, so `claude` runs.
+- [Claude Code](https://code.claude.com/docs/en/setup) installed and signed in, so `claude` runs. Argus offers to
+  install it if it's missing (**Argus: Install Claude Code**).
   Argus chat runs it through the Agent SDK. Argus also reads the session registry Claude Code keeps at
   `~/.claude/sessions/<pid>.json`, which is not a documented public API and may change. The Claude Code VS Code
   extension isn't needed.
@@ -208,7 +211,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.diffReview.contextLines` | `3` | Unchanged lines shown around each change. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
-| `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then the Claude Code extension's copy. |
+| `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`. |
 | `argus.chat.askForFolder` | `false` | In a window with several workspace folders, ask which folder each new chat starts in. Off: the first folder. |
 | `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (tool calls hidden). Each chat remembers its own toggle. |
 | `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name (`Haiku 4.5`) or id. A chat's current model stays listed. |
@@ -227,6 +230,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 - **Argus: Import Existing Claude Chats** (`argus.sessions.importChats`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
 - **Argus: New Chat** (`argus.chat.new`)
+- **Argus: Install Claude Code** (`argus.chat.installClaude`)
 - **Argus: Open Chats Side by Side** (`argus.chat.openGrid`, `argus.chat.experimentalMultiAgent` only)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)
 - **Argus: Refresh Claude Plan Usage** (`argus.usage.refresh`)
@@ -264,8 +268,8 @@ usage call above. A plugin may make its own network calls; see its README.
   changed, so it asks first.
 - **Sessions stop updating after a Claude Code update**: Argus depends on Claude Code's session registry file,
   which is not a stable public API. If it changes shape, session detection can break until Argus is updated.
-- **Chat says it can't start or can't find `claude`**: check that `claude --version` works in a terminal, or set
-  `argus.chat.claudePath`.
+- **Chat says Claude Code isn't installed**: click **Install Claude Code**, or run **Argus: Install Claude Code**.
+  If `claude --version` already works in a terminal, set `argus.chat.claudePath` to its path.
 - **PR status fails**: run `gh auth status`. If `gh` is installed but not found, make sure it is on the PATH VS
   Code was launched with.
 

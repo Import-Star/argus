@@ -153,6 +153,10 @@
       {
         "command": "argus.chat.openGrid",
         "title": "Argus: Open Chats Side by Side"
+      },
+      {
+        "command": "argus.chat.installClaude",
+        "title": "Argus: Install Claude Code"
       }
     ],
     "configuration": {
@@ -245,7 +249,7 @@
         "argus.chat.claudePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then the Claude Code extension's copy."
+          "markdownDescription": "Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, where Claude Code's installer puts it. **Argus: Install Claude Code** installs it."
         },
         "argus.chat.askForFolder": {
           "type": "boolean",
