@@ -6,7 +6,10 @@ const nowhere = () => undefined;
 
 describe("findClaude", () => {
   it("uses the configured path first", () => {
-    assert.equal(findClaude("/opt/claude", "linux", () => "/usr/bin/claude"), "/opt/claude");
+    assert.equal(findClaude("/opt/claude", "linux", () => "/usr/bin/claude", () => true), "/opt/claude");
+  });
+  it("treats a configured path that's gone as not installed", () => {
+    assert.equal(findClaude("/opt/claude", "linux", () => "/usr/bin/claude", () => false), undefined);
   });
   it("then claude on the PATH, by the platform's executable name", () => {
     const names: string[] = [];

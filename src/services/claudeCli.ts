@@ -19,8 +19,9 @@ export function findClaude(
   exists: (file: string) => boolean = fs.existsSync,
   home: string = os.homedir()
 ): string | undefined {
+  // A configured path that's gone counts as not installed, so the user is offered the installer.
   if (configured) {
-    return configured;
+    return exists(configured) ? configured : undefined;
   }
   const name = platform === "win32" ? "claude.exe" : "claude";
   const found = lookup(name, platform);
