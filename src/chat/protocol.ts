@@ -48,7 +48,15 @@ export interface CardInfo {
   prs: { key: string; title?: string; url: string; state: string; isDraft: boolean; reviewDecision?: string; checks: { name: string; status: string; conclusion?: string }[] }[];
   usedTokens?: number;
   compactions?: number;
+  // Sections plugins add to the Details pane.
+  plugins?: { key: string; title: string; items: PluginItem[] }[];
 }
+
+export type PluginItem =
+  | { type: "row"; label: string; value: string; tooltip?: string }
+  | { type: "note"; text: string }
+  | { type: "select"; id: string; label: string; value: string; options: { value: string; label: string }[] }
+  | { type: "button"; id: string; label: string };
 
 // claude.ai plan limits as /usage reports them. Null where plan limits don't apply (API key, Bedrock, Vertex).
 export interface PlanUsageWindow {
@@ -190,4 +198,5 @@ export type WebviewMessage =
   | { type: "rewind"; sessionId: string; userMessageId: string; text: string }
   | { type: "fork"; sessionId: string; messageId: string; before?: boolean; draft?: string }
   | { type: "aside"; sessionId: string; askId: string; text: string }
-  | { type: "asideClose"; sessionId: string };
+  | { type: "asideClose"; sessionId: string }
+  | { type: "pluginAction"; sessionId: string; key: string; itemId: string; value?: string };

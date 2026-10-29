@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { ArgusApi, ArgusTab, CleanupItem, PrSummary, SessionCard, SessionChip, TabHandle } from "./types";
+import { ArgusApi, ArgusTab, ChatDetailsProvider, CleanupItem, PrSummary, SessionCard, SessionChip, TabHandle } from "./types";
+import { ChatDetailsRegistry } from "./services/chatDetails";
 import { ArchiveCleanupRegistry } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { startChat } from "./services/openSession";
@@ -47,10 +48,11 @@ export interface ArgusServices {
   controlCenter: ControlCenter;
   chips: SessionChipsRegistry;
   archiveCleanup: ArchiveCleanupRegistry;
+  chatDetails: ChatDetailsRegistry;
 }
 
 export function createApi(services: ArgusServices): ArgusApi {
-  const { sessions, prSync, controlCenter, chips, archiveCleanup } = services;
+  const { sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails } = services;
 
   return {
     version: 1,
@@ -101,6 +103,10 @@ export function createApi(services: ArgusServices): ArgusApi {
 
     registerArchiveCleanup(provider: (card: SessionCard) => Promise<CleanupItem[]> | CleanupItem[]): vscode.Disposable {
       return archiveCleanup.register(provider);
+    },
+
+    registerChatDetails(provider: ChatDetailsProvider): vscode.Disposable & { refresh(): void } {
+      return chatDetails.register(provider);
     }
   };
 }

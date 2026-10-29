@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Plugin API: `registerChatDetails` adds sections to the Details pane beside an Argus chat, drawn by the chat from
+  plain data (rows, notes, a dropdown, buttons), with `onAction` for picks and presses. Optional on `ArgusApi`.
+
 ## 0.5.0
 
 - **Argus chat is now how sessions open**, and no longer needs turning on: the `argus.chat.enabled` setting is gone.
