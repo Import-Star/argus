@@ -35,8 +35,8 @@ export class AttentionNotifier implements vscode.Disposable {
     for (const card of fresh) {
       const input = card.record.state === "permission" || card.record.state === "question";
       // The user usually caused the interrupt (Esc), so a popup would only repeat it back to them.
-      // A finished chat that is already on screen needs no popup; prompts still show because they need an answer.
-      if (card.interrupted || mode === "off" || (mode === "input" && !input) || (!input && this.isViewing(card.record.sessionId))) {
+      // A chat already on screen shows its own prompt card, so a popup would only repeat it.
+      if (card.interrupted || mode === "off" || (mode === "input" && !input) || this.isViewing(card.record.sessionId)) {
         continue;
       }
       void this.notify(card, input);
