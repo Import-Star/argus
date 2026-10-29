@@ -2,10 +2,17 @@
 
 First public release.
 
-## Unreleased
+## 0.6.0
 
 - Plugin API: `registerChatDetails` adds sections to the Details pane beside an Argus chat, drawn by the chat from
   plain data (rows, notes, a dropdown, buttons), with `onAction` for picks and presses. Optional on `ArgusApi`.
+- No permission or question popup for a session whose chat is already in front of you; the chat shows the prompt.
+- Questions in Argus chat: answered questions fold to one line with **Change**, options are numbered tiles with a
+  **Recommended** tag, "Something else" is answered inline, and each answer can carry a note. Keys 1–9, ↑↓, Enter
+  and Esc work. Once answered, the transcript shows a summary of the answers and notes.
+- Question options on board cards show as pills, with descriptions on hover.
+- Code-review findings (`ReportFindings`) show as a findings card in Argus chat: each finding's file and line (click
+  to open), summary and failure scenario. They used to show only the tool name.
 
 ## 0.5.0
 
@@ -27,7 +34,6 @@ First public release.
 - Argus chat draws ` ```mermaid ` blocks as diagrams (Mermaid 12.2.0, strict security level), with **Show source**
   to switch to the code. A block that doesn't parse stays as code with the error shown. Mermaid loads only when a
   reply has a diagram; it adds about 1.4 MB to the extension download.
-- No permission or question popup for a session whose chat is already in front of you; the chat shows the prompt.
 
 ## 0.4.2
 
