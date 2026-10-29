@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import type { CardInfo, ChangeScope, PlanUsageWindow, SDKMessage } from "../../../src/chat/protocol";
+import type { CardInfo, ChangeScope, PlanUsageWindow, PluginItem, SDKMessage } from "../../../src/chat/protocol";
 import { backgroundTasks, type BackgroundTask } from "../backgroundTasks";
 import { sessionArtifacts } from "../sessionArtifacts";
 import { sessionFiles } from "../sessionFiles";
@@ -209,6 +209,54 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
+// A section a plugin added (ArgusApi.registerChatDetails): plain data, drawn here.
+function PluginSection({ sessionId, section }: { sessionId: string; section: NonNullable<CardInfo["plugins"]>[number] }) {
+  const act = (item: { id: string }, value?: string) => post({ type: "pluginAction", sessionId, key: section.key, itemId: item.id, value });
+  const draw = (item: PluginItem, index: number) => {
+    switch (item.type) {
+      case "row":
+        return (
+          <div class="det-row" key={index} title={item.tooltip}>
+            <span class="muted">{item.label}</span>
+            <span>{item.value}</span>
+          </div>
+        );
+      case "note":
+        return (
+          <div class="muted det-note" key={index}>
+            {item.text}
+          </div>
+        );
+      case "select":
+        return (
+          <div class="det-row det-select" key={item.id}>
+            <span class="muted">{item.label}</span>
+            <label class="det-pick">
+              <span class="det-pick-text">{item.options.find((option) => option.value === item.value)?.label ?? item.value}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            <select aria-label={item.label} value={item.value} onChange={(event) => act(item, event.currentTarget.value)}>
+              {item.options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            </label>
+          </div>
+        );
+      case "button":
+        return (
+          <button type="button" class="det-diff" key={item.id} onClick={() => act(item)}>
+            {item.label}
+          </button>
+        );
+    }
+  };
+  return <Section title={section.title}>{section.items.map(draw)}</Section>;
+}
+
 function openReview(sessionId: string, scope: ChangeScope, file?: string): void {
   setUi(sessionId, { side: "review", reviewScope: scope, reviewFile: file, worktree: undefined });
 }
@@ -280,6 +328,9 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
           ))}
         </Section>
       )}
+      {(card?.plugins ?? []).map((section) => (
+        <PluginSection key={section.key} sessionId={sessionId} section={section} />
+      ))}
       {worktrees.length > 0 && (
         <Section title={worktrees.length > 1 ? `Worktrees · ${worktrees.length}` : "Worktree"}>
           {worktrees.map((tree) => (

@@ -299,6 +299,9 @@ export class ChatPanel implements vscode.Disposable {
           this.asides.get(session.sessionId)?.dispose();
           this.asides.delete(session.sessionId);
           return;
+        case "pluginAction":
+          await this.manager.pluginAction(session.sessionId, message.key, message.itemId, message.value);
+          return;
       }
     } catch (error) {
       void vscode.window.showErrorMessage(`Argus chat: ${error instanceof Error ? error.message : String(error)}`);

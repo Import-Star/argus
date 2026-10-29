@@ -221,3 +221,56 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+.det-select {
+  align-items: center;
+  gap: 8px;
+}
+
+/* The composer's pill picker: the value and a chevron, with the native select invisible on top. */
+.det-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 70%;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
+  border-radius: 999px;
+  color: var(--strong);
+  cursor: pointer;
+}
+
+.det-pick:hover,
+.det-pick:focus-within {
+  border-color: var(--accent);
+}
+
+.det-pick svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.det-pick-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.det-pick select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.det-pick option {
+  background: var(--vscode-dropdown-background, var(--bg));
+  color: var(--vscode-dropdown-foreground, var(--text));
+}

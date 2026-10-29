@@ -87,6 +87,7 @@ src/services/
   GhPrSyncService.ts              PR state through the gh CLI, exposed to plugins as api.prs
   openSession.ts                  opens sessions in Argus chat
   archiveSession.ts               archive (one session or a batch) plus plugin-supplied cleanup (registerArchiveCleanup)
+  chatDetails.ts                  plugin sections for the chat Details pane (registerChatDetails)
   importChats.ts                  builds session records from existing Claude Code transcripts (Import Existing Claude Chats)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse
   UsageService.ts                 Claude plan usage, reads from Anthropic's OAuth endpoint
@@ -217,13 +218,18 @@ rest. Document your keys in your plugin's README: they do not appear in the Sett
 
 ### Optional extras
 
-Both work without a tab:
+These work without a tab:
 
 - `argus.registerSessionChips(card => chips)` adds a small label to session cards (e.g. a linked ticket). Called
   on every render, so keep it fast; call `.refresh()` on the returned handle when your data changes without a
   session change.
 - `argus.registerArchiveCleanup(card => items)` offers extra steps when a session is archived (e.g. "remove work
   card"). Return `[]` when there is nothing to do for that card.
+- `argus.registerChatDetails?.({ sections(card), onAction(sessionId, sectionId, itemId, value) })` adds sections to
+  the Details pane beside an Argus chat. Sections are plain data (`row`, `note`, `select`, `button` items) that the
+  chat draws itself, so no plugin code runs in the chat webview. A select change or a button press calls `onAction`;
+  call `.refresh()` on the returned handle when your sections change without a session change. It's optional on
+  `ArgusApi`, so call it with `?.` to keep working on older Argus versions.
 
 ### Start a linked session
 

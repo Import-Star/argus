@@ -52,6 +52,7 @@ export class ChatManager implements vscode.Disposable {
     this.subscriptions.push(
       this.log,
       deps.onDidChangeCards(() => this.broadcastCards()),
+      deps.onDidChangePluginSections(() => this.broadcastCards()),
       vscode.window.registerWebviewPanelSerializer("argusChat", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "single", state) }),
       vscode.window.registerWebviewPanelSerializer("argusChatGrid", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "grid", state) }),
       vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration(MULTI_AGENT_SETTING) && this.panels.forEach((panel) => panel.sendLayout()))
@@ -390,6 +391,10 @@ export class ChatManager implements vscode.Disposable {
     return folder ? this.card(sessionId)?.worktrees.find((entry) => entry.path === folder)?.path : undefined;
   }
 
+  public pluginAction(sessionId: string, key: string, itemId: string, value?: string): Promise<void> {
+    return this.deps.pluginAction(sessionId, key, itemId, value);
+  }
+
   public sideQuestionDefaults(cwd: string): { claudePath?: string; additionalDirectories: string[]; log(line: string): void } {
     const { claudePath, additionalDirectories, log } = this.defaults(cwd);
     return { claudePath, additionalDirectories, log };
@@ -414,7 +419,8 @@ export class ChatManager implements vscode.Disposable {
         checks: pr.checks
       })),
       usedTokens: card.usage?.usedTokens,
-      compactions: card.usage?.compactions
+      compactions: card.usage?.compactions,
+      plugins: this.deps.pluginSections(card)
     };
   }
 

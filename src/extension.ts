@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { createApi, SessionChipsRegistry } from "./api";
+import { ChatDetailsRegistry } from "./services/chatDetails";
 import { ChatLoader } from "./chat/loader";
 import { registerDiffReview } from "./diffReview";
 import { AttentionNotifier } from "./providers/AttentionNotifier";
@@ -44,8 +45,9 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   context.subscriptions.push(controlCenter.registerSerializer());
   const chips = new SessionChipsRegistry();
   const archiveCleanup = new ArchiveCleanupRegistry();
+  const chatDetails = new ChatDetailsRegistry();
 
-  const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup });
+  const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails });
 
   const chat = new ChatLoader(context, {
     getCards: () => sessions.getCards(),
@@ -56,7 +58,10 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     removeFromGroup: (sessionId) => sessions.removeFromGroup(sessionId),
     setLiveChats: (provider) => sessions.setLiveChats(provider),
     archive: (sessionId) => archiveWithCleanup(sessions, archiveCleanup, sessionId),
-    rename: (sessionId) => renameSessionPrompt(sessions, sessionId)
+    rename: (sessionId) => renameSessionPrompt(sessions, sessionId),
+    pluginSections: (card) => chatDetails.sectionsFor(card),
+    pluginAction: (sessionId, key, itemId, value) => chatDetails.action(sessionId, key, itemId, value),
+    onDidChangePluginSections: (listener) => chatDetails.onDidChange(listener)
   });
   registerDiffReview(context, chips, chat);
   const tracking = new TrackingMonitor(context);

@@ -1,6 +1,7 @@
 import type * as vscode from "vscode";
 import type { SessionCard } from "../types";
 import type { LiveChat } from "../services/sessionColumn";
+import type { ChatPluginSection } from "../services/chatDetails";
 import type { PermissionDecision, PermissionRequest } from "./protocol";
 
 export interface ChatDeps {
@@ -13,6 +14,10 @@ export interface ChatDeps {
   setLiveChats(provider: (() => LiveChat[]) | undefined): void;
   archive(sessionId: string): Promise<void>;
   rename(sessionId: string): Promise<void>;
+  // Plugin sections for the Details pane (ArgusApi.registerChatDetails).
+  pluginSections(card: SessionCard): ChatPluginSection[];
+  pluginAction(sessionId: string, key: string, itemId: string, value?: string): Promise<void>;
+  onDidChangePluginSections(listener: () => void): { dispose(): void };
 }
 
 // What the core sees of the chat bundle (out/chat/host.js).

@@ -114,6 +114,31 @@ export interface SessionChip {
   command?: { command: string; arguments?: unknown[] };
 }
 
+// A section a plugin adds to the Details pane beside an Argus chat. Plain data the core draws (no plugin code runs
+// in the chat webview), so it follows the chat's theme. Ids are lowercase [a-z0-9-], unique within the plugin.
+export interface ChatDetailsSection {
+  id: string;
+  title: string;
+  items: ChatDetailsItem[];
+}
+
+export type ChatDetailsItem =
+  // A label and a value on one line, e.g. "Client  Owl Markets".
+  | { type: "row"; label: string; value: string; tooltip?: string }
+  // A short muted line, e.g. where a value came from.
+  | { type: "note"; text: string }
+  // A dropdown. Picking an option calls the provider's onAction with the item id and the option's value.
+  | { type: "select"; id: string; label: string; value: string; options: { value: string; label: string }[] }
+  // A button. Pressing it calls onAction with the item id.
+  | { type: "button"; id: string; label: string };
+
+export interface ChatDetailsProvider {
+  // Sections for one session's chat, asked for whenever its card changes; keep it fast.
+  sections(card: SessionCard): ChatDetailsSection[] | undefined;
+  // A select changed (with the option's value) or a button was pressed (no value).
+  onAction?(sessionId: string, sectionId: string, itemId: string, value?: string): void | Promise<void>;
+}
+
 // One extra step offered when the user archives a session ("Archive and clean up").
 export interface CleanupItem {
   label: string; // shown in the confirmation dialog, e.g. "Remove work card: Fix login"
@@ -175,6 +200,9 @@ export interface ArgusApi {
   registerSessionChips(provider: (card: SessionCard) => SessionChip[] | undefined): vscode.Disposable & { refresh(): void };
   // Extra cleanup offered when a session is archived. Return [] when there is nothing to do.
   registerArchiveCleanup(provider: (card: SessionCard) => Promise<CleanupItem[]> | CleanupItem[]): vscode.Disposable;
+  // Sections in the Details pane of Argus chats. Call `refresh` when they change without a session change.
+  // Optional: older Argus versions don't have it, so check before calling.
+  registerChatDetails?(provider: ChatDetailsProvider): vscode.Disposable & { refresh(): void };
 }
 
 // A plugin's slice of the "argus.plugins" setting. Keys missing from settings fall back to the defaults in the
