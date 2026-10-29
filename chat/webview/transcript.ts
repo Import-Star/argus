@@ -1,4 +1,5 @@
 import { REVIEW_PROMPT_START, type SDKMessage } from "../../src/chat/protocol";
+import { RECOMMENDED, questionsOf } from "./plan";
 
 export interface DiffLine {
   kind: "ctx" | "add" | "del";
@@ -40,11 +41,13 @@ export type Item =
   | { kind: "workflow"; id: string; toolUseId: string; input: Record<string, unknown> }
   | { kind: "tool"; id: string; name: string; summary: string; pending: boolean; error?: string }
   | { kind: "findings"; id: string; level?: string; findings: Finding[]; pending: boolean; error?: string }
+  | { kind: "answers"; id: string; pairs: Answer[]; pending: boolean; skipped?: boolean }
   | { kind: "note"; id: string; text: string; tone: "muted" | "error" }
   | { kind: "usage"; id: string; input: number; output: number; cacheRead: number; cacheWrite: number; cost?: number };
 
 type Block = { type: string; [key: string]: unknown };
-type ToolResult = { text: string; isError: boolean };
+type ToolResult = { text: string; isError: boolean; data?: any };
+export type Answer = { header: string; answer: string; note?: string };
 type Input = Record<string, unknown>;
 type Raw = SDKMessage & { [key: string]: any };
 
@@ -362,6 +365,15 @@ export function buildItems(messages: SDKMessage[]): Item[] {
       const item: Extract<Item, { kind: "findings" }> = { kind: "findings", id, level: str(input.level) || undefined, findings: findingsOf(input), pending: true };
       waiting.set(id, (result) => Object.assign(item, { pending: false, error: result.isError ? result.text : undefined }));
       items.push(item);
+    } else if (name === "AskUserQuestion") {
+      const item: Extract<Item, { kind: "answers" }> = { kind: "answers", id, pairs: [], pending: true };
+      waiting.set(id, (result) => {
+        const answers = result.data?.answers ?? {};
+        const notes = result.data?.annotations ?? {};
+        const pairs = questionsOf(input).map((question) => ({ header: question.header, answer: str(answers[question.question]).replace(RECOMMENDED, ""), note: str(notes[question.question]?.notes) || undefined }));
+        Object.assign(item, { pending: false, skipped: result.isError, pairs });
+      });
+      items.push(item);
     } else if (name === "Workflow") {
       items.push({ kind: "workflow", id, toolUseId: id, input });
     } else {
@@ -389,7 +401,7 @@ export function buildItems(messages: SDKMessage[]): Item[] {
     const content = message.message?.content;
     blocks(content)
       .filter((block) => block.type === "tool_result")
-      .forEach((block) => waiting.get(str(block.tool_use_id))?.({ text: resultText(block.content), isError: block.is_error === true }));
+      .forEach((block) => waiting.get(str(block.tool_use_id))?.({ text: resultText(block.content), isError: block.is_error === true, data: message.toolUseResult ?? message.tool_use_result }));
     const origin = message.origin as { kind?: string } | undefined;
     if (message.isSynthetic || message.isMeta || (origin && origin.kind !== "human")) {
       return;
@@ -501,7 +513,7 @@ function reviewSummary(text: string): string | undefined {
 
 export type Row = Item | { kind: "hidden"; id: string; firstId: string; calls: number };
 
-const CALL_KINDS = new Set<Item["kind"]>(["edit", "bash", "todos", "agent", "workflow", "tool"]);
+const CALL_KINDS = new Set<Item["kind"]>(["edit", "bash", "todos", "agent", "workflow", "tool", "answers"]);
 
 const callCount = (item: Item): number => (item.kind === "lookups" ? item.calls.length : CALL_KINDS.has(item.kind) ? 1 : 0);
 
@@ -599,6 +611,8 @@ export function searchText(item: Item): string {
       return [item.name, item.summary, item.error ?? ""].join("\n");
     case "findings":
       return item.findings.flatMap((finding) => [finding.file, finding.summary, finding.failureScenario]).join("\n");
+    case "answers":
+      return item.pairs.map((pair) => [pair.header, pair.answer, pair.note ?? ""].join(" ")).join("\n");
     case "usage":
       return "";
   }

@@ -691,3 +691,21 @@
   background-color: rgba(217, 119, 87, 0.7);
   color: inherit;
 }
+
+.tr-answer-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0 12px 10px;
+  line-height: 1.45;
+}
+
+.tr-answer-list dt {
+  color: var(--muted);
+}
+
+.tr-answer-list dd {
+  margin: 0;
+  color: var(--strong);
+}
