@@ -185,6 +185,34 @@ function Agent({ item, sessionId }: { item: Extract<Item, { kind: "agent" }>; se
   );
 }
 
+function Answers({ item }: { item: Extract<Item, { kind: "answers" }> }) {
+  if (item.pending) {
+    return null;
+  }
+  if (item.skipped) {
+    return <div class="tr-note">Questions skipped</div>;
+  }
+  return (
+    <div class="tr-card tr-answers">
+      <div class="tr-row muted">
+        <span class="tr-ok"><Icon d={CHECK} size={12} stroke={3} /></span>
+        You answered {item.pairs.length === 1 ? "a question" : `${item.pairs.length} questions`}
+      </div>
+      <dl class="tr-answer-list">
+        {item.pairs.map((pair) => (
+          <>
+            <dt>{pair.header}</dt>
+            <dd>
+              {pair.answer}
+              {pair.note ? <span class="muted"> · note: {pair.note}</span> : null}
+            </dd>
+          </>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 function Tool({ item }: { item: Extract<Item, { kind: "tool" }> }) {
   return (
     <div class="tr-card">
@@ -304,6 +332,8 @@ function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId: strin
       return <WorkflowCard sessionId={sessionId} toolUseId={item.toolUseId} input={item.input} />;
     case "tool":
       return <Tool item={item} />;
+    case "answers":
+      return <Answers item={item} />;
     case "note":
       return <div class={`tr-note${item.tone === "error" ? " tr-note-error" : ""}`}>{item.text}</div>;
     case "usage":

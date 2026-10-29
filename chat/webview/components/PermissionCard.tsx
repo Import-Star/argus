@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import type { PermissionDecision, PermissionMode, PermissionRequest } from "../../../src/chat/protocol";
-import { questionsOf, type AskQuestion } from "../plan";
+import { RECOMMENDED, questionsOf, type AskQuestion } from "../plan";
 import { post, setUi } from "../store";
 import "./permission.css";
 
@@ -128,10 +128,14 @@ function ToolCard({ sessionId, request, compact }: { sessionId: string; request:
   );
 }
 
+const CHECK = "M5 12.5l4.5 4.5L19 7.5";
+
 interface Choice {
   picked: string[];
   other: string;
   otherOn: boolean;
+  note: string;
+  noteOpen: boolean;
 }
 
 function answerOf(question: AskQuestion, choice: Choice): string {
@@ -142,77 +146,190 @@ function answerOf(question: AskQuestion, choice: Choice): string {
   return parts.join(", ");
 }
 
-function QuestionBlock({ id, index, question, choice, onChange }: { id: string; index: number; question: AskQuestion; choice: Choice; onChange: (choice: Choice) => void }) {
+function Tick() {
+  return (
+    <svg class="q-tick" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" aria-hidden="true">
+      <path d={CHECK} />
+    </svg>
+  );
+}
+
+function QuestionBlock({ id, index, question, choice, compact, onChange, onPicked }: { id: string; index: number; question: AskQuestion; choice: Choice; compact?: boolean; onChange: (choice: Choice) => void; onPicked: () => void }) {
   const name = `${id}-${index}`;
   const multi = question.multiSelect === true;
   const pick = (label: string, on: boolean) => {
     if (!multi) {
       onChange({ ...choice, picked: [label], otherOn: false });
+      onPicked();
       return;
     }
     onChange({ ...choice, picked: on ? [...choice.picked, label] : choice.picked.filter((item) => item !== label) });
   };
-  const toggleOther = (on: boolean) => onChange({ ...choice, otherOn: on, picked: on && !multi ? [] : choice.picked });
   const type = multi ? "checkbox" : "radio";
   return (
-    <fieldset class="perm-question">
+    <fieldset class="q-question">
       <legend>
-        <span class="perm-chip">{question.header}</span>
-        {question.question}
+        <span class="q-header">{question.header}</span>
+        <span class="q-text">{question.question}</span>
+        {multi ? <span class="q-hint">Pick any</span> : null}
       </legend>
-      {question.options.map((option) => (
-        <label class="perm-option" key={option.label}>
-          <input type={type} name={name} checked={choice.picked.includes(option.label)} onChange={(event) => pick(option.label, event.currentTarget.checked)} />
-          <span>
-            <span class="perm-option-label">{option.label}</span>
-            {option.description ? <span class="perm-option-desc">{option.description}</span> : null}
-          </span>
-        </label>
-      ))}
-      <label class="perm-option">
-        <input type={type} name={name} checked={choice.otherOn} onChange={(event) => toggleOther(event.currentTarget.checked)} />
-        <span class="perm-option-label">Other</span>
+      {question.options.map((option, optionIndex) => {
+        const on = choice.picked.includes(option.label);
+        const recommended = RECOMMENDED.test(option.label);
+        return (
+          <label class={`q-option${on ? " on" : ""}`} key={option.label}>
+            <input type={type} name={name} checked={on} onChange={(event) => pick(option.label, event.currentTarget.checked)} />
+            <span class="q-key" aria-hidden="true">{optionIndex + 1}</span>
+            <span class="q-body">
+              <span class="q-label">
+                {option.label.replace(RECOMMENDED, "")}
+                {recommended ? <span class="q-badge">Recommended</span> : null}
+              </span>
+              {option.description ? <span class="q-desc">{option.description}</span> : null}
+            </span>
+            {on ? <Tick /> : null}
+          </label>
+        );
+      })}
+      <div class={`q-option q-other${choice.otherOn ? " on" : ""}`}>
+        <span class="q-key" aria-hidden="true">{question.options.length + 1}</span>
         <input
           type="text"
-          class="perm-other"
           aria-label={`Other answer for ${question.header}`}
+          placeholder="Something else…"
           value={choice.other}
-          onInput={(event) => onChange({ ...choice, other: event.currentTarget.value, otherOn: true, picked: multi ? choice.picked : [] })}
+          onInput={(event) => {
+            const other = event.currentTarget.value;
+            onChange({ ...choice, other, otherOn: other.trim() !== "", picked: multi ? choice.picked : [] });
+          }}
         />
-      </label>
+      </div>
+      {compact ? null : choice.noteOpen ? (
+        <input
+          type="text"
+          class="q-note"
+          aria-label={`Note for ${question.header}`}
+          placeholder="Note for Claude"
+          value={choice.note}
+          autoFocus
+          onInput={(event) => onChange({ ...choice, note: event.currentTarget.value })}
+        />
+      ) : (
+        <button type="button" class="q-add-note" onClick={() => onChange({ ...choice, noteOpen: true })}>
+          + Add a note to this answer
+        </button>
+      )}
     </fieldset>
   );
 }
 
 function QuestionCard({ sessionId, request, compact }: { sessionId: string; request: PermissionRequest; compact?: boolean }) {
   const questions = questionsOf(request.input);
-  const [choices, setChoices] = useState<Choice[]>(() => questions.map(() => ({ picked: [], other: "", otherOn: false })));
-  const ready = questions.every((question, index) => answerOf(question, choices[index]) !== "");
+  const [choices, setChoices] = useState<Choice[]>(() => questions.map(() => ({ picked: [], other: "", otherOn: false, note: "", noteOpen: false })));
+  const [active, setActive] = useState(0);
+  const card = useRef<HTMLDivElement>(null);
+  const answers = questions.map((question, index) => answerOf(question, choices[index]));
+  const missing = questions.find((_, index) => answers[index] === "");
+  const answered = answers.filter(Boolean).length;
+
+  useEffect(() => {
+    const focused = document.activeElement;
+    const typing = (focused instanceof HTMLTextAreaElement || focused instanceof HTMLInputElement) && focused.value !== "";
+    if (!typing) {
+      card.current?.focus({ preventScroll: true });
+    }
+  }, []);
+
   const send = () => {
-    const answers = Object.fromEntries(questions.map((question, index) => [question.question, answerOf(question, choices[index])]));
-    decide(sessionId, request.id, { behavior: "allow", updatedInput: { ...request.input, answers } });
+    if (missing) {
+      return;
+    }
+    const answerMap = Object.fromEntries(questions.map((question, index) => [question.question, answers[index]]));
+    const notes = questions.flatMap((question, index) => (choices[index].note.trim() ? [[question.question, { notes: choices[index].note.trim() }]] : []));
+    const updatedInput = { ...request.input, answers: answerMap, ...(notes.length > 0 ? { annotations: Object.fromEntries(notes) } : {}) };
+    decide(sessionId, request.id, { behavior: "allow", updatedInput });
   };
-  const change = (index: number, choice: Choice) => setChoices(choices.map((current, i) => (i === index ? choice : current)));
-  return (
-    <Shell
-      title={questions.length > 1 ? "Claude has questions" : "Claude has a question"}
-      icon="question"
-      compact={compact}
-      actions={
-        <>
-          <button type="button" class="primary" disabled={!ready} onClick={send}>
-            Send answer
-          </button>
-          <button type="button" onClick={() => decide(sessionId, request.id, { behavior: "deny", message: "The user declined to answer." })}>
-            Skip
-          </button>
-        </>
+  const skip = () => decide(sessionId, request.id, { behavior: "deny", message: "The user skipped these questions. Use your best judgement." });
+  const change = (index: number, choice: Choice) => setChoices((current) => current.map((entry, i) => (i === index ? choice : entry)));
+  const advance = (from: number) => {
+    const next = questions.findIndex((_, index) => index > from && answers[index] === "");
+    if (next !== -1) {
+      setActive(next);
+    }
+  };
+
+  const onKeyDown = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement;
+    if (target instanceof HTMLInputElement && target.type === "text") {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        send();
+      } else if (event.key === "Escape") {
+        card.current?.focus();
       }
-    >
-      {questions.map((question, index) => (
-        <QuestionBlock key={question.question} id={request.id} index={index} question={question} choice={choices[index]} onChange={(choice) => change(index, choice)} />
-      ))}
-    </Shell>
+      return;
+    }
+    const question = questions[active];
+    const digit = Number(event.key);
+    if (question && Number.isInteger(digit) && digit >= 1 && digit <= question.options.length + 1) {
+      event.preventDefault();
+      const inputs = card.current?.querySelectorAll<HTMLInputElement>(".q-question input");
+      const input = inputs?.[digit - 1];
+      if (input?.type === "text") {
+        input.focus();
+      } else {
+        input?.click();
+      }
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      setActive(Math.min(questions.length - 1, Math.max(0, active + (event.key === "ArrowDown" ? 1 : -1))));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      send();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      skip();
+    }
+  };
+
+  return (
+    <div class={`perm-card question${compact ? " compact" : ""}`} role="group" aria-label="Claude has questions" tabIndex={0} ref={card} onKeyDown={onKeyDown}>
+      <div class="q-head">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d={ICONS.question} />
+        </svg>
+        <span class="q-title">{questions.length > 1 ? `Claude has ${questions.length} questions` : "Claude has a question"}</span>
+        {questions.length > 1 ? (
+          <span class="q-progress">
+            {questions.map((_, index) => (
+              <span key={index} class={answers[index] ? "done" : undefined} />
+            ))}
+            {answered} of {questions.length}
+          </span>
+        ) : null}
+      </div>
+      {questions.map((question, index) =>
+        index === active || questions.length === 1 ? (
+          <QuestionBlock key={question.question} id={request.id} index={index} question={question} choice={choices[index]} compact={compact} onChange={(choice) => change(index, choice)} onPicked={() => advance(index)} />
+        ) : (
+          <button type="button" key={question.question} class="q-row" onClick={() => setActive(index)}>
+            {answers[index] ? <Tick /> : <span class="q-dot" />}
+            <span class="q-header">{question.header}</span>
+            <span class={`q-row-text${answers[index] ? "" : " muted"}`}>{answers[index] ? answers[index].replace(RECOMMENDED, "") : question.question}</span>
+            <span class="q-row-action">{answers[index] ? "Change" : "Answer"}</span>
+          </button>
+        )
+      )}
+      <div class="perm-actions">
+        <button type="button" class="primary" disabled={!!missing} title={missing ? `Answer "${missing.header}" to send` : undefined} onClick={send}>
+          {questions.length > 1 ? "Send answers" : "Send answer"} <span class="perm-key">⏎</span>
+        </button>
+        <button type="button" onClick={skip}>
+          Skip, Claude decides
+        </button>
+        {compact ? null : <span class="q-keys">{missing && answered > 0 ? `Answer "${missing.header}" to send` : "1–9 pick · ↑↓ question · Esc skip"}</span>}
+      </div>
+    </div>
   );
 }
 

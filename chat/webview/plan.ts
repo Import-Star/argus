@@ -110,6 +110,8 @@ export function lastPlan(messages: SDKMessage[]): string | undefined {
   return undefined;
 }
 
+export const RECOMMENDED = /\s*\(recommended\)\s*$/i;
+
 export function questionsOf(input: Record<string, unknown>): AskQuestion[] {
   return Array.isArray(input.questions) ? (input.questions as AskQuestion[]) : [];
 }
