@@ -78,6 +78,7 @@ async function workflowSteps(page) {
 
 async function boardSteps(page) {
   await page.getByLabel("Expand then contract").check();
+  await page.locator(".pending-opt.on").waitFor();
 }
 
 async function textOnlySteps(page) {
@@ -158,6 +159,21 @@ async function searchSteps(page) {
   await page.locator(".tr-search-count", { hasText: "3 of" }).waitFor();
 }
 
+async function questionSteps(page) {
+  await page.locator(".perm-card.question").focus();
+  await page.keyboard.press("1");
+  await page.locator(".q-row", { hasText: "Use a dev vault" }).waitFor();
+  await page.keyboard.press("1");
+  await page.getByRole("button", { name: "+ Add a note to this answer" }).click();
+  await page.getByLabel("Note for PRs").fill("stack PR2 on PR1");
+  await page.keyboard.press("Enter");
+  const sent = await page.evaluate(() => window.__posted.filter((message) => message.type === "permission").at(-1));
+  const input = sent?.decision?.updatedInput;
+  if (input?.answers?.["Should the PRs be opened when done?"] !== "Draft PRs, no Slack (Recommended)" || input?.annotations?.["Should the PRs be opened when done?"]?.notes !== "stack PR2 on PR1" || Object.keys(input.answers).length !== 2) {
+    throw new Error(`unexpected question answer: ${JSON.stringify(sent)}`);
+  }
+}
+
 const CHAT_PAGE = { html: "chat.html" };
 const CENTER_PAGE = { html: "center.html" };
 
@@ -165,6 +181,7 @@ const SCREENS = [
   { name: "chat", ...CHAT_PAGE, expect: { todos: ".tr-todos", diffCard: ".tr-diff", agent: ".tr-row strong", streaming: ".tr-cursor", cache: ".det-row[title=\"Prompt cache expires if idle\"]", effort: ".cmp-effort .on", details: ".det-section", agentsChip: ".hdr-agents", agentDots: ".hdr-agent-dots .hdr-dot" } },
   { name: "chat-narrow", ...CHAT_PAGE, width: 900, fixture: "chat", expect: { agentsChip: ".hdr-agents", header: ".chat-header" } },
   { name: "permission", ...CHAT_PAGE, expect: { permission: ".perm-card", command: ".perm-code", actions: ".perm-actions button" } },
+  { name: "question", ...CHAT_PAGE, steps: questionSteps, expect: { card: ".perm-card.question", answered: ".q-row", options: ".q-option", recommended: ".q-badge", receipt: ".tr-answer-list dd" } },
   { name: "plan", ...CHAT_PAGE, steps: planSteps, expect: { planPane: ".plan-pane", planBlocks: ".plan-block", comment: ".plan-comment", approve: ".plan-foot button" } },
   { name: "review", ...CHAT_PAGE, steps: reviewSteps, expect: { overlay: ".review", threads: ".review-thread", answered: ".review-claude:not(.review-working)", inProgress: ".review-working", files: ".review-file" } },
   { name: "review-pr", ...CHAT_PAGE, messages: () => [...fixture("review").messages, ...fixture("review-pr").messages], steps: reviewPrSteps, expect: { overlay: ".review", prTab: '.review-tabs [aria-selected="true"]', files: ".review-file", deleted: ".review-k-del", gapCollapsed: ".review-gap", gapExpanded: ".review-line.review-k-ctx" } },

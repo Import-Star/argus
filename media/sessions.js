@@ -11,6 +11,7 @@
   ];
 
   // Columns shown as a strip until clicked open, with the state key that remembers it.
+  const RECOMMENDED = /\s*\(recommended\)\s*$/i;
   const FOLDED = { scheduled: "showScheduled", archived: "showArchived" };
   const TIMER_GLYPH = { wakeup: "⏰", cron: "⏰", command: "⧗", monitor: "⧗", agent: "⑂" };
 
@@ -409,9 +410,9 @@
         const ids = `data-session-id="${sid}" data-request-id="${esc(req.id)}"`;
         const open = `<button data-action="open-session" data-session-id="${sid}">Open chat</button>`;
         if (req.questions && req.questions.length) {
-          const questions = req.questions.map((q, qi) => this.renderQuestion(card.record.sessionId, req.id, q, qi)).join("");
+          const questions = req.questions.map((q, qi) => this.renderQuestion(card.record.sessionId, req.id, q, qi, req.questions.length)).join("");
           const ready = req.questions.every((q, qi) => this.pickedAnswer(card.record.sessionId, req.id, q, qi));
-          return `<div class="pending" ${ids}>${questions}<div class="pending-actions"><button class="primary" data-action="chat-answer" ${ids}${ready ? "" : " disabled"}>Send answer</button>${open}</div></div>`;
+          return `<div class="pending question" ${ids}>${questions}<div class="pending-actions"><button class="primary" data-action="chat-answer" ${ids}${ready ? "" : " disabled"}>Send answer</button>${open}</div></div>`;
         }
         if (req.toolName === "ExitPlanMode") {
           return `<div class="pending"><div class="pending-title">Plan ready for approval</div><div class="pending-actions">${open}</div></div>`;
@@ -422,13 +423,19 @@
       }).join("");
     },
 
-    renderQuestion(sessionId, requestId, q, qi) {
+    renderQuestion(sessionId, requestId, q, qi, total) {
       const { esc } = this.ctx;
       const key = `${sessionId}|${requestId}|${qi}`;
       const chosen = this.state.answers[key] || [];
       const type = q.multiSelect ? "checkbox" : "radio";
-      const options = q.options.map((option) => `<label class="pending-opt${chosen.includes(option.label) ? " on" : ""}"><input type="${type}" name="${esc(key)}" value="${esc(option.label)}" data-answer-key="${esc(key)}"${chosen.includes(option.label) ? " checked" : ""} /><span><span class="pending-label">${esc(option.label)}</span>${option.description ? `<span class="pending-desc">${esc(option.description)}</span>` : ""}</span></label>`).join("");
-      return `<fieldset class="pending-q"><legend>${esc(q.question)}</legend>${options}</fieldset>`;
+      const count = total > 1 ? `<span class="pending-count">${qi + 1} of ${total}</span>` : "";
+      const options = q.options.map((option) => {
+        const on = chosen.includes(option.label);
+        const recommended = RECOMMENDED.test(option.label);
+        const tag = recommended ? `<span class="pending-rec">Recommended</span>` : "";
+        return `<label class="pending-opt${on ? " on" : ""}"${option.description ? ` title="${esc(option.description)}"` : ""}><input type="${type}" name="${esc(key)}" value="${esc(option.label)}" data-answer-key="${esc(key)}"${on ? " checked" : ""} />${esc(option.label.replace(RECOMMENDED, ""))}${tag}</label>`;
+      }).join("");
+      return `<fieldset class="pending-q"><legend>${esc(q.question)}${count}</legend><div class="pending-opts">${options}</div></fieldset>`;
     },
 
     pickedAnswer(sessionId, requestId, q, qi) {

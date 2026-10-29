@@ -191,13 +191,18 @@ body.welcome { max-width: 760px; margin: 0 auto; padding: 24px 24px 40px; line-h
 .pending-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .pending-actions button { font-size: 12px; padding: 4px 10px; }
 .pending-actions button:disabled { opacity: 0.5; cursor: default; }
+.pending.question { border-color: var(--border); background: var(--row); }
 .pending-q { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.pending-q legend { padding: 0 0 6px; font-weight: 600; line-height: 1.4; }
-.pending-opt { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--row); cursor: pointer; }
-.pending-opt.on { border-color: var(--coral); background: var(--coral-soft); }
-.pending-opt input { margin: 2px 0 0; accent-color: var(--coral); }
-.pending-label { display: block; font-weight: 600; }
-.pending-desc { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.pending-q legend { display: flex; gap: 8px; width: 100%; padding: 0 0 4px; font-weight: 600; line-height: 1.4; }
+.pending-count { margin-left: auto; flex: none; color: var(--muted); font-weight: 400; font-size: 12px; }
+.pending-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.pending-opt { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 999px; font-size: 12px; cursor: pointer; }
+.pending-opt:hover { border-color: var(--muted); }
+.pending-opt.on { border-color: var(--coral); background: var(--coral); color: #ffffff; font-weight: 600; }
+.pending-opt:focus-within { outline: 1px solid var(--coral); outline-offset: 1px; }
+.pending-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.pending-rec { color: #8fc28e; font-size: 11px; font-weight: 400; }
+.pending-opt.on .pending-rec { color: #ffffff; opacity: 0.85; }
 
 #refresh-sessions.refreshing { cursor: default; }
 #refresh-sessions.refreshing .refresh-glyph { display: inline-block; animation: spin 0.8s linear infinite; }
