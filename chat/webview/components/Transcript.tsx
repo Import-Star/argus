@@ -198,6 +198,35 @@ function Tool({ item }: { item: Extract<Item, { kind: "tool" }> }) {
   );
 }
 
+function Findings({ item, sessionId }: { item: Extract<Item, { kind: "findings" }>; sessionId: string }) {
+  const count = item.findings.length;
+  return (
+    <div class="tr-card">
+      <div class="tr-row">
+        <Status pending={item.pending} error={!!item.error} />
+        <strong>{count === 0 ? "No findings" : `${count} finding${count === 1 ? "" : "s"}`}</strong>
+        {item.level && <span class="tr-label muted">{item.level}</span>}
+      </div>
+      {item.findings.map((finding, index) => (
+        <div key={index} class="tr-finding">
+          <div class="tr-finding-head">
+            {finding.verdict && <span class="tr-chip">{finding.verdict}</span>}
+            {finding.outcome && <span class="tr-chip">{finding.outcome}</span>}
+            {finding.category && <span class="tr-chip">{finding.category}</span>}
+            <button type="button" class="mono tr-finding-file" title={finding.file} onClick={() => post({ type: "openFile", sessionId, path: finding.file, line: finding.line })}>
+              {finding.file}
+              {finding.line ? `:${finding.line}` : ""}
+            </button>
+          </div>
+          <div class="tr-finding-summary">{finding.summary}</div>
+          {finding.failureScenario && <div class="tr-desc">{finding.failureScenario}</div>}
+        </div>
+      ))}
+      {item.error && <div class="tr-err">{item.error.slice(0, 400)}</div>}
+    </div>
+  );
+}
+
 function formatElapsed(ms: number): string {
   const seconds = Math.max(0, Math.floor(ms / 1000));
   if (seconds < 60) {
@@ -304,6 +333,8 @@ function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId: strin
       return <WorkflowCard sessionId={sessionId} toolUseId={item.toolUseId} input={item.input} />;
     case "tool":
       return <Tool item={item} />;
+    case "findings":
+      return <Findings item={item} sessionId={sessionId} />;
     case "note":
       return <div class={`tr-note${item.tone === "error" ? " tr-note-error" : ""}`}>{item.text}</div>;
     case "usage":

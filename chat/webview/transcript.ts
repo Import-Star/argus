@@ -18,6 +18,16 @@ export interface Todo {
   status: "pending" | "in_progress" | "completed";
 }
 
+export interface Finding {
+  file: string;
+  line?: number;
+  summary: string;
+  failureScenario: string;
+  category?: string;
+  verdict?: string;
+  outcome?: string;
+}
+
 export type Item =
   | { kind: "user"; id: string; text: string; images: string[] }
   | { kind: "text"; id: string; text: string; streaming?: boolean }
@@ -29,6 +39,7 @@ export type Item =
   | { kind: "agent"; id: string; toolUseId: string; subagentType: string; description: string; taskId?: string; pending: boolean; error?: string }
   | { kind: "workflow"; id: string; toolUseId: string; input: Record<string, unknown> }
   | { kind: "tool"; id: string; name: string; summary: string; pending: boolean; error?: string }
+  | { kind: "findings"; id: string; level?: string; findings: Finding[]; pending: boolean; error?: string }
   | { kind: "note"; id: string; text: string; tone: "muted" | "error" }
   | { kind: "usage"; id: string; input: number; output: number; cacheRead: number; cacheWrite: number; cost?: number };
 
@@ -168,6 +179,18 @@ function toolSummary(input: Input): string {
   const value = input.description ?? input.file_path ?? input.command ?? input.pattern ?? input.query ?? input.url ?? input.prompt ?? input.path;
   const text = str(value).replace(/\s+/g, " ").trim();
   return text.length > 140 ? `${text.slice(0, 140)}…` : text;
+}
+
+function findingsOf(input: Input): Finding[] {
+  return blocks(input.findings).map((finding) => ({
+    file: str(finding.file),
+    line: typeof finding.line === "number" ? finding.line : undefined,
+    summary: str(finding.summary),
+    failureScenario: str(finding.failure_scenario),
+    category: str(finding.category) || undefined,
+    verdict: str(finding.verdict) || undefined,
+    outcome: str(finding.outcome) || undefined
+  }));
 }
 
 function todosOf(input: Input): Todo[] {
@@ -335,6 +358,10 @@ export function buildItems(messages: SDKMessage[]): Item[] {
       }
       waiting.set(id, (result) => Object.assign(item, { pending: background.has(id), error: result.isError ? result.text : undefined }));
       items.push(item);
+    } else if (name === "ReportFindings") {
+      const item: Extract<Item, { kind: "findings" }> = { kind: "findings", id, level: str(input.level) || undefined, findings: findingsOf(input), pending: true };
+      waiting.set(id, (result) => Object.assign(item, { pending: false, error: result.isError ? result.text : undefined }));
+      items.push(item);
     } else if (name === "Workflow") {
       items.push({ kind: "workflow", id, toolUseId: id, input });
     } else {
@@ -478,7 +505,7 @@ const CALL_KINDS = new Set<Item["kind"]>(["edit", "bash", "todos", "agent", "wor
 
 const callCount = (item: Item): number => (item.kind === "lookups" ? item.calls.length : CALL_KINDS.has(item.kind) ? 1 : 0);
 
-const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || (item.kind === "note" && item.tone === "error");
+const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || item.kind === "findings" || (item.kind === "note" && item.tone === "error");
 
 export function textOnlyRows(items: Item[]): Row[] {
   const rows: Row[] = [];
@@ -570,6 +597,8 @@ export function searchText(item: Item): string {
       return JSON.stringify(item.input);
     case "tool":
       return [item.name, item.summary, item.error ?? ""].join("\n");
+    case "findings":
+      return item.findings.flatMap((finding) => [finding.file, finding.summary, finding.failureScenario]).join("\n");
     case "usage":
       return "";
   }

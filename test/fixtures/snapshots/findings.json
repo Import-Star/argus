@@ -1,0 +1,411 @@
+{
+  "messages": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "11111111-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "groups",
+      "groups": [
+        {
+          "id": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "members": [
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000001",
+              "title": "Add subtract to math.ts",
+              "status": "working"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000002",
+              "title": "Fix flaky MFA test",
+              "status": "needs-you"
+            },
+            {
+              "sessionId": "11111111-0000-4000-8000-000000000003",
+              "title": "Charts ECS dev rollout",
+              "status": "working"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "rail",
+      "sessions": [
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000001",
+          "title": "Add subtract to math.ts",
+          "column": "working",
+          "activity": "Editing src/math.ts",
+          "since": "@now-134000",
+          "repo": "orders"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000002",
+          "title": "Fix flaky MFA test",
+          "column": "needs-you",
+          "activity": "Waiting on permission: Bash",
+          "since": "@now-540000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "11111111-0000-4000-8000-000000000003",
+          "title": "Charts ECS dev rollout",
+          "column": "working",
+          "activity": "Running tests",
+          "since": "@now-840000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r4",
+          "title": "Review PR 11215",
+          "column": "needs-you",
+          "activity": "Question for you",
+          "since": "@now-1860000",
+          "repo": "acme"
+        },
+        {
+          "sessionId": "r5",
+          "title": "Update Redis alerts runbook",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-7200000",
+          "repo": "platform"
+        },
+        {
+          "sessionId": "r6",
+          "title": "Orders leader election notes",
+          "column": "idle",
+          "activity": "",
+          "since": "@now-36000000",
+          "repo": "orders"
+        }
+      ]
+    },
+    {
+      "type": "card",
+      "card": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "worktree": "/work/orders",
+        "prs": [
+          {
+            "key": "acme/orders#412",
+            "title": "Add subtract helper",
+            "url": "https://github.com/acme/orders/pull/412",
+            "state": "OPEN",
+            "isDraft": false,
+            "reviewDecision": "REVIEW_REQUIRED",
+            "checks": [
+              {
+                "name": "build",
+                "status": "COMPLETED",
+                "conclusion": "SUCCESS"
+              },
+              {
+                "name": "lint",
+                "status": "IN_PROGRESS"
+              }
+            ]
+          }
+        ],
+        "usedTokens": 48210,
+        "compactions": 0
+      }
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/subtract-fn",
+        "status": "idle",
+        "statusSince": -1000,
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "default",
+            "displayName": "Default (recommended)",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "opus",
+            "displayName": "Opus 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "fable",
+            "displayName": "Fable 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "sonnet",
+            "displayName": "Sonnet 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "haiku",
+            "displayName": "Haiku 5.5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-haiku-4-5-20251001",
+            "displayName": "Haiku 4.5",
+            "efforts": []
+          },
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-5",
+            "displayName": "Opus 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-fable-5",
+            "displayName": "Fable 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-8",
+            "displayName": "Opus 4.8",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-7",
+            "displayName": "Opus 4.7",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-opus-4-6",
+            "displayName": "Opus 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-sonnet-4-6",
+            "displayName": "Sonnet 4.6",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "max"
+            ]
+          },
+          {
+            "value": "claude-mythos-5-1",
+            "displayName": "Mythos 5.1",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "lastResponseAt": "@now-150000",
+        "cacheTtlMs": 300000,
+        "title": "Add subtract to math.ts"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000201",
+        "message": {
+          "role": "user",
+          "content": "<command-name>/code-review</command-name>\n<command-args>412</command-args>"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000202",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_f1",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_f1",
+              "name": "ReportFindings",
+              "input": {
+                "level": "high",
+                "findings": [
+                  {
+                    "file": "src/orders/fill.ts",
+                    "line": 42,
+                    "category": "correctness",
+                    "verdict": "CONFIRMED",
+                    "short_summary": "Partial fill double-credits balance",
+                    "summary": "A retried partial fill credits the balance twice because the idempotency key omits the fill sequence.",
+                    "failure_scenario": "Reproduced: node scripts/retry-fill.ts \u2192 balance 200 after one 100 fill"
+                  },
+                  {
+                    "file": "src/orders/cancel.ts",
+                    "line": 88,
+                    "category": "correctness",
+                    "verdict": "PLAUSIBLE",
+                    "short_summary": "Cancel races settlement",
+                    "summary": "Cancel reads status before the settlement lock, so a settling order can be cancelled.",
+                    "failure_scenario": "Not reproduced: needs two workers on a shared queue locally"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000203",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_f1",
+              "content": "Reported 2 findings"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000204",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_f2",
+          "content": [
+            {
+              "type": "tool_use",
+              "id": "toolu_f2",
+              "name": "ReportFindings",
+              "input": {
+                "level": "low",
+                "findings": []
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000205",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "tool_result",
+              "tool_use_id": "toolu_f2",
+              "content": "Reported 0 findings"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

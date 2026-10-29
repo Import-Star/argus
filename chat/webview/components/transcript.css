@@ -307,6 +307,44 @@
   overflow-wrap: anywhere;
 }
 
+.tr-finding {
+  border-top: 1px solid var(--border);
+  padding: 8px 0 2px;
+}
+
+.tr-finding-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 4px;
+  min-width: 0;
+}
+
+.tr-finding-head .tr-chip {
+  margin-top: 0;
+}
+
+.tr-finding-file {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  font-size: 12px;
+  color: var(--strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tr-finding-file:hover {
+  text-decoration: underline;
+}
+
+.tr-finding-summary {
+  padding: 0 12px 4px;
+  overflow-wrap: anywhere;
+}
+
 .tr-bash-cmd {
   flex: 1;
 }
