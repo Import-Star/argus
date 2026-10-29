@@ -56,8 +56,8 @@ how many uncommitted files each one has, and offers a force removal that deletes
 can add their own cleanup steps; you are asked first. Sending a new prompt to an archived session brings it back.
 
 **Notifications.** A warning when a session needs permission or asks a question, and an info message when it
-finishes. The **Open Session** button jumps straight to the session. Set `argus.notifications` to `input`
-(permission and questions only) or `off`.
+finishes. The **Open Session** button jumps straight to the session. No popup shows for a session whose chat is
+already in front of you. Set `argus.notifications` to `input` (permission and questions only) or `off`.
 
 ### Control Center
 
