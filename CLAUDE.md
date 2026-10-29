@@ -23,6 +23,14 @@ and [README.md](README.md) for user-facing behaviour.
 - `src/services/PluginHost.ts` — finds, loads and reloads plugin folders. `src/services/PluginConfig.ts` — a
   plugin's slice of `argus.plugins.config`.
 
+## Releases
+
+- A release is a `chore: release X.Y.Z` PR that bumps `version` in `package.json` and `package-lock.json` and turns
+  `## Unreleased` in `CHANGELOG.md` into `## X.Y.Z`, then an annotated `vX.Y.Z` tag on main after it merges.
+- Never create a GitHub release (`gh release create`) or attach a `.vsix` to one. Tags are the only release record.
+- Publish to the VS Code Marketplace from the tag with `npm run publish:store` only when asked. A tagged version is
+  released: later changes go under `## Unreleased`, never into an existing version heading.
+
 ## Rules
 
 - `api/*.d.ts` is the public plugin contract: changes must stay backwards compatible or bump `version`.
