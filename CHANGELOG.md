@@ -2,6 +2,10 @@
 
 First public release.
 
+## Unreleased
+
+- PR chips on session cards show unresolved review comments (`💬 2`).
+
 ## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the

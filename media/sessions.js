@@ -321,8 +321,10 @@
       const failed = (pr.checks || []).some((c) => c.conclusion && !["SUCCESS", "SKIPPED", "NEUTRAL"].includes(c.conclusion));
       const checks = (pr.checks || []).length ? (failed ? " · ✗ checks" : " · ✓ checks") : "";
       const review = pr.reviewDecision === "APPROVED" ? " · approved" : pr.reviewDecision === "CHANGES_REQUESTED" ? " · changes" : "";
+      const comments = pr.unresolvedThreads ? ` · 💬 ${pr.unresolvedThreads}` : "";
       const num = String(pr.key || "").split("#").pop();
-      return `<button class="chip pr-${esc(state)}" data-action="open-pr" data-url="${esc(pr.url)}" title="${esc(pr.title || pr.key)}">#${esc(num)} ${esc(state)}${checks}${review}</button>`;
+      const title = `${pr.title || pr.key}${pr.unresolvedThreads ? ` (${pr.unresolvedThreads} unresolved comment${pr.unresolvedThreads === 1 ? "" : "s"})` : ""}`;
+      return `<button class="chip pr-${esc(state)}" data-action="open-pr" data-url="${esc(pr.url)}" title="${esc(title)}">#${esc(num)} ${esc(state)}${checks}${review}${comments}</button>`;
     },
 
     promptFor(card) {
