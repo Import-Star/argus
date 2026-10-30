@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- A reopened chat keeps the model, effort and permission mode it started with. Before, a chat where none were picked
+  followed `settings.json`, which picking a model or effort in any other chat changes.
+
 ## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
