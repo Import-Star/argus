@@ -2,6 +2,12 @@
 
 First public release.
 
+## Unreleased
+
+- **Code-review findings** are now a collapsed list: each finding shows a HIGH / MED / LOW badge (from its category),
+  its short summary and its file name. Opening one shows the issue, repro, likelihood and fix on separate rows, with
+  **Fix** and **Skip** buttons that reply to Claude and **Ask**, which starts a message about that finding.
+
 ## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the

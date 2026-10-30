@@ -81,6 +81,11 @@ async function boardSteps(page) {
   await page.locator(".pending-opt.on").waitFor();
 }
 
+async function findingsSteps(page) {
+  await page.locator(".tr-finding .tr-fold").first().click();
+  await page.locator(".tr-finding-rows dt").first().waitFor();
+}
+
 async function textOnlySteps(page) {
   await page.keyboard.press("Meta+Shift+T");
   await page.locator('.tr-pill[aria-pressed="true"]').waitFor();
@@ -188,7 +193,7 @@ const SCREENS = [
   { name: "grid", ...CHAT_PAGE, expect: { tiles: ".grid-tile", needsYou: ".grid-tile.needs", summary: ".grid-needs", groupName: ".grid-group", addAgent: ".grid-add-agent" } },
   { name: "board", ...CENTER_PAGE, height: 1200, tab: "sessions", messages: () => fixture("board").messages, steps: boardSteps, expect: { cards: ".row", permission: ".pending-code", question: ".pending-q", columns: ".scol", group: ".row.group", agents: ".row.group .agent", groupPending: ".row.group .agent-pending .pending-code" } },
   { name: "workflow", ...CHAT_PAGE, steps: workflowSteps, expect: { card: ".wf-card", pane: ".wf-pane", phases: ".wf-column", failed: ".wf-agent-failed", detail: ".wf-detail" } },
-  { name: "findings", ...CHAT_PAGE, expect: { card: ".tr-finding", file: ".tr-finding-file", summary: ".tr-finding-summary" } },
+  { name: "findings", ...CHAT_PAGE, steps: findingsSteps, expect: { card: ".tr-finding", file: ".tr-finding-file", severity: ".tr-sev", rows: ".tr-finding-rows dt", actions: ".tr-finding-actions button" } },
   { name: "text-only", ...CHAT_PAGE, steps: textOnlySteps, expect: { pill: '.tr-pill[aria-pressed="true"]', divider: ".tr-hidden", text: ".tr-text" } },
   { name: "details", ...CHAT_PAGE, steps: detailsSteps, expect: { limits: ".det-limit", warn: ".det-meter.warn", background: ".det-bg", output: ".det-bg-output", stop: ".det-bg-actions button[aria-label^=Stop]", finished: '.det-bg svg[aria-label="done"]' } },
   { name: "history", ...CHAT_PAGE, steps: historySteps, expect: { actions: ".tr-actions", usage: ".tr-usage", user: ".tr-user" } },
