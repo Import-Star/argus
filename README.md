@@ -40,7 +40,8 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
   wait; click it to jump to one.
 - Open a session from its card: it opens in Argus chat, resuming the session.
 - Each VS Code window shows only its own sessions: those started in the window's workspace folders, or in any
-  checkout or worktree of the same git repo. Set `argus.sessions.scope` to `all` to see every session in every
+  checkout or worktree of the same git repo. Set `argus.sessions.scope` to `folder` in a window's Workspace
+  settings to show only that window's folders (not the rest of its repo), or `all` to see every session in every
   window. A window with no folder open shows everything.
 - A card's title is the session's first prompt. Double-click the title (or use **Rename Chat**) to rename it in
   Argus. Claude Code's `/rename` also works, and changes the name in `/resume` and for other sessions too.
@@ -219,7 +220,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `argus.sessions.scope` | `window` | `window` shows this window's sessions only; `all` shows every session on this machine. |
+| `argus.sessions.scope` | `window` | `window` shows this window's sessions, including other folders of the same git repo; `folder` shows only sessions inside this window's folders (set it in Workspace settings for a per-window choice); `all` shows every session on this machine. |
 | `argus.sessions.prRefreshMinutes` | `1` | How often PR states refresh in the background, for session cards. |
 | `argus.sessions.retentionDays` | `30` | Session record files are deleted this many days after the session is no longer open. |
 | `argus.keepAwake.whileAgentsRun` | `false` | Keep this machine from sleeping while a session in this window is working or scheduled, and for 2 minutes after. A **☕ Awake** status bar item shows while it's on. Closing the lid still sleeps the machine. |

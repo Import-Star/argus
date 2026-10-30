@@ -4,6 +4,8 @@ First public release.
 
 ## Unreleased
 
+- New `argus.sessions.scope` value `folder`: a window shows only chats started inside its own folders, not
+  every chat from the same git repo. Set it in Workspace settings to choose per window.
 - **Keep awake while agents run**: turn on `argus.keepAwake.whileAgentsRun` and Argus stops the machine sleeping
   while any session in the window is working or scheduled, releasing 2 minutes after the last one stops. It uses a
   Windows power request, `caffeinate` on macOS or `systemd-inhibit` on Linux, held by a child process that exits
