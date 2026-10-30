@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
   empty result the CLI replays on resume and waits for the real answer. An empty answer now says so.
