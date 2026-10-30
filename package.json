@@ -178,14 +178,16 @@
           "type": "string",
           "enum": [
             "window",
+            "folder",
             "all"
           ],
           "default": "window",
           "enumDescriptions": [
             "Only show sessions whose folder, or git repo and worktrees, belongs to this window's workspace folders.",
+            "Only show sessions whose folder (or a linked worktree) is inside this window's workspace folders; other folders of the same git repo are left out.",
             "Show every Claude Code session on this machine in every window."
           ],
-          "description": "Which sessions this VS Code window shows. With no folder open, all sessions are shown."
+          "description": "Which sessions this VS Code window shows. Set it in Workspace settings to choose per window. With no folder open, all sessions are shown."
         },
         "argus.keepAwake.whileAgentsRun": {
           "type": "boolean",

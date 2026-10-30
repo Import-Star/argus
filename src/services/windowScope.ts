@@ -45,19 +45,28 @@ function repoRoot(folder: string): string | undefined {
   return root;
 }
 
-export function scopeIsWindow(): boolean {
-  return vscode.workspace.getConfiguration("argus").get<string>("sessions.scope", "window") === "window";
+export type SessionScope = "window" | "folder" | "all";
+
+export function sessionScope(): SessionScope {
+  const value = vscode.workspace.getConfiguration("argus").get<string>("sessions.scope", "window");
+  return value === "folder" || value === "all" ? value : "window";
 }
 
 // Builds a predicate for "does this session belong to the folders open in this VS Code window".
 // A session belongs when its cwd or a linked worktree is inside a workspace folder, or is a checkout or
-// worktree of the same git repo. With no folder open (or scope "all") everything is shown.
+// worktree of the same git repo. Scope "folder" drops the same-repo match, so sibling folders of one repo stay
+// apart. With no folder open (or scope "all") everything is shown.
 export function windowFilter(): (record: SessionRecord) => boolean {
   const folders = (vscode.workspace.workspaceFolders ?? []).map((folder) => folder.uri.fsPath);
-  if (!scopeIsWindow() || folders.length === 0) {
+  const scope = sessionScope();
+  if (scope === "all" || folders.length === 0) {
     return () => true;
   }
   const paths = folders.map(normalize);
+  if (scope === "folder") {
+    return (record) =>
+      [record.cwd, ...(record.worktrees ?? [])].some((dir) => paths.some((folder) => within(normalize(dir), folder)));
+  }
   const roots = new Set(folders.map(repoRoot).filter((root): root is string => Boolean(root)));
 
   return (record) =>
