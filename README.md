@@ -208,6 +208,8 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.sessions.scope` | `window` | `window` shows this window's sessions only; `all` shows every session on this machine. |
 | `argus.sessions.prRefreshMinutes` | `1` | How often PR states refresh in the background, for session cards. |
 | `argus.sessions.retentionDays` | `30` | Session record files are deleted this many days after the session is no longer open. |
+| `argus.keepAwake.whileAgentsRun` | `false` | Keep this machine from sleeping while a session in this window is working or scheduled, and for 2 minutes after. A **☕ Awake** status bar item shows while it's on. Closing the lid still sleeps the machine. |
+| `argus.keepAwake.keepScreenOn` | `true` | Keep the screen on as well. Windows laptops with Modern Standby sleep once the screen turns off, so leave this on there. |
 | `argus.notifications` | `all` | Show notifications when a session needs attention: `all` (permission, question or finished), `input` (permission and questions only), or `off`. |
 | `argus.prs.cacheSeconds` | `300` | How long a fetched PR state is reused before `gh` is called again. |
 | `argus.diffReview.baseRef` | `""` | Base to diff against. Empty uses `origin/HEAD`, then `origin/main`, `origin/master`, `main`, `master`. |

@@ -187,6 +187,16 @@
           ],
           "description": "Which sessions this VS Code window shows. With no folder open, all sessions are shown."
         },
+        "argus.keepAwake.whileAgentsRun": {
+          "type": "boolean",
+          "default": false,
+          "description": "Stop this machine sleeping while any Claude session in this window is working or scheduled, and for 2 minutes after. Uses a Windows power request, caffeinate on macOS, or systemd-inhibit on Linux. Closing the lid still sleeps it."
+        },
+        "argus.keepAwake.keepScreenOn": {
+          "type": "boolean",
+          "default": true,
+          "description": "While keeping the machine awake, keep the screen on too. Needed on Windows laptops with Modern Standby, which go to sleep when the screen turns off."
+        },
         "argus.notifications": {
           "type": "string",
           "enum": [

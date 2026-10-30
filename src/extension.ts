@@ -13,6 +13,7 @@ import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSe
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
 import { TrackingMonitor } from "./services/TrackingMonitor";
+import { KeepAwake } from "./services/KeepAwake";
 import { registerClaudeSetup } from "./services/claudeSetup";
 import { findChats, readChat, writeChats } from "./services/importChats";
 import { newChat, openSession, openWorktree, routeChatsTo, routeCloseTo } from "./services/openSession";
@@ -82,6 +83,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   context.subscriptions.push(new AttentionNotifier(sessions, (sessionId) => chat.host?.isViewing(sessionId) ?? false));
 
   context.subscriptions.push(sessions, controlCenter, treeView, tree, status, sessionsTabHandle, ...sessionsTab.disposables);
+  context.subscriptions.push(new KeepAwake(sessions));
 
   const register = (command: string, handler: (...args: unknown[]) => unknown) =>
     context.subscriptions.push(vscode.commands.registerCommand(command, handler));
