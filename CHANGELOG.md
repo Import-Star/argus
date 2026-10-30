@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Opening a chat after a VS Code restart no longer opens a second tab when its old tab is still there but not yet
+  shown: Argus switches to the old tab, and closes any duplicate once the old tab is restored.
+
 ## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
