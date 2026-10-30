@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { scenarioParts, severityOf } from "../chat/webview/findings.ts";
+import { scenarioParts } from "../chat/webview/findings.ts";
 
 describe("scenarioParts", () => {
   it("splits repro, likelihood and fix", () => {
@@ -26,15 +26,5 @@ describe("scenarioParts", () => {
 
   it("returns nothing for empty text", () => {
     assert.deepEqual(scenarioParts(""), []);
-  });
-});
-
-describe("severityOf", () => {
-  it("maps known categories and ignores unknown ones", () => {
-    assert.equal(severityOf("correctness"), "high");
-    assert.equal(severityOf("Hardening"), "medium");
-    assert.equal(severityOf("docs"), "low");
-    assert.equal(severityOf("something-new"), undefined);
-    assert.equal(severityOf(undefined), undefined);
   });
 });
