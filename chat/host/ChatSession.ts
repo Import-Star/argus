@@ -5,6 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import { MessageQueue, type QueueAction } from "./messageQueue";
+import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
 
 export interface ChatSessionOptions {
@@ -18,8 +19,19 @@ export interface ChatSessionOptions {
   effort?: EffortLevel;
   permissionMode: PermissionMode;
   textOnly: boolean;
+  // Claude in Chrome; unset leaves the CLI's default.
+  chrome?: boolean;
+  // Turn Remote Control on whenever the process starts (Claude Code's remoteControlAtStartup).
+  remoteControlAtStartup?: boolean;
   log(line: string): void;
 }
+
+// The SDK runtime has these, but sdk.d.ts doesn't declare them.
+type RemoteControlQuery = Query & {
+  enableRemoteControl?(enabled: boolean, name?: string): Promise<{ session_url?: string }>;
+  getChromeBrowsers?(): Promise<{ browsers?: { device_id: string; name: string; os_platform?: string; current?: boolean }[] }>;
+  selectChromeBrowser?(deviceId: string): Promise<unknown>;
+};
 
 class InputQueue implements AsyncIterable<SDKUserMessage> {
   private items: SDKUserMessage[] = [];
@@ -135,6 +147,7 @@ export class ChatSession implements vscode.Disposable {
       textOnly: options.textOnly,
       effort: options.effort,
       permissionMode: options.permissionMode,
+      chrome: options.chrome,
       models: []
     };
   }
@@ -159,6 +172,7 @@ export class ChatSession implements vscode.Disposable {
         effort,
         permissionMode,
         pathToClaudeCodeExecutable: claudePath,
+        extraArgs: chromeArgs(this.options.chrome),
         // SDK sessions leave the to-do tools off; the transcript's to-do card needs them.
         // Under the SDK's default "sdk-ts" entrypoint the CLI turns the Artifact tools off; the to-do tools are off by default too.
         env: { ...process.env, CLAUDE_CODE_ENTRYPOINT: "claude-vscode", CLAUDE_CODE_ENABLE_TODO_TOOLS: "1", CLAUDE_CODE_ENABLE_TASKS: "1" },
@@ -172,6 +186,62 @@ export class ChatSession implements vscode.Disposable {
     void this.loadModels(this.q);
     void this.loadCommands(this.q);
     void this.loadCacheTtl(this.q);
+    if (this.options.remoteControlAtStartup) {
+      this.setRemoteControl(true).catch((error) => log(`remote control ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`));
+    }
+  }
+
+  public get claudePath(): string | undefined {
+    return this.options.claudePath;
+  }
+
+  public get additionalDirectories(): string[] {
+    return [...this.options.additionalDirectories];
+  }
+
+  public get busy(): boolean {
+    return this.meta.status === "working" || this.meta.status === "needs-you";
+  }
+
+  public get runningBackgroundTasks(): number {
+    return this.backgroundTasks;
+  }
+
+  // Returns the claude.ai link while on. The session shows there under its Argus title.
+  public async setRemoteControl(enabled: boolean): Promise<string | undefined> {
+    this.start();
+    const q = this.q as RemoteControlQuery | undefined;
+    if (!q?.enableRemoteControl) {
+      throw new Error("This version of Claude Code can't start Remote Control from an SDK session. Update Claude Code.");
+    }
+    const response = await q.enableRemoteControl(enabled, enabled ? this.meta.title : undefined);
+    const url = enabled ? response?.session_url : undefined;
+    this.update({ remoteControlUrl: url });
+    return url;
+  }
+
+  public async chromeBrowsers(): Promise<{ id: string; name: string; platform?: string; current: boolean }[]> {
+    const q = this.q as RemoteControlQuery | undefined;
+    const response = await q?.getChromeBrowsers?.();
+    return (response?.browsers ?? []).map((browser) => ({ id: browser.device_id, name: browser.name, platform: browser.os_platform, current: Boolean(browser.current) }));
+  }
+
+  public async selectChromeBrowser(id: string): Promise<void> {
+    await (this.q as RemoteControlQuery | undefined)?.selectChromeBrowser?.(id);
+  }
+
+  // Claude in Chrome is a start-up flag, so changing it restarts the process on the same session.
+  public setChrome(enabled: boolean): void {
+    this.options.chrome = enabled;
+    this.update({ chrome: enabled });
+    this.relaunch();
+  }
+
+  public addDirectory(folder: string): void {
+    if (!this.options.additionalDirectories.includes(folder)) {
+      this.options.additionalDirectories.push(folder);
+      this.relaunch();
+    }
   }
 
   public get activeQuery(): Query | undefined {
@@ -298,19 +368,42 @@ export class ChatSession implements vscode.Disposable {
     return this.q!.rewindFiles(userMessageId, { dryRun });
   }
 
-  // Restarts the CLI on the same session, resumed only up to `at`; the SDK has no in-place truncate.
-  public async truncateTo(at: string, userMessageId: string, text: string): Promise<void> {
+  // Restarts the CLI on the same session with the current options. Remote Control comes back on if it was on.
+  public relaunch(): void {
+    const remote = Boolean(this.meta.remoteControlUrl);
+    this.stopProcess();
+    this.historyLoaded = undefined;
+    this.start();
+    this.restoreRemoteControl(remote);
+  }
+
+  // start() already turns it on when remoteControlAtStartup is set.
+  private restoreRemoteControl(wasOn: boolean): void {
+    if (wasOn && !this.options.remoteControlAtStartup) {
+      this.setRemoteControl(true).catch((error) => this.options.log(`remote control ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`));
+    }
+  }
+
+  private stopProcess(): void {
     const old = this.q;
     this.q = undefined;
     this.input.close();
     this.input = new InputQueue();
     old?.close();
     this.queue.clear();
+    this.update({ remoteControlUrl: undefined });
+  }
+
+  // Restarts the CLI on the same session, resumed only up to `at`; the SDK has no in-place truncate.
+  public async truncateTo(at: string, userMessageId: string, text: string): Promise<void> {
+    const remote = Boolean(this.meta.remoteControlUrl);
+    this.stopProcess();
     this.options.resume = true;
     this.historyLoaded = getSessionMessages(this.sessionId, { dir: this.options.cwd })
       .then((chain) => chain.slice(0, chain.findIndex((entry) => entry.uuid === at) + 1) as unknown as SDKMessage[])
       .catch(() => []);
     this.start(at);
+    this.restoreRemoteControl(remote);
     this.emitter.fire({ type: "rewound", sessionId: this.sessionId, userMessageId, text });
     this.setStatus("idle");
   }
@@ -430,6 +523,7 @@ export class ChatSession implements vscode.Disposable {
     this.input.close();
     this.input = new InputQueue();
     this.queue.clear();
+    this.update({ remoteControlUrl: undefined });
   }
 
   private track(message: SDKMessage): void {
@@ -477,7 +571,7 @@ export class ChatSession implements vscode.Disposable {
   }
 
   private setCommands(commands: SlashCommand[]): void {
-    this.update({ commands: commands.map(({ name, description, argumentHint }) => ({ name, description, argumentHint })) });
+    this.update({ commands: withLocalCommands(commands.map(({ name, description, argumentHint }) => ({ name, description, argumentHint }))) });
   }
 
   private async loadModels(q: Query): Promise<void> {

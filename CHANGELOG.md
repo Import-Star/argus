@@ -9,6 +9,12 @@ First public release.
   Windows power request, `caffeinate` on macOS or `systemd-inhibit` on Linux, held by a child process that exits
   with VS Code. `argus.keepAwake.keepScreenOn` (on by default) keeps the screen on too, which Windows Modern Standby
   laptops need. A **☕ Awake** status bar item shows while it's holding.
+- Argus chat runs slash commands that the Claude Code SDK leaves out, because the CLI only has them in its own
+  terminal screen: `/remote-control` (`/rc`), `/chrome` (Claude in Chrome), `/add-dir`, `/permissions`, `/hooks`,
+  `/memory`, `/agents`, `/resume`, `/login`, `/logout` and `/plugin`. They show in the `/` menu. The header shows
+  **Remote Control** and **Chrome** while those are on.
+- Argus chats follow Claude Code's `remoteControlAtStartup` setting and `/chrome` **Enabled by default**. SDK
+  sessions used to ignore both.
 
 ## 0.6.0
 

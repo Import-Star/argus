@@ -103,6 +103,20 @@ board; opening one while it is running there warns you first, since two processe
   asks a side question without adding it to the transcript. Queued messages can be edited, reordered or sent now.
   Each reply shows its turn's cost, and code blocks and replies have copy buttons. Type `/` for the session's
   slash commands, and paste or drop files to attach them.
+- Commands Claude Code only has in its terminal screen are run by Argus itself:
+  - `/remote-control` (`/rc`) continues the chat from claude.ai/code or the Claude app. The header shows
+    **Remote Control** while it's on. Claude Code's `remoteControlAtStartup` setting turns it on for every chat.
+  - `/chrome` lets Claude control your browser through Claude in Chrome, and `/chrome browser` picks which browser.
+    The header shows **Chrome** while it's on. Each chat remembers its own choice. New chats follow Claude Code's
+    `/chrome` **Enabled by default**.
+  - `/add-dir` gives Claude another folder.
+  - `/permissions`, `/hooks` and `/memory` open the settings or `CLAUDE.md` file you pick, creating it if missing.
+  - `/agents` opens a subagent file or makes a new one.
+  - `/resume` opens another session from the board.
+  - `/login`, `/logout` and `/plugin` open `claude` in a terminal.
+
+  `/chrome` and `/add-dir` restart the chat's Claude process: they wait for the turn to end, and ask first while
+  background tasks are running.
 - ` ```mermaid ` blocks in replies are drawn as diagrams in your theme's colours, with **Show source** to see the
   code. A block that doesn't parse stays as code, with the error above it. Mermaid loads the first time a reply has
   a diagram.

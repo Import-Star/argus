@@ -37,6 +37,10 @@ export interface ChatMeta {
   contextMax?: number;
   lastResponseAt?: number;
   cacheTtlMs?: number;
+  // Claude in Chrome: whether this chat's process was started with --chrome.
+  chrome?: boolean;
+  // Set while Remote Control is on: the claude.ai link that continues this chat.
+  remoteControlUrl?: string;
   error?: string;
 }
 

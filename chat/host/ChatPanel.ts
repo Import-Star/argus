@@ -5,7 +5,9 @@ import { multiAgentEnabled } from "../../src/chat/multiAgent";
 import type { HostMessage, WebviewMessage } from "../../src/chat/protocol";
 import type { ChatManager } from "./ChatManager";
 import type { ChatSession } from "./ChatSession";
+import { parseLocalCommand } from "../../src/chat/localCommands";
 import { rewind } from "./history";
+import { runLocalCommand } from "./localCommands";
 import { commentsPrompt, fileDiff, listChanges } from "./review";
 import { SideQuestion } from "./sideQuestion";
 import { taskOutput } from "./tasks";
@@ -224,9 +226,15 @@ export class ChatPanel implements vscode.Disposable {
     const cwd = session.meta.cwd;
     try {
       switch (message.type) {
-        case "send":
-          session.send(message.text, message.images);
+        case "send": {
+          const local = !message.images?.length ? parseLocalCommand(message.text) : undefined;
+          if (local) {
+            await runLocalCommand(this.manager, session, local.name, local.args);
+          } else {
+            session.send(message.text, message.images);
+          }
           return;
+        }
         case "interrupt":
           await session.interrupt();
           return;

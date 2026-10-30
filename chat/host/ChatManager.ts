@@ -21,6 +21,7 @@ interface Remembered {
   effort?: EffortLevel;
   permissionMode?: PermissionMode;
   textOnly?: boolean;
+  chrome?: boolean;
 }
 
 const SESSION_CHOICES_KEY = "argus.chat.sessionChoices";
@@ -569,7 +570,7 @@ export class ChatManager implements vscode.Disposable {
 
   // A resumed chat keeps its own last model/effort; without one, the CLI restores the model from the transcript.
   // New chats follow Claude Code's own settings; a reopened chat keeps the model/effort last picked in it.
-  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; textOnly: boolean; log(line: string): void } {
+  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; textOnly: boolean; chrome?: boolean; remoteControlAtStartup?: boolean; log(line: string): void } {
     const config = vscode.workspace.getConfiguration("argus.chat");
     const claude = readClaudeSettings(cwd);
     const remembered = (resumeId && this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY)?.[resumeId]) || {};
@@ -580,6 +581,9 @@ export class ChatManager implements vscode.Disposable {
       effort: remembered.effort ?? claude.effort,
       permissionMode: remembered.permissionMode ?? claude.permissionMode ?? "default",
       textOnly: remembered.textOnly ?? config.get<boolean>("textOnlyDefault", false),
+      // SDK sessions ignore Claude Code's own "/chrome → Enabled by default", so Argus applies it.
+      chrome: remembered.chrome ?? (chromeDefaultEnabled() || undefined),
+      remoteControlAtStartup: claude.remoteControlAtStartup,
       log: (line) => this.log.appendLine(line)
     };
   }
@@ -624,12 +628,13 @@ function statusOf(column: string): ChatStatus {
 }
 
 // Same precedence as Claude Code: user, then project, then local project settings.
-function readClaudeSettings(cwd: string): { model?: string; effort?: EffortLevel; permissionMode?: PermissionMode } {
+function readClaudeSettings(cwd: string): { model?: string; effort?: EffortLevel; permissionMode?: PermissionMode; remoteControlAtStartup?: boolean } {
   const files = [path.join(os.homedir(), ".claude", "settings.json"), path.join(cwd, ".claude", "settings.json"), path.join(cwd, ".claude", "settings.local.json")];
-  const merged: { model?: string; effort?: EffortLevel; permissionMode?: PermissionMode } = {};
+  const merged: { model?: string; effort?: EffortLevel; permissionMode?: PermissionMode; remoteControlAtStartup?: boolean } = {};
   for (const file of files) {
     try {
-      const settings = JSON.parse(fs.readFileSync(file, "utf8")) as { model?: string; effortLevel?: EffortLevel; permissions?: { defaultMode?: PermissionMode } };
+      const settings = JSON.parse(fs.readFileSync(file, "utf8")) as { model?: string; effortLevel?: EffortLevel; permissions?: { defaultMode?: PermissionMode }; remoteControlAtStartup?: boolean };
+      merged.remoteControlAtStartup = typeof settings.remoteControlAtStartup === "boolean" ? settings.remoteControlAtStartup : merged.remoteControlAtStartup;
       merged.model = settings.model ?? merged.model;
       merged.effort = settings.effortLevel ?? merged.effort;
       merged.permissionMode = settings.permissions?.defaultMode ?? merged.permissionMode;
@@ -638,6 +643,16 @@ function readClaudeSettings(cwd: string): { model?: string; effort?: EffortLevel
     }
   }
   return merged;
+}
+
+// Claude Code keeps "/chrome → Enabled by default" in its global config, ~/.claude.json. Only that one key is read.
+function chromeDefaultEnabled(): boolean {
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claude.json"), "utf8")) as { claudeInChromeDefaultEnabled?: unknown };
+    return config.claudeInChromeDefaultEnabled === true;
+  } catch {
+    return false;
+  }
 }
 
 // The CLI's settings writer only accepts effortLevel, so model and default mode are written directly, keeping every other key.
