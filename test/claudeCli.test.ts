@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { findClaude, installerShell } from "../src/services/claudeCli.ts";
+import { findClaude, installerShell, isOlder } from "../src/services/claudeCli.ts";
 
 const nowhere = () => undefined;
 
@@ -39,5 +39,13 @@ describe("installerShell", () => {
     assert.equal(shell.command, "curl -fsSL https://claude.ai/install.sh | bash");
     assert.equal(shell.shellArgs[0], "-c");
     assert.ok(shell.shellArgs[1].startsWith(`${shell.command}; exec `));
+  });
+});
+
+describe("isOlder", () => {
+  it("compares each part as a number", () => {
+    assert.equal(isOlder("2.1.99", "2.1.314"), true);
+    assert.equal(isOlder("2.1.314", "2.1.314"), false);
+    assert.equal(isOlder("2.2.0", "2.1.314"), false);
   });
 });

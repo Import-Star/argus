@@ -2,6 +2,12 @@
 
 First public release.
 
+## Unreleased
+
+- Argus says when Claude Code is out of date (checked at startup and every 4 hours), once per release. **Argus:
+  Install Claude Code** is now **Argus: Install or Update Claude Code** and runs `claude update` when it's already
+  installed.
+
 ## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the

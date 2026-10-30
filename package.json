@@ -156,7 +156,7 @@
       },
       {
         "command": "argus.chat.installClaude",
-        "title": "Argus: Install Claude Code"
+        "title": "Argus: Install or Update Claude Code"
       }
     ],
     "configuration": {

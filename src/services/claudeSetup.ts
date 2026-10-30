@@ -1,10 +1,17 @@
+import { execFile } from "child_process";
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
+import { promisify } from "util";
 import * as vscode from "vscode";
-import { findClaude, installerShell } from "./claudeCli";
+import { findClaude, installerShell, isOlder, parseVersion, releaseUrl, updaterShell } from "./claudeCli";
 
 export const INSTALL_CLAUDE_COMMAND = "argus.chat.installClaude";
 const NOTIFIED_KEY = "argus.claude.missingNotified";
+const UPDATE_NOTIFIED_KEY = "argus.claude.updateNotified";
 const POLL_MS = 2000;
 const POLL_LIMIT_MS = 15 * 60_000;
+const UPDATE_CHECK_MS = 4 * 60 * 60_000;
 
 export function configuredClaude(): string | undefined {
   return findClaude(vscode.workspace.getConfiguration("argus.chat").get<string>("claudePath", ""));
@@ -24,7 +31,17 @@ export async function promptMissingClaude(): Promise<void> {
 
 export function registerClaudeSetup(context: vscode.ExtensionContext): void {
   context.subscriptions.push(vscode.commands.registerCommand(INSTALL_CLAUDE_COMMAND, (confirmed?: unknown) => installClaude(confirmed === true)));
+  // Windows stay open for days, so checking only at startup would miss most releases.
+  const checkForUpdate = (): void => {
+    const claude = configuredClaude();
+    if (claude) {
+      void notifyOutdated(context, claude);
+    }
+  };
+  const timer = setInterval(checkForUpdate, UPDATE_CHECK_MS);
+  context.subscriptions.push({ dispose: () => clearInterval(timer) });
   if (configuredClaude()) {
+    checkForUpdate();
     return;
   }
   const key = String(context.extension.packageJSON.version);
@@ -34,12 +51,57 @@ export function registerClaudeSetup(context: vscode.ExtensionContext): void {
   }
 }
 
-// Runs Anthropic's installer where the user can watch it, then offers to sign in once `claude` appears.
+// Undefined when the version check fails, e.g. offline.
+async function claudeVersions(claude: string): Promise<{ current: string; latest: string } | undefined> {
+  try {
+    const { stdout } = await promisify(execFile)(claude, ["--version"], { timeout: 10_000 });
+    const current = parseVersion(stdout);
+    const response = await fetch(releaseUrl(readUpdateChannel()), { signal: AbortSignal.timeout(10_000) });
+    const latest = parseVersion(await response.text());
+    return current && latest ? { current, latest } : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function readUpdateChannel(): unknown {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(os.homedir(), ".claude", "settings.json"), "utf8")).autoUpdatesChannel;
+  } catch {
+    return undefined;
+  }
+}
+
+// Once per new Claude Code release, so dismissing it doesn't bring it back every window.
+async function notifyOutdated(context: vscode.ExtensionContext, claude: string): Promise<void> {
+  const versions = await claudeVersions(claude);
+  if (!versions || !isOlder(versions.current, versions.latest) || context.globalState.get<string>(UPDATE_NOTIFIED_KEY) === versions.latest) {
+    return;
+  }
+  void context.globalState.update(UPDATE_NOTIFIED_KEY, versions.latest);
+  const update = "Update";
+  const choice = await vscode.window.showWarningMessage(`Argus: Claude Code ${versions.current} is out of date (latest ${versions.latest}).`, update);
+  if (choice === update) {
+    await vscode.commands.executeCommand(INSTALL_CLAUDE_COMMAND, true);
+  }
+}
+
+// Runs `claude update` in a terminal; still runs it when the version check fails so the user sees why.
+async function updateClaude(claude: string): Promise<void> {
+  const versions = await claudeVersions(claude);
+  if (versions && !isOlder(versions.current, versions.latest)) {
+    void vscode.window.showInformationMessage(`Argus: Claude Code ${versions.current} is up to date.`);
+    return;
+  }
+  vscode.window.createTerminal({ name: "Update Claude Code", ...updaterShell(claude) }).show();
+}
+
+// Updates an existing install, or runs Anthropic's installer where the user can watch it, then offers to sign in
+// once `claude` appears.
 async function installClaude(confirmed: boolean): Promise<void> {
   const existing = configuredClaude();
   if (existing) {
-    void vscode.window.showInformationMessage(`Argus: Claude Code is already installed at ${existing}.`);
-    return;
+    return updateClaude(existing);
   }
   const { shellPath, shellArgs, command } = installerShell();
   if (!confirmed) {
