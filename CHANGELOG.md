@@ -4,6 +4,8 @@ First public release.
 
 ## Unreleased
 
+- **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
+  empty result the CLI replays on resume and waits for the real answer. An empty answer now says so.
 - **Keep awake while agents run**: turn on `argus.keepAwake.whileAgentsRun` and Argus stops the machine sleeping
   while any session in the window is working or scheduled, releasing 2 minutes after the last one stops. It uses a
   Windows power request, `caffeinate` on macOS or `systemd-inhibit` on Linux, held by a child process that exits

@@ -1,5 +1,6 @@
-import { query, type Query, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import { query, type Query } from "@anthropic-ai/claude-agent-sdk";
 import type * as vscode from "vscode";
+import { AsideAnswer } from "../../src/chat/asideAnswer";
 import type { EffortLevel, HostMessage } from "../../src/chat/protocol";
 import { hasTranscript } from "./restore";
 
@@ -18,11 +19,6 @@ const FLUSH_MS = 40;
 const EFFORT: EffortLevel = "low";
 const INSTRUCTIONS =
   "The user is asking a quick side question about this conversation. Answer briefly from what is already in the conversation, using the read-only tools only if you must. Make no changes and do not carry on the earlier task.";
-
-function textOf(content: unknown): string {
-  const blocks = Array.isArray(content) ? (content as { type: string; text?: string }[]) : [];
-  return blocks.filter((block) => block.type === "text").map((block) => block.text ?? "").join("");
-}
 
 export class SideQuestion implements vscode.Disposable {
   private current?: { q: Query; abort: AbortController };
@@ -77,7 +73,7 @@ export class SideQuestion implements vscode.Disposable {
 
   private async pump(q: Query, askId: string, abort: AbortController): Promise<void> {
     const { sessionId, log, emit } = this.options;
-    const answer = new Answer();
+    const answer = new AsideAnswer();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const send = (status: "streaming" | "done" | "error", error?: string) => {
       clearTimeout(timer);
@@ -90,9 +86,11 @@ export class SideQuestion implements vscode.Disposable {
           return;
         }
         if (message.type === "result") {
-          const failed = message.subtype !== "success" || message.is_error;
-          answer.commit(message.subtype === "success" && !answer.text ? message.result : "");
-          send(failed ? "error" : "done", failed ? `The side question ended early (${message.subtype}).` : undefined);
+          const end = answer.finish(message);
+          if (end === "skip") {
+            continue;
+          }
+          send(end.status, end.error);
           return;
         }
         if (answer.apply(message)) {
@@ -113,35 +111,5 @@ export class SideQuestion implements vscode.Disposable {
         this.current = undefined;
       }
     }
-  }
-}
-
-class Answer {
-  private finished = "";
-  private partial = "";
-
-  get text(): string {
-    return this.finished && this.partial ? `${this.finished}\n\n${this.partial}` : this.finished || this.partial;
-  }
-
-  commit(text: string): void {
-    if (text) {
-      this.finished = this.finished ? `${this.finished}\n\n${text}` : text;
-    }
-    this.partial = "";
-  }
-
-  apply(message: SDKMessage): boolean {
-    if (message.type === "stream_event" && !message.parent_tool_use_id) {
-      const { event } = message;
-      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-        this.partial += event.delta.text;
-        return true;
-      }
-    } else if (message.type === "assistant" && !message.parent_tool_use_id) {
-      this.commit(textOf(message.message.content));
-      return true;
-    }
-    return false;
   }
 }

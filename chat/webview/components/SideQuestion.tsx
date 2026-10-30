@@ -91,6 +91,7 @@ function AskView({ ask }: { ask: Ask }) {
           Thinking…
         </div>
       )}
+      {ask.status === "done" && !ask.text && <div class="aside-error muted">No answer came back. Try asking again.</div>}
       {ask.status === "error" && (
         <div class="aside-error" role="alert">
           {ask.error ?? "The side question failed."}
