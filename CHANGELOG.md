@@ -2,6 +2,14 @@
 
 First public release.
 
+## Unreleased
+
+- **Keep awake while agents run**: turn on `argus.keepAwake.whileAgentsRun` and Argus stops the machine sleeping
+  while any session in the window is working or scheduled, releasing 2 minutes after the last one stops. It uses a
+  Windows power request, `caffeinate` on macOS or `systemd-inhibit` on Linux, held by a child process that exits
+  with VS Code. `argus.keepAwake.keepScreenOn` (on by default) keeps the screen on too, which Windows Modern Standby
+  laptops need. A **☕ Awake** status bar item shows while it's holding.
+
 ## 0.6.0
 
 - Plugin API: `registerChatDetails` adds sections to the Details pane beside an Argus chat, drawn by the chat from
