@@ -176,6 +176,16 @@ export function Header({ sessionId }: { sessionId: string }) {
         </button>
       )}
       {group && multiAgent && <AgentsChip group={group} sessionId={sessionId} />}
+      {meta?.remoteControlUrl && (
+        <button type="button" class="hdr-pr" title="Remote Control is on: open this chat on claude.ai. /remote-control off stops it." onClick={() => post({ type: "openUrl", url: meta.remoteControlUrl! })}>
+          Remote Control
+        </button>
+      )}
+      {meta?.chrome && (
+        <span class="mono muted" title="Claude in Chrome is on: Claude can control your browser. /chrome off turns it off.">
+          Chrome
+        </span>
+      )}
       <div class="hdr-end">
         {meta?.contextTokens !== undefined && meta.contextMax ? <ContextMeter tokens={meta.contextTokens} max={meta.contextMax} /> : null}
         <SideQuestion sessionId={sessionId} />
