@@ -17,7 +17,7 @@ updates:
       - dependency-name: "@types/vscode"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
-  # No workflows yet; this keeps SHA-pinned actions current once they exist.
+  # Keeps the SHA-pinned actions in .github/workflows current.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:

@@ -308,14 +308,27 @@ from the extension arrives.
 Use this for your own fork or a private team build. Only the core is published; plugins are cloned, not
 installed from the Marketplace.
 
-1. Create a publisher at <https://marketplace.visualstudio.com/manage> and a Personal Access Token (Azure DevOps,
-   scope `Marketplace > Manage`).
+1. Create a publisher at <https://marketplace.visualstudio.com/manage>.
 2. In `package.json`, set `publisher` to yours, and update `repository`, `bugs` and `homepage`.
-3. Bump `version` and update `CHANGELOG.md`.
-4. `npx @vscode/vsce login <publisher>` then `npm run publish:store`. To only build the file,
-   `npm run package:vsix`.
-5. For Open VSX (VS Code forks such as VSCodium), use `npx ovsx publish` from the same folder.
+3. Bump `version` and update `CHANGELOG.md`, then tag the release `vX.Y.Z`.
+4. Publish with Trusted Publishing, which needs no token. On your publisher's page choose Trusted Publishing, then
+   Create, and enter your GitHub owner, repo, workflow file (`publish.yml`) and environment (`marketplace`). Create
+   a `marketplace` environment in the repo settings (require a reviewer, allow only `v*` tags). Then run
+   **Publish to Marketplace** (`.github/workflows/publish.yml`) from the tag. Tick `dry_run` to only build the
+   `.vsix`. The workflow runs `vsce publish --oidc`.
+5. Without CI, the old route still works until 2026-12-01, when Azure DevOps global Personal Access Tokens are
+   retired: create a PAT (scope `Marketplace > Manage`), `npx @vscode/vsce login <publisher>`, then
+   `npm run publish:store`. To only build the file, `npm run package:vsix`.
+6. For Open VSX (VS Code forks such as VSCodium), use `npx ovsx publish` from the same folder.
 
 Before publishing, check the packaged file list with `npx @vscode/vsce ls` — `api/*.d.ts` must be in it, because
 the core copies those out for plugin authors — and run through the README's "Getting started" steps in a clean
 VS Code profile (`code --profile-temp`) to confirm a first-time user can get sessions to appear.
+
+## Code review
+
+Every pull request from a branch in this repo is reviewed by Claude (`.github/workflows/claude-review.yml`, using
+`anthropics/claude-code-action`). It checks the change against `CLAUDE.md` and comments on the PR. Fork PRs are
+skipped, because GitHub gives them no secrets. To enable it on a fork, install the Claude GitHub App
+(<https://github.com/apps/claude>) on the repo and add a `CLAUDE_CODE_OAUTH_TOKEN` secret (from `claude setup-token`)
+or change the workflow to use `ANTHROPIC_API_KEY`.

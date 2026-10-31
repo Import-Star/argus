@@ -28,8 +28,13 @@ and [README.md](README.md) for user-facing behaviour.
 - A release is a `chore: release X.Y.Z` PR that bumps `version` in `package.json` and `package-lock.json` and turns
   `## Unreleased` in `CHANGELOG.md` into `## X.Y.Z`, then an annotated `vX.Y.Z` tag on main after it merges.
 - Never create a GitHub release (`gh release create`) or attach a `.vsix` to one. Tags are the only release record.
-- Publish to the VS Code Marketplace from the tag with `npm run publish:store` only when asked. A tagged version is
-  released: later changes go under `## Unreleased`, never into an existing version heading.
+- Publish to the VS Code Marketplace only when asked: run **Publish to Marketplace** (`.github/workflows/publish.yml`)
+  from the `vX.Y.Z` tag (Actions, then "Use workflow from": the tag) and approve the `marketplace` environment. It
+  publishes with Trusted Publishing (`vsce publish --oidc`), so no token is stored. Tick `dry_run` to only build the
+  `.vsix`. `npm run publish:store` from the tag is a local fallback until the Azure DevOps PATs end on 2026-12-01.
+  A tagged version is released: later changes go under `## Unreleased`, never into an existing version heading.
+- Every pull request gets an automatic Claude review (`.github/workflows/claude-review.yml`). It reads this file, so
+  keep the rules below current. It needs the Claude GitHub App on the repo and the `CLAUDE_CODE_OAUTH_TOKEN` secret.
 
 ## Rules
 
@@ -45,7 +50,8 @@ and [README.md](README.md) for user-facing behaviour.
   `argus.plugins.config.<plugin-id>`; its commands still carry the `argus.` prefix.
 - Control Center webview code (core's `media/host.js`, `media/styles.css`, and each plugin's tab script) is plain
   JS with a strict CSP (no inline scripts). Escape interpolated text with `ctx.esc()`.
-- Do not log, store or transmit the Claude OAuth token; only `src/services/UsageService.ts` reads it.
+- Do not log, store or transmit the user's local Claude OAuth token (the CI review's `CLAUDE_CODE_OAUTH_TOKEN` secret
+  is separate); only `src/services/UsageService.ts` reads it.
 - Use `Edit`-style small changes. Update the relevant README and CHANGELOG when behaviour changes.
 - Windows, macOS and Linux must all work: use `path`, `os.homedir()` and `execFile` with argument arrays, never
   shell strings.
