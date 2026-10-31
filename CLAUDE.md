@@ -50,7 +50,8 @@ and [README.md](README.md) for user-facing behaviour.
   `argus.plugins.config.<plugin-id>`; its commands still carry the `argus.` prefix.
 - Control Center webview code (core's `media/host.js`, `media/styles.css`, and each plugin's tab script) is plain
   JS with a strict CSP (no inline scripts). Escape interpolated text with `ctx.esc()`.
-- Do not log, store or transmit the Claude OAuth token; only `src/services/UsageService.ts` reads it.
+- Do not log, store or transmit the user's local Claude OAuth token (the CI review's `CLAUDE_CODE_OAUTH_TOKEN` secret
+  is separate); only `src/services/UsageService.ts` reads it.
 - Use `Edit`-style small changes. Update the relevant README and CHANGELOG when behaviour changes.
 - Windows, macOS and Linux must all work: use `path`, `os.homedir()` and `execFile` with argument arrays, never
   shell strings.

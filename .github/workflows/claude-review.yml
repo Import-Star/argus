@@ -43,7 +43,7 @@ jobs:
             - Windows, macOS and Linux all work (path, os.homedir(), execFile with argument arrays).
             - Webview code keeps the strict CSP and escapes interpolated text with ctx.esc().
             - hooks/session-tracker.ts stays fast, synchronous, dependency-free, silent on stdout and never throws.
-            - The Claude OAuth token is never logged, stored or sent anywhere.
+            - The user's local Claude OAuth token is never logged, stored or sent anywhere.
             - README.md and CHANGELOG.md are updated when behaviour changes.
 
             Focus on correctness bugs, not style. Use `gh pr diff` and `gh pr view` to read the change.
