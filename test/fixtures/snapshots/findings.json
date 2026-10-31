@@ -323,7 +323,7 @@
                     "verdict": "CONFIRMED",
                     "short_summary": "Partial fill double-credits balance",
                     "summary": "A retried partial fill credits the balance twice because the idempotency key omits the fill sequence.",
-                    "failure_scenario": "Reproduced: node scripts/retry-fill.ts \u2192 balance 200 after one 100 fill"
+                    "failure_scenario": "Reproduced: `node scripts/retry-fill.ts` \u2192 balance 200 after one 100 fill. Likelihood: high, every retried partial fill. Fix: add the fill sequence to the idempotency key."
                   },
                   {
                     "file": "src/orders/cancel.ts",
@@ -333,6 +333,14 @@
                     "short_summary": "Cancel races settlement",
                     "summary": "Cancel reads status before the settlement lock, so a settling order can be cancelled.",
                     "failure_scenario": "Not reproduced: needs two workers on a shared queue locally"
+                  },
+                  {
+                    "file": "README.md",
+                    "line": 120,
+                    "category": "docs",
+                    "short_summary": "README still documents the old retry flag",
+                    "summary": "The README tells operators to set RETRY_FILLS, which this change removed.",
+                    "failure_scenario": "No repro needed. Operators following the README set a flag that does nothing."
                   }
                 ]
               }

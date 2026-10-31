@@ -4,7 +4,8 @@ import { runReplyAction, useReplyActions } from "../extensions";
 import { highlightCode, languageFor } from "../highlight";
 import { renderMarkdown } from "../markdown";
 import { post, setUi, useSession } from "../store";
-import { buildItems, displayPath, MAX_OUTPUT, messageUuid, searchText, textOnlyRows, turnOutputTokens, type Item, type Row as TranscriptRow } from "../transcript";
+import { scenarioParts, severityOf, type Severity } from "../findings";
+import { buildItems, displayPath, MAX_OUTPUT, messageUuid, searchText, textOnlyRows, turnOutputTokens, type Finding, type Item, type Row as TranscriptRow } from "../transcript";
 import { clearMatches, fillComposer, findMatches, paintMatches, revealMatch } from "../transcriptSearch";
 import { Icon } from "./Icon";
 import { PermissionCard } from "./PermissionCard";
@@ -244,7 +245,48 @@ function Tool({ item }: { item: Extract<Item, { kind: "tool" }> }) {
   );
 }
 
-function Findings({ item, sessionId }: { item: Extract<Item, { kind: "findings" }>; sessionId: string }) {
+const SEVERITY_LABEL: Record<Severity, string> = { high: "HIGH", medium: "MED", low: "LOW" };
+
+function FindingRow({ finding, index, sessionId, forceOpen }: { finding: Finding; index: number; sessionId: string; forceOpen?: boolean }) {
+  const [open, toggle] = useToggle(forceOpen);
+  const severity = severityOf(finding.category);
+  const where = `${finding.file.split(/[\\/]/).pop()}${finding.line ? `:${finding.line}` : ""}`;
+  const ref = `finding ${index + 1} (${finding.title}, ${finding.file}${finding.line ? `:${finding.line}` : ""})`;
+  const rows = [...(!finding.summary || finding.title === finding.summary ? [] : [{ label: "Issue", text: finding.summary }]), ...scenarioParts(finding.failureScenario)];
+  return (
+    <div class="tr-finding">
+      <div class="tr-finding-head">
+        <Fold open={open} onToggle={toggle}>
+          {severity && <span class={`tr-sev tr-sev-${severity}`}>{SEVERITY_LABEL[severity]}</span>}
+          {finding.outcome && <span class="tr-chip">{finding.outcome}</span>}
+          <span class="tr-label tr-finding-title">{finding.title}</span>
+        </Fold>
+        <button type="button" class="mono tr-finding-file" title={finding.file} onClick={() => post({ type: "openFile", sessionId, path: finding.file, line: finding.line })}>
+          {where}
+        </button>
+      </div>
+      {open && (
+        <div class="tr-finding-body">
+          <div class="tr-finding-meta">
+            {finding.verdict && <span class="tr-chip">{finding.verdict}</span>}
+            {finding.category && <span class="tr-chip">{finding.category}</span>}
+            <span class="mono muted">{finding.file}</span>
+          </div>
+          <dl class="tr-finding-rows">
+            {rows.map((row) => [<dt key={`${row.label}-t`}>{row.label}</dt>, <dd key={`${row.label}-d`} class="tr-text" dangerouslySetInnerHTML={{ __html: renderMarkdown(row.text) }} />])}
+          </dl>
+          <div class="tr-finding-actions">
+            <button type="button" class="primary" onClick={() => post({ type: "send", sessionId, text: `Fix ${ref}` })}>Fix</button>
+            <button type="button" onClick={() => post({ type: "send", sessionId, text: `Skip ${ref}` })}>Skip</button>
+            <button type="button" onClick={() => fillComposer(sessionId, `About ${ref}: `)}>Ask</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Findings({ item, sessionId, forceOpen }: { item: Extract<Item, { kind: "findings" }>; sessionId: string; forceOpen?: boolean }) {
   const count = item.findings.length;
   return (
     <div class="tr-card">
@@ -254,19 +296,7 @@ function Findings({ item, sessionId }: { item: Extract<Item, { kind: "findings" 
         {item.level && <span class="tr-label muted">{item.level}</span>}
       </div>
       {item.findings.map((finding, index) => (
-        <div key={index} class="tr-finding">
-          <div class="tr-finding-head">
-            {finding.verdict && <span class="tr-chip">{finding.verdict}</span>}
-            {finding.outcome && <span class="tr-chip">{finding.outcome}</span>}
-            {finding.category && <span class="tr-chip">{finding.category}</span>}
-            <button type="button" class="mono tr-finding-file" title={finding.file} onClick={() => post({ type: "openFile", sessionId, path: finding.file, line: finding.line })}>
-              {finding.file}
-              {finding.line ? `:${finding.line}` : ""}
-            </button>
-          </div>
-          <div class="tr-finding-summary">{finding.summary}</div>
-          {finding.failureScenario && <div class="tr-desc">{finding.failureScenario}</div>}
-        </div>
+        <FindingRow key={index} finding={finding} index={index} sessionId={sessionId} forceOpen={forceOpen} />
       ))}
       {item.error && <div class="tr-err">{item.error.slice(0, 400)}</div>}
     </div>
@@ -380,7 +410,7 @@ function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId: strin
     case "tool":
       return <Tool item={item} />;
     case "findings":
-      return <Findings item={item} sessionId={sessionId} />;
+      return <Findings item={item} sessionId={sessionId} forceOpen={forceOpen} />;
     case "answers":
       return <Answers item={item} />;
     case "note":
