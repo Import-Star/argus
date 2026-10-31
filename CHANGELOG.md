@@ -4,6 +4,9 @@ First public release.
 
 ## Unreleased
 
+- Argus says when Claude Code is out of date (checked at startup and every 4 hours), once per release. **Argus:
+  Install Claude Code** is now **Argus: Install or Update Claude Code** and runs `claude update` when it's already
+  installed.
 - PR chips on session cards show unresolved review comments (`💬 2`).
 - A reopened chat keeps the model, effort and permission mode it started with. Before, a chat where none were picked
   followed `settings.json`, which picking a model or effort in any other chat changes.
