@@ -45,9 +45,10 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
   window. A window with no folder open shows everything.
 - A card's title is the session's first prompt. Double-click the title (or use **Rename Chat**) to rename it in
   Argus. Claude Code's `/rename` also works, and changes the name in `/resume` and for other sessions too.
-- Cards show open PRs. A `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to
-  hide them. A card stays in **PR open** while one of its PRs merged or closed after the session's last prompt,
-  so newly finished work is easy to spot.
+- Cards show open PRs with their checks, review decision and unresolved review comments (`💬 2`). A
+  `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to hide them. A card stays in
+  **PR open** while one of its PRs merged or closed after the session's last prompt, so newly finished work is easy
+  to spot.
 - Keyboard: `/` to search, `j`/`k` to move, `Enter` to open, `e` to archive, `x` to select for bulk actions, `Esc`
   to clear the selection, `n` for a new chat.
 
