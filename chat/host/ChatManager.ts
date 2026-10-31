@@ -132,7 +132,12 @@ export class ChatManager implements vscode.Disposable {
       return;
     }
     const live = [...this.panels].filter((panel) => panel.view === "single").map((panel) => ({ sessionId: panel.sessionIds[0], title: panel.tabTitle }));
-    this.savedTabs = tabsToSave(this.savedTabs, live, this.unrestoredTabs().map((tab) => tab.label));
+    const next = tabsToSave(this.savedTabs, live, this.unrestoredTabs().map((tab) => tab.label));
+    // Tab events fire on every focus change, so only write when the list actually changed.
+    if (JSON.stringify(next) === JSON.stringify(this.savedTabs)) {
+      return;
+    }
+    this.savedTabs = next;
     void this.context.workspaceState.update(SAVED_TABS_KEY, this.savedTabs);
   }
 
