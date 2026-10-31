@@ -22,6 +22,7 @@ export interface Todo {
 export interface Finding {
   file: string;
   line?: number;
+  title: string;
   summary: string;
   failureScenario: string;
   category?: string;
@@ -188,6 +189,7 @@ function findingsOf(input: Input): Finding[] {
   return blocks(input.findings).map((finding) => ({
     file: str(finding.file),
     line: typeof finding.line === "number" ? finding.line : undefined,
+    title: str(finding.short_summary) || str(finding.summary),
     summary: str(finding.summary),
     failureScenario: str(finding.failure_scenario),
     category: str(finding.category) || undefined,
@@ -610,7 +612,7 @@ export function searchText(item: Item): string {
     case "tool":
       return [item.name, item.summary, item.error ?? ""].join("\n");
     case "findings":
-      return item.findings.flatMap((finding) => [finding.file, finding.summary, finding.failureScenario]).join("\n");
+      return item.findings.flatMap((finding) => [finding.file, finding.title, finding.summary, finding.failureScenario]).join("\n");
     case "answers":
       return item.pairs.map((pair) => [pair.header, pair.answer, pair.note ?? ""].join(" ")).join("\n");
     case "usage":

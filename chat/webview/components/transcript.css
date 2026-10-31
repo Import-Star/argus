@@ -309,14 +309,17 @@
 
 .tr-finding {
   border-top: 1px solid var(--border);
-  padding: 8px 0 2px;
 }
 
 .tr-finding-head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px 4px;
+  min-width: 0;
+}
+
+.tr-finding-head .tr-fold {
+  flex: 1;
+  width: auto;
   min-width: 0;
 }
 
@@ -324,25 +327,102 @@
   margin-top: 0;
 }
 
+.tr-finding-title {
+  color: var(--strong);
+}
+
+.tr-sev {
+  flex: none;
+  min-width: 34px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font: 600 10px/16px var(--mono);
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.tr-sev-high {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.tr-sev-medium {
+  color: var(--amber);
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+}
+
+.tr-sev-low {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 14%, transparent);
+}
+
 .tr-finding-file {
-  min-width: 0;
+  flex: none;
+  max-width: 45%;
   border: 0;
-  padding: 0;
+  padding: 0 12px 0 8px;
   background: none;
   font-size: 12px;
-  color: var(--strong);
+  color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tr-finding-file:hover {
+  color: var(--strong);
   text-decoration: underline;
 }
 
-.tr-finding-summary {
-  padding: 0 12px 4px;
+.tr-finding-body {
+  display: grid;
+  gap: 8px;
+  padding: 2px 12px 10px 32px;
+}
+
+.tr-finding-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
   overflow-wrap: anywhere;
+}
+
+.tr-finding-meta .tr-chip {
+  margin-top: 0;
+}
+
+.tr-finding-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.tr-finding-rows dt {
+  color: var(--muted);
+  font-size: 11px;
+  padding-top: 2px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tr-finding-rows dd {
+  margin: 0;
+}
+
+.tr-finding-rows dd > :first-child {
+  margin-top: 0;
+}
+
+.tr-finding-rows dd > :last-child {
+  margin-bottom: 0;
+}
+
+.tr-finding-actions {
+  display: flex;
+  gap: 6px;
 }
 
 .tr-bash-cmd {

@@ -4,6 +4,9 @@ First public release.
 
 ## Unreleased
 
+- **Code-review findings** are now a collapsed list: each finding shows a HIGH / MED / LOW badge (from its category),
+  its short summary and its file name. Opening one shows the issue, repro, likelihood and fix on separate rows, with
+  **Fix** and **Skip** buttons that reply to Claude and **Ask**, which starts a message about that finding.
 - Opening a chat after a VS Code restart no longer opens a second tab when its old tab is still there but not yet
   shown: Argus switches to the old tab, and closes any duplicate once the old tab is restored.
 - Argus says when Claude Code is out of date (checked at startup and every 4 hours), once per release. **Argus:
