@@ -66,6 +66,15 @@ export class ChatPanel implements vscode.Disposable {
     return this.panel.active;
   }
 
+  public get tabTitle(): string {
+    return this.panel.title;
+  }
+
+  // A tab that became a grid in place keeps "argusChat".
+  public get viewType(): string {
+    return this.panel.viewType;
+  }
+
   public get groupId(): string | undefined {
     return this.group;
   }
