@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { findClaude, installerShell, isOlder } from "../src/services/claudeCli.ts";
+import { findClaude, installerShell, isOlder, parseVersion, releaseUrl } from "../src/services/claudeCli.ts";
 
 const nowhere = () => undefined;
 
@@ -47,5 +47,19 @@ describe("isOlder", () => {
     assert.equal(isOlder("2.1.99", "2.1.314"), true);
     assert.equal(isOlder("2.1.314", "2.1.314"), false);
     assert.equal(isOlder("2.2.0", "2.1.314"), false);
+  });
+});
+
+describe("parseVersion", () => {
+  it("finds the version in `claude --version` output", () => {
+    assert.equal(parseVersion("2.1.314 (Claude Code)\n"), "2.1.314");
+    assert.equal(parseVersion("not a version"), undefined);
+  });
+});
+
+describe("releaseUrl", () => {
+  it("uses the stable channel only when asked for it", () => {
+    assert.ok(releaseUrl("stable").endsWith("/stable"));
+    assert.ok(releaseUrl(undefined).endsWith("/latest"));
   });
 });

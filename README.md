@@ -291,7 +291,7 @@ hours. A plugin may make its own network calls; see its README.
   changed, so it asks first.
 - **Sessions stop updating after a Claude Code update**: Argus depends on Claude Code's session registry file,
   which is not a stable public API. If it changes shape, session detection can break until Argus is updated.
-- **Chat says Claude Code isn't installed**: click **Install Claude Code**, or run **Argus: Install Claude Code**.
+- **Chat says Claude Code isn't installed**: click **Install Claude Code**, or run **Argus: Install or Update Claude Code**.
   If `claude --version` already works in a terminal, set `argus.chat.claudePath` to its path.
 - **PR status fails**: run `gh auth status`. If `gh` is installed but not found, make sure it is on the PATH VS
   Code was launched with.

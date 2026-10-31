@@ -57,7 +57,9 @@ async function claudeVersions(claude: string): Promise<{ current: string; latest
     const { stdout } = await promisify(execFile)(claude, ["--version"], { timeout: 10_000 });
     const current = parseVersion(stdout);
     const response = await fetch(releaseUrl(readUpdateChannel()), { signal: AbortSignal.timeout(10_000) });
-    const latest = parseVersion(await response.text());
+    const body = (await response.text()).trim();
+    // An error page or proxy banner must not pass as a release.
+    const latest = response.ok && /^\d+\.\d+\.\d+$/.test(body) ? body : undefined;
     return current && latest ? { current, latest } : undefined;
   } catch {
     return undefined;
