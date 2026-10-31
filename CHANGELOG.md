@@ -2,6 +2,10 @@
 
 First public release.
 
+## 0.8.1
+
+- Argus is no longer marked Preview on the Marketplace.
+
 ## 0.8.0
 
 - Plugin API: `registerChatExtension` lets a plugin run a script inside Argus chat, with buttons under Claude's

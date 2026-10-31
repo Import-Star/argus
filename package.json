@@ -2,11 +2,10 @@
   "name": "argus-control-center",
   "displayName": "Argus Control Center",
   "description": "Mission control for Claude Code: a live board of your sessions, notifications when one needs you, PR and worktree tracking, diff review, Claude plan usage in the status bar, and plugins.",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "publisher": "importstar",
   "license": "MIT",
   "icon": "media/icon.png",
-  "preview": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/Import-Star/argus.git"
