@@ -607,6 +607,11 @@ export class ChatManager implements vscode.Disposable {
     this.sessions.set(session.sessionId, session);
     const cwds = this.context.globalState.get<Record<string, string>>(SESSION_CWDS_KEY) ?? {};
     void this.context.globalState.update(SESSION_CWDS_KEY, { ...cwds, [session.sessionId]: session.meta.cwd });
+    // Without its own entry a reopened chat follows settings.json, which a pick in any chat changes.
+    const { model, effort, permissionMode } = session.meta;
+    const choices = this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY) ?? {};
+    const started: Remembered = { ...(model !== "default" && { model }), ...(effort && { effort }), ...(permissionMode && { permissionMode }) };
+    void this.context.globalState.update(SESSION_CHOICES_KEY, { ...choices, [session.sessionId]: { ...started, ...choices[session.sessionId] } });
     let status = session.meta.status;
     session.onMessage((message) => {
       if (message.type === "meta" && message.meta.status !== status) {

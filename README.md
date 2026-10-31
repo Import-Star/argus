@@ -45,9 +45,10 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
   window. A window with no folder open shows everything.
 - A card's title is the session's first prompt. Double-click the title (or use **Rename Chat**) to rename it in
   Argus. Claude Code's `/rename` also works, and changes the name in `/resume` and for other sessions too.
-- Cards show open PRs. A `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to
-  hide them. A card stays in **PR open** while one of its PRs merged or closed after the session's last prompt,
-  so newly finished work is easy to spot.
+- Cards show open PRs with their checks, review decision and unresolved review comments (`💬 2`). A
+  `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to hide them. A card stays in
+  **PR open** while one of its PRs merged or closed after the session's last prompt, so newly finished work is easy
+  to spot.
 - Keyboard: `/` to search, `j`/`k` to move, `Enter` to open, `e` to archive, `x` to select for bulk actions, `Esc`
   to clear the selection, `n` for a new chat.
 
@@ -140,9 +141,11 @@ side. With it off, forks open in their own tab and each agent has its own card.
   card adds its chat to the grid.
 
 `argus.chat.claudePath` sets the `claude` executable (empty: `claude` on your PATH, then `~/.local/bin`, where Claude
-Code's installer puts it). Without Claude Code, Argus offers to install it: **Argus: Install Claude Code** runs
+Code's installer puts it). Without Claude Code, Argus offers to install it: **Argus: Install or Update Claude Code** runs
 Anthropic's official installer in a terminal (`irm https://claude.ai/install.ps1 | iex` on Windows,
-`curl -fsSL https://claude.ai/install.sh | bash` elsewhere), then opens `claude` once so you can sign in. New chats take their model, effort and permission mode from your Claude Code settings (`model`, `effortLevel`, `permissions.defaultMode`); a reopened chat keeps the model and effort last picked in it.
+`curl -fsSL https://claude.ai/install.sh | bash` elsewhere), then opens `claude` once so you can sign in. On startup
+and every 4 hours Argus compares `claude --version` with the newest release on your `autoUpdatesChannel` and, once
+per release, says when it's out of date; **Update** (or the same command) runs `claude update` in a terminal. New chats take their model, effort and permission mode from your Claude Code settings (`model`, `effortLevel`, `permissions.defaultMode`); a reopened chat keeps the model and effort last picked in it.
 
 ### Claude plan usage
 
@@ -207,7 +210,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 
 - VS Code 1.90 or newer.
 - [Claude Code](https://code.claude.com/docs/en/setup) installed and signed in, so `claude` runs. Argus offers to
-  install it if it's missing (**Argus: Install Claude Code**).
+  install it if it's missing (**Argus: Install or Update Claude Code**).
   Argus chat runs it through the Agent SDK. Argus also reads the session registry Claude Code keeps at
   `~/.claude/sessions/<pid>.json`, which is not a documented public API and may change. The Claude Code VS Code
   extension isn't needed.
@@ -250,7 +253,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 - **Argus: Import Existing Claude Chats** (`argus.sessions.importChats`)
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
 - **Argus: New Chat** (`argus.chat.new`)
-- **Argus: Install Claude Code** (`argus.chat.installClaude`)
+- **Argus: Install or Update Claude Code** (`argus.chat.installClaude`)
 - **Argus: Open Chats Side by Side** (`argus.chat.openGrid`, `argus.chat.experimentalMultiAgent` only)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)
 - **Argus: Refresh Claude Plan Usage** (`argus.usage.refresh`)
@@ -277,7 +280,8 @@ Argus is local-only. It has no telemetry.
 | `~/.claude/.credentials.json` | Claude Code sign-in (read only, while `argus.usage.enabled` is on, which is the default). Sent only to the Anthropic usage endpoint. |
 
 Network use: `gh` calls to GitHub for PR state and PR diffs, using your existing `gh` login, and the Claude plan
-usage call above. A plugin may make its own network calls; see its README.
+usage call above, and a request to `downloads.claude.ai` for the newest Claude Code version at startup and every 4
+hours. A plugin may make its own network calls; see its README.
 
 ## Troubleshooting
 
@@ -288,7 +292,7 @@ usage call above. A plugin may make its own network calls; see its README.
   changed, so it asks first.
 - **Sessions stop updating after a Claude Code update**: Argus depends on Claude Code's session registry file,
   which is not a stable public API. If it changes shape, session detection can break until Argus is updated.
-- **Chat says Claude Code isn't installed**: click **Install Claude Code**, or run **Argus: Install Claude Code**.
+- **Chat says Claude Code isn't installed**: click **Install Claude Code**, or run **Argus: Install or Update Claude Code**.
   If `claude --version` already works in a terminal, set `argus.chat.claudePath` to its path.
 - **PR status fails**: run `gh auth status`. If `gh` is installed but not found, make sure it is on the PATH VS
   Code was launched with.
