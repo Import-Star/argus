@@ -8,7 +8,12 @@ import { dispatch, post } from "./store";
 
 window.addEventListener("message", (event: MessageEvent<HostMessage>) => (event.data.type === "extension" ? onExtensionMessage(event.data.id, event.data.message) : dispatch(event.data)));
 render(<App />, document.getElementById("root")!);
-post({ type: "ready" });
+// Plugin chat extension scripts come after this bundle: say ready once they have run and registered.
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => post({ type: "ready" }));
+} else {
+  post({ type: "ready" });
+}
 startMermaid();
 
 // VS Code's webview drops Cmd+C, so copies go through the host clipboard.

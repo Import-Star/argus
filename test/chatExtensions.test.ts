@@ -26,4 +26,15 @@ describe("ChatExtensionRegistry", () => {
     await registry.receive("a", {}, () => {});
     assert.match(warnings[0], /boom/);
   });
+
+  it("stops posting once disposed", () => {
+    const registry = new ChatExtensionRegistry();
+    const posted: unknown[] = [];
+    registry.onDidPost((_id, message) => posted.push(message));
+    const handle = registry.register({ id: "a", script });
+    handle.post(1);
+    handle.dispose();
+    handle.post(2);
+    assert.deepEqual(posted, [1]);
+  });
 });

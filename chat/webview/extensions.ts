@@ -4,6 +4,7 @@ import { post } from "./store";
 
 export interface ReplyAction extends ArgusReplyAction {
   key: string;
+  extensionId: string;
 }
 
 const ID = /^[a-z0-9-]{1,64}$/;
@@ -35,7 +36,11 @@ window.argusChat = {
       extension.mount({
         post: (message) => post({ type: "extension", id, message }),
         addReplyAction: (action) => {
-          const entry = { ...action, key: `${id}:${action.id}` };
+          if (!ID.test(action.id)) {
+            console.error(`Argus: chat extension "${id}" reply action id ${JSON.stringify(action.id)} is invalid.`);
+            return { dispose: () => {} };
+          }
+          const entry = { ...action, key: `${id}:${action.id}`, extensionId: id };
           setActions([...actions.filter((existing) => existing.key !== entry.key), entry]);
           return { dispose: () => setActions(actions.filter((existing) => existing !== entry)) };
         }
@@ -64,7 +69,7 @@ export function runReplyAction(action: ReplyAction, button: HTMLElement, markdow
     button.title = title;
     button.setAttribute("aria-label", title);
   };
-  guard(action.key.split(":")[0], "onClick", () => action.onClick({ sessionId: transcript.dataset.session ?? "", markdown, element, overlay, setActive }));
+  guard(action.extensionId, "onClick", () => action.onClick({ sessionId: transcript.dataset.session ?? "", markdown, element, overlay, setActive }));
 }
 
 export function useReplyActions(): ReplyAction[] {

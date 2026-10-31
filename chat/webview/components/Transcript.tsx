@@ -643,7 +643,7 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
           {working && session.meta && <WorkingLine since={session.meta.statusSince} tokens={tokens} generic={toolRunning} compact={compact} />}
         </div>
       </div>
-      <div class="chat-overlay" />
+      <div key={sessionId} class="chat-overlay" />
       {searching && <TranscriptSearch query={query} current={current} total={total} inputRef={searchBox} onQuery={searchFor} onStep={step} onClose={closeSearch} />}
       {away && (
         <button

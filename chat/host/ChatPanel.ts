@@ -332,6 +332,7 @@ export class ChatPanel implements vscode.Disposable {
 
   // A plugin's chat extension was added or removed: load the page again, which re-sends everything on "ready".
   public reload(): void {
+    this.ready = false;
     this.panel.webview.options = this.options();
     this.panel.webview.html = this.html();
   }

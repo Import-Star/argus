@@ -30,7 +30,11 @@ export class ChatExtensionRegistry {
           this.fire();
         }
       },
-      post: (message) => this.postListeners.forEach((listener) => listener(extension.id, message))
+      post: (message) => {
+        if (this.extensions.get(extension.id) === extension) {
+          this.postListeners.forEach((listener) => listener(extension.id, message));
+        }
+      }
     };
   }
 
