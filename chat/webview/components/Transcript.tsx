@@ -1,5 +1,6 @@
 import type { ComponentChildren } from "preact";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
+import { runReplyAction, useReplyActions } from "../extensions";
 import { highlightCode, languageFor } from "../highlight";
 import { renderMarkdown } from "../markdown";
 import { post, setUi, useSession } from "../store";
@@ -49,6 +50,7 @@ function useToggle(forced = false): [boolean, () => void] {
 }
 
 function Text({ text, streaming }: { text: string; streaming?: boolean }) {
+  const actions = useReplyActions();
   let html = renderMarkdown(text);
   if (streaming) {
     html = /<\/(p|li)>\s*$/.test(html) ? html.replace(/(<\/(?:p|li)>\s*)$/, '<span class="tr-cursor"></span>$1') : `${html}<span class="tr-cursor"></span>`;
@@ -60,6 +62,22 @@ function Text({ text, streaming }: { text: string; streaming?: boolean }) {
         <button type="button" class="copy-btn tr-reply-copy" title="Copy response" aria-label="Copy response" data-copy={text}>
           <Icon d="M9 9h11v11H9zM5 15H4V4h11v1" />
         </button>
+      )}
+      {!streaming && actions.length > 0 && (
+        <div class="tr-reply-actions">
+          {actions.map((action) => (
+            <button key={action.key} type="button" class="tr-reply-action" title={action.title} aria-label={action.title} onClick={(event) => runReplyAction(action, event.currentTarget, text)}>
+              <span class="tr-action-icon">
+                <Icon d={action.icon} />
+              </span>
+              {action.activeIcon && (
+                <span class="tr-action-active">
+                  <Icon d={action.activeIcon} />
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -655,6 +673,7 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
           {working && session.meta && <WorkingLine since={session.meta.statusSince} tokens={tokens} generic={toolRunning} compact={compact} />}
         </div>
       </div>
+      <div key={sessionId} class="chat-overlay" />
       {searching && <TranscriptSearch query={query} current={current} total={total} inputRef={searchBox} onQuery={searchFor} onStep={step} onClose={closeSearch} />}
       {away && (
         <button

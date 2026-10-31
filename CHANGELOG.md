@@ -4,6 +4,8 @@ First public release.
 
 ## Unreleased
 
+- Plugin API: `registerChatExtension` lets a plugin run a script inside Argus chat, with buttons under Claude's
+  replies (`addReplyAction`) and a floating overlay for its own controls.
 - **Code-review findings** are now a collapsed list: each finding shows a HIGH / MED / LOW badge (from its category),
   its short summary and its file name. Opening one shows the issue, repro, likelihood and fix on separate rows, with
   **Fix** and **Skip** buttons that reply to Claude and **Ask**, which starts a message about that finding.

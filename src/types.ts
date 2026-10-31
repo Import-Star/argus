@@ -12,6 +12,8 @@ export type {
   ChatDetailsSection,
   ChatDetailsItem,
   ChatDetailsProvider,
+  ArgusChatExtension,
+  ChatExtensionHandle,
   CleanupItem,
   ArgusTab,
   TabHandle,

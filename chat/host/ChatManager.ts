@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import type { ChatDeps } from "../../src/chat/types";
+import type { ChatDeps, ChatExtensionHub } from "../../src/chat/types";
 import type { LiveChat } from "../../src/services/sessionColumn";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
@@ -50,6 +50,11 @@ export class ChatManager implements vscode.Disposable {
   public readonly onDidChangePending = this.pendingEmitter.event;
   private readonly subscriptions: vscode.Disposable[] = [];
   private readonly log: vscode.OutputChannel;
+  private reloadTimer: ReturnType<typeof setTimeout> | undefined;
+
+  public get extensions(): ChatExtensionHub {
+    return this.deps.chatExtensions;
+  }
   private savedTabs: SavedTab[];
   private closing = false;
 
@@ -61,6 +66,8 @@ export class ChatManager implements vscode.Disposable {
       this.log,
       deps.onDidChangeCards(() => this.broadcastCards()),
       deps.onDidChangePluginSections(() => this.broadcastCards()),
+      deps.chatExtensions.onDidChange(() => this.reloadPanels()),
+      deps.chatExtensions.onDidPost((id, message) => this.panels.forEach((panel) => panel.post({ type: "extension", id, message }))),
       vscode.window.registerWebviewPanelSerializer("argusChat", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "single", state) }),
       vscode.window.registerWebviewPanelSerializer("argusChatGrid", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "grid", state) }),
       vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration(MULTI_AGENT_SETTING) && this.panels.forEach((panel) => panel.sendLayout()))
@@ -492,7 +499,14 @@ export class ChatManager implements vscode.Disposable {
     return files.map((file) => path.relative(cwd, file.fsPath));
   }
 
+  // Plugins register and dispose chat extensions in bursts (startup, Reload Plugins): reload each tab once per burst.
+  private reloadPanels(): void {
+    clearTimeout(this.reloadTimer);
+    this.reloadTimer = setTimeout(() => this.panels.forEach((panel) => panel.reload()), 100);
+  }
+
   public dispose(): void {
+    clearTimeout(this.reloadTimer);
     this.closing = true;
     this.idleTimers.forEach((timer) => clearTimeout(timer));
     this.panels.forEach((panel) => panel.dispose());

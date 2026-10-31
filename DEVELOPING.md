@@ -88,6 +88,7 @@ src/services/
   openSession.ts                  opens sessions in Argus chat
   archiveSession.ts               archive (one session or a batch) plus plugin-supplied cleanup (registerArchiveCleanup)
   chatDetails.ts                  plugin sections for the chat Details pane (registerChatDetails)
+  chatExtensions.ts               plugin scripts that run in the chat webview (registerChatExtension)
   importChats.ts                  builds session records from existing Claude Code transcripts (Import Existing Claude Chats)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse
   UsageService.ts                 Claude plan usage, reads from Anthropic's OAuth endpoint
@@ -230,6 +231,12 @@ These work without a tab:
   chat draws itself, so no plugin code runs in the chat webview. A select change or a button press calls `onAction`;
   call `.refresh()` on the returned handle when your sections change without a session change. It's optional on
   `ArgusApi`, so call it with `?.` to keep working on older Argus versions.
+- `argus.registerChatExtension?.({ id, script, style, media, onMessage(message, reply) })` runs your script inside
+  every Argus chat webview, after the chat's own bundle. The script calls `argusChat.registerExtension(id, { mount,
+  onMessage })`; `ctx.addReplyAction()` puts a button beside Copy under Claude's replies, and the reply it hands you
+  carries the rendered element, the markdown, `setActive()` and an `overlay` for floating controls. `media: ["data:"]`
+  (or `"blob:"`) lets the script play audio or video it builds. Registering or disposing reloads open chat tabs. Types
+  are in `argus-webview.d.ts`; check for it with `?.` like `registerChatDetails`.
 
 ### Start a linked session
 
