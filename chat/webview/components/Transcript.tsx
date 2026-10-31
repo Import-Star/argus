@@ -232,9 +232,9 @@ const SEVERITY_LABEL: Record<Severity, string> = { high: "HIGH", medium: "MED", 
 function FindingRow({ finding, index, sessionId, forceOpen }: { finding: Finding; index: number; sessionId: string; forceOpen?: boolean }) {
   const [open, toggle] = useToggle(forceOpen);
   const severity = severityOf(finding.category);
-  const where = `${finding.file.split("/").pop()}${finding.line ? `:${finding.line}` : ""}`;
+  const where = `${finding.file.split(/[\\/]/).pop()}${finding.line ? `:${finding.line}` : ""}`;
   const ref = `finding ${index + 1} (${finding.title}, ${finding.file}${finding.line ? `:${finding.line}` : ""})`;
-  const rows = [...(finding.title === finding.summary ? [] : [{ label: "Issue", text: finding.summary }]), ...scenarioParts(finding.failureScenario)];
+  const rows = [...(!finding.summary || finding.title === finding.summary ? [] : [{ label: "Issue", text: finding.summary }]), ...scenarioParts(finding.failureScenario)];
   return (
     <div class="tr-finding">
       <div class="tr-finding-head">

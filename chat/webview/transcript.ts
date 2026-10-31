@@ -612,7 +612,7 @@ export function searchText(item: Item): string {
     case "tool":
       return [item.name, item.summary, item.error ?? ""].join("\n");
     case "findings":
-      return item.findings.flatMap((finding) => [finding.file, finding.summary, finding.failureScenario]).join("\n");
+      return item.findings.flatMap((finding) => [finding.file, finding.title, finding.summary, finding.failureScenario]).join("\n");
     case "answers":
       return item.pairs.map((pair) => [pair.header, pair.answer, pair.note ?? ""].join(" ")).join("\n");
     case "usage":
