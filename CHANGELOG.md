@@ -4,6 +4,8 @@ First public release.
 
 ## Unreleased
 
+- Opening a chat after a VS Code restart no longer opens a second tab when its old tab is still there but not yet
+  shown: Argus switches to the old tab, and closes any duplicate once the old tab is restored.
 - Argus says when Claude Code is out of date (checked at startup and every 4 hours), once per release. **Argus:
   Install Claude Code** is now **Argus: Install or Update Claude Code** and runs `claude update` when it's already
   installed.
