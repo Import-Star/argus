@@ -4,6 +4,8 @@ First public release.
 
 ## 0.7.0
 
+- A chat no longer opens blank after it auto-compacts while its shell is in another folder: the compaction no
+  longer moves the session's folder, so Argus still finds its history.
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
   empty result the CLI replays on resume and waits for the real answer. An empty answer now says so.
 - New `argus.sessions.scope` value `folder`: a window shows only chats started inside its own folders, not
