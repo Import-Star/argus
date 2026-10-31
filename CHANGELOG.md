@@ -4,6 +4,8 @@ First public release.
 
 ## Unreleased
 
+- A reopened chat keeps the model, effort and permission mode it started with. Before, a chat where none were picked
+  followed `settings.json`, which picking a model or effort in any other chat changes.
 - Answering a question in a long chat no longer blanks the panel: picking an option scrolled the whole page to
   the option's hidden input, far below the chat.
 
