@@ -228,6 +228,7 @@
                 "isDraft": false,
                 "reviewDecision": "REVIEW_REQUIRED",
                 "reviewers": [],
+                "unresolvedThreads": 2,
                 "checks": [
                   {
                     "name": "build",

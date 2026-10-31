@@ -83,6 +83,7 @@ export interface PrSummary {
   closedAt?: string; // ISO time the PR was merged or closed
   reviewDecision?: string;
   reviewers: PrReviewer[];
+  unresolvedThreads?: number; // review comment threads not yet resolved
   checks: PrCheck[];
   syncedAt: string;
   error?: string;
