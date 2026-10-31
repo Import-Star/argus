@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Answering a question in a long chat no longer blanks the panel: picking an option scrolled the whole page to
+  the option's hidden input, far below the chat.
+
 ## 0.7.0
 
 - A chat no longer opens blank after it auto-compacts while its shell is in another folder: the compaction no
