@@ -2,28 +2,28 @@
 
 First public release.
 
-## Unreleased
+## 0.8.0
 
 - Plugin API: `registerChatExtension` lets a plugin run a script inside Argus chat, with buttons under Claude's
   replies (`addReplyAction`) and a floating overlay for its own controls.
 - **Code-review findings** are now a collapsed list: each finding shows a HIGH / MED / LOW badge (from its category),
   its short summary and its file name. Opening one shows the issue, repro, likelihood and fix on separate rows, with
   **Fix** and **Skip** buttons that reply to Claude and **Ask**, which starts a message about that finding.
-- Opening a chat after a VS Code restart no longer opens a second tab when its old tab is still there but not yet
-  shown: Argus switches to the old tab, and closes any duplicate once the old tab is restored.
 - Argus says when Claude Code is out of date (checked at startup and every 4 hours), once per release. **Argus:
   Install Claude Code** is now **Argus: Install or Update Claude Code** and runs `claude update` when it's already
   installed.
 - PR chips on session cards show unresolved review comments (`💬 2`).
 - A reopened chat keeps the model, effort and permission mode it started with. Before, a chat where none were picked
   followed `settings.json`, which picking a model or effort in any other chat changes.
+- Opening a chat after a VS Code restart no longer opens a second tab when its old tab is still there but not yet
+  shown: Argus switches to the old tab, and closes any duplicate once the old tab is restored.
+- A chat no longer opens blank after it auto-compacts while its shell is in another folder: the compaction no
+  longer moves the session's folder, so Argus still finds its history.
 - Answering a question in a long chat no longer blanks the panel: picking an option scrolled the whole page to
   the option's hidden input, far below the chat.
 
 ## 0.7.0
 
-- A chat no longer opens blank after it auto-compacts while its shell is in another folder: the compaction no
-  longer moves the session's folder, so Argus still finds its history.
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
   empty result the CLI replays on resume and waits for the real answer. An empty answer now says so.
 - New `argus.sessions.scope` value `folder`: a window shows only chats started inside its own folders, not
