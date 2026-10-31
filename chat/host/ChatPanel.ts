@@ -16,6 +16,7 @@ import { planUsage, shellTaskOutput } from "./usage";
 export class ChatPanel implements vscode.Disposable {
   private readonly panel: vscode.WebviewPanel;
   private readonly subscriptions: vscode.Disposable[] = [];
+  private readonly root: vscode.Uri;
   private sessionDisposables = new Map<string, vscode.Disposable>();
   private readonly asides = new Map<string, SideQuestion>();
   private ready = false;
@@ -35,8 +36,8 @@ export class ChatPanel implements vscode.Disposable {
     private group?: string,
     existing?: vscode.WebviewPanel
   ) {
-    const root = vscode.Uri.joinPath(extensionUri, "out", "chat");
-    const options = { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [root] };
+    this.root = vscode.Uri.joinPath(extensionUri, "out", "chat");
+    const options = this.options();
     if (existing) {
       this.panel = existing;
       this.panel.webview.options = options;
@@ -45,7 +46,7 @@ export class ChatPanel implements vscode.Disposable {
       this.panel = vscode.window.createWebviewPanel(view === "grid" ? "argusChatGrid" : "argusChat", this.title(), column ?? vscode.ViewColumn.Active, options);
     }
     this.panel.iconPath = vscode.Uri.joinPath(extensionUri, "media", "icon.png");
-    this.panel.webview.html = this.html(root);
+    this.panel.webview.html = this.html();
     this.subscriptions.push(
       this.panel.webview.onDidReceiveMessage((message: WebviewMessage) => void this.handle(message)),
       this.panel.onDidDispose(() => this.dispose()),
@@ -187,6 +188,10 @@ export class ChatPanel implements vscode.Disposable {
       await vscode.env.openExternal(vscode.Uri.parse(message.url));
       return;
     }
+    if (message.type === "extension") {
+      await this.manager.extensions.receive(message.id, message.message, (reply) => this.post({ type: "extension", id: message.id, message: reply }));
+      return;
+    }
     if (message.type === "copy") {
       await vscode.env.clipboard.writeText(message.text);
       return;
@@ -325,22 +330,40 @@ export class ChatPanel implements vscode.Disposable {
     return aside;
   }
 
-  private html(root: vscode.Uri): string {
+  // A plugin's chat extension was added or removed: load the page again, which re-sends everything on "ready".
+  public reload(): void {
+    this.panel.webview.options = this.options();
+    this.panel.webview.html = this.html();
+  }
+
+  private options(): vscode.WebviewOptions & vscode.WebviewPanelOptions {
+    const extensions = this.manager.extensions.list();
+    const folders = extensions.flatMap((extension) => [extension.script, extension.style]).flatMap((uri) => (uri ? [vscode.Uri.file(path.dirname(uri.fsPath))] : []));
+    return { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [this.root, ...folders] };
+  }
+
+  private html(): string {
     const webview = this.panel.webview;
     const nonce = randomBytes(16).toString("base64");
-    const script = webview.asWebviewUri(vscode.Uri.joinPath(root, "webview.js"));
-    const style = webview.asWebviewUri(vscode.Uri.joinPath(root, "webview.css"));
+    const script = webview.asWebviewUri(vscode.Uri.joinPath(this.root, "webview.js"));
+    const style = webview.asWebviewUri(vscode.Uri.joinPath(this.root, "webview.css"));
+    const extensions = this.manager.extensions.list();
+    const media = this.manager.extensions.media();
+    const styles = extensions.flatMap((extension) => (extension.style ? [`<link rel="stylesheet" href="${webview.asWebviewUri(extension.style)}">`] : []));
+    const scripts = extensions.map((extension) => `<script nonce="${nonce}" src="${webview.asWebviewUri(extension.script)}"></script>`);
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https: data:; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource};${media.length ? ` media-src ${media.join(" ")};` : ""} script-src 'nonce-${nonce}';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="${style}">
+  ${styles.join("\n  ")}
 </head>
 <body>
   <div id="root"></div>
   <script nonce="${nonce}" src="${script}"></script>
+  ${scripts.join("\n  ")}
 </body>
 </html>`;
   }

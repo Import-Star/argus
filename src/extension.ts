@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { createApi, SessionChipsRegistry } from "./api";
 import { ChatDetailsRegistry } from "./services/chatDetails";
+import { ChatExtensionRegistry } from "./services/chatExtensions";
 import { ChatLoader } from "./chat/loader";
 import { registerDiffReview } from "./diffReview";
 import { AttentionNotifier } from "./providers/AttentionNotifier";
@@ -47,8 +48,9 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const chips = new SessionChipsRegistry();
   const archiveCleanup = new ArchiveCleanupRegistry();
   const chatDetails = new ChatDetailsRegistry();
+  const chatExtensions = new ChatExtensionRegistry();
 
-  const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails });
+  const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails, chatExtensions });
 
   const chat = new ChatLoader(context, {
     getCards: () => sessions.getCards(),
@@ -62,7 +64,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     rename: (sessionId) => renameSessionPrompt(sessions, sessionId),
     pluginSections: (card) => chatDetails.sectionsFor(card),
     pluginAction: (sessionId, key, itemId, value) => chatDetails.action(sessionId, key, itemId, value),
-    onDidChangePluginSections: (listener) => chatDetails.onDidChange(listener)
+    onDidChangePluginSections: (listener) => chatDetails.onDidChange(listener),
+    chatExtensions
   });
   registerDiffReview(context, chips, chat);
   const tracking = new TrackingMonitor(context);

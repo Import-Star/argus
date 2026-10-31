@@ -709,3 +709,23 @@
   margin: 0;
   color: var(--strong);
 }
+
+.chat-overlay {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.chat-overlay > * {
+  pointer-events: auto;
+}
+
+/* Room under the last reply so a plugin's floating controls never cover its buttons. */
+.chat-transcript:has(.chat-overlay > *) .tr-inner {
+  padding-bottom: 64px;
+}

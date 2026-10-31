@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Plugin API: `registerChatExtension` lets a plugin run a script inside Argus chat, with buttons under Claude's
+  replies (`addReplyAction`) and a floating overlay for its own controls.
+
 ## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the

@@ -206,6 +206,44 @@ code,
   opacity: 1;
 }
 
+.tr-reply-actions {
+  position: absolute;
+  bottom: -26px;
+  right: 28px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+}
+
+.tr-reply:hover > .tr-reply-actions,
+.tr-reply-actions:focus-within,
+.tr-reply-actions:has([data-active="true"]) {
+  opacity: 1;
+}
+
+.tr-reply-action {
+  display: flex;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--row);
+  color: var(--muted, inherit);
+  cursor: pointer;
+}
+
+.tr-reply-action[data-active="true"] {
+  color: var(--vscode-focusBorder, inherit);
+}
+
+.tr-action-active,
+.tr-reply-action[data-active="true"]:has(.tr-action-active) .tr-action-icon {
+  display: none;
+}
+
+.tr-reply-action[data-active="true"] .tr-action-active {
+  display: flex;
+}
+
 .copy-btn.copied {
   opacity: 1;
   color: var(--vscode-testing-iconPassed, #3fb950);

@@ -2,10 +2,11 @@ import { render } from "preact";
 import type { HostMessage } from "../../src/chat/protocol";
 import { App } from "./App";
 import "./chat.css";
+import { onExtensionMessage } from "./extensions";
 import { startMermaid } from "./mermaid";
 import { dispatch, post } from "./store";
 
-window.addEventListener("message", (event: MessageEvent<HostMessage>) => dispatch(event.data));
+window.addEventListener("message", (event: MessageEvent<HostMessage>) => (event.data.type === "extension" ? onExtensionMessage(event.data.id, event.data.message) : dispatch(event.data)));
 render(<App />, document.getElementById("root")!);
 post({ type: "ready" });
 startMermaid();

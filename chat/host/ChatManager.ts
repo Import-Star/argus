@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import type { ChatDeps } from "../../src/chat/types";
+import type { ChatDeps, ChatExtensionHub } from "../../src/chat/types";
 import type { LiveChat } from "../../src/services/sessionColumn";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
@@ -48,12 +48,18 @@ export class ChatManager implements vscode.Disposable {
   private readonly subscriptions: vscode.Disposable[] = [];
   private readonly log: vscode.OutputChannel;
 
+  public get extensions(): ChatExtensionHub {
+    return this.deps.chatExtensions;
+  }
+
   constructor(private readonly context: vscode.ExtensionContext, private readonly deps: ChatDeps) {
     this.log = vscode.window.createOutputChannel("Argus Chat");
     this.subscriptions.push(
       this.log,
       deps.onDidChangeCards(() => this.broadcastCards()),
       deps.onDidChangePluginSections(() => this.broadcastCards()),
+      deps.chatExtensions.onDidChange(() => this.panels.forEach((panel) => panel.reload())),
+      deps.chatExtensions.onDidPost((id, message) => this.panels.forEach((panel) => panel.post({ type: "extension", id, message }))),
       vscode.window.registerWebviewPanelSerializer("argusChat", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "single", state) }),
       vscode.window.registerWebviewPanelSerializer("argusChatGrid", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "grid", state) }),
       vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration(MULTI_AGENT_SETTING) && this.panels.forEach((panel) => panel.sendLayout()))

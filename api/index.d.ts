@@ -139,6 +139,24 @@ export interface ChatDetailsProvider {
   onAction?(sessionId: string, sectionId: string, itemId: string, value?: string): void | Promise<void>;
 }
 
+// A script a plugin runs inside every Argus chat webview, e.g. to add a button under Claude's replies. The webview
+// side is described in ./webview.d.ts (window.argusChat). Registering or disposing one reloads open chat tabs.
+export interface ArgusChatExtension {
+  id: string; // unique, lowercase [a-z0-9-]
+  // File URIs inside the plugin's own folder, loaded after the chat's own bundle with the webview's CSP nonce.
+  script: vscode.Uri;
+  style?: vscode.Uri;
+  // Extra sources the chat's CSP allows for <audio> and <video>, e.g. ["data:"] to play generated audio.
+  media?: ("data:" | "blob:")[];
+  // A message the script sent with ctx.post(). `reply` answers the chat webview it came from.
+  onMessage?(message: unknown, reply: (message: unknown) => void): void | Promise<void>;
+}
+
+export interface ChatExtensionHandle extends vscode.Disposable {
+  // Sends a message to the extension's script in every open chat webview (ArgusChatExtensionModule.onMessage).
+  post(message: unknown): void;
+}
+
 // One extra step offered when the user archives a session ("Archive and clean up").
 export interface CleanupItem {
   label: string; // shown in the confirmation dialog, e.g. "Remove work card: Fix login"
@@ -203,6 +221,8 @@ export interface ArgusApi {
   // Sections in the Details pane of Argus chats. Call `refresh` when they change without a session change.
   // Optional: older Argus versions don't have it, so check before calling.
   registerChatDetails?(provider: ChatDetailsProvider): vscode.Disposable & { refresh(): void };
+  // A script that runs inside Argus chat webviews. Optional: older Argus versions don't have it.
+  registerChatExtension?(extension: ArgusChatExtension): ChatExtensionHandle;
 }
 
 // A plugin's slice of the "argus.plugins" setting. Keys missing from settings fall back to the defaults in the
