@@ -6,9 +6,13 @@ First public release.
 
 - A reopened chat keeps the model, effort and permission mode it started with. Before, a chat where none were picked
   followed `settings.json`, which picking a model or effort in any other chat changes.
+- Answering a question in a long chat no longer blanks the panel: picking an option scrolled the whole page to
+  the option's hidden input, far below the chat.
 
 ## 0.7.0
 
+- A chat no longer opens blank after it auto-compacts while its shell is in another folder: the compaction no
+  longer moves the session's folder, so Argus still finds its history.
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
   empty result the CLI replays on resume and waits for the real answer. An empty answer now says so.
 - New `argus.sessions.scope` value `folder`: a window shows only chats started inside its own folders, not
