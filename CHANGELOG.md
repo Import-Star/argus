@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Answering a question in a long chat no longer blanks the panel: picking an option scrolled the whole page to
+  the option's hidden input, far below the chat.
+
 ## 0.7.0
 
 - **Ask aside** no longer comes back blank on a session that had a finished background task waiting: it skips the
