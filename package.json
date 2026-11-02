@@ -394,11 +394,11 @@
     "snapshots": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs"
   },
   "devDependencies": {
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/vscode": "~1.90.0",
     "@vscode/vsce": "^4.1.0",
-    "esbuild": "^0.25.12",
-    "playwright": "1.55.1",
+    "esbuild": "^0.28.2",
+    "playwright": "1.64.1",
     "typescript": "^7.0.2"
   },
   "dependencies": {
