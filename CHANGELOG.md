@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.8.3
 
 - 0.8.2 was tagged but never published: its build failed after the Preact 11 upgrade. This release fixes the build
   and is the first on the Marketplace with 0.8.2's changes.
