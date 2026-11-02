@@ -10,7 +10,7 @@ interface Props {
   query: string;
   current: number;
   total: number;
-  inputRef: RefObject<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement | null>;
   onQuery(query: string): void;
   onStep(delta: number): void;
   onClose(): void;

@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- 0.8.2 was tagged but never published: its build failed after the Preact 11 upgrade. This release fixes the build
+  and is the first on the Marketplace with 0.8.2's changes.
+
 ## 0.8.2
 
 - A chat no longer opens blank after a resume while its shell was in another folder: a session now keeps the

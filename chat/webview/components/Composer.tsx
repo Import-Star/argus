@@ -78,7 +78,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   const [active, setActive] = useState(0);
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
-  const suggestTimer = useRef<number>();
+  const suggestTimer = useRef<number | undefined>(undefined);
 
   const working = meta?.status === "working";
   const model = meta?.models.find((option) => option.value === meta.model) ?? (meta?.model ? undefined : meta?.models[0]);
@@ -88,6 +88,16 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   const slashQuery = !slashOff ? SLASH.exec(text)?.[1] : undefined;
   const commands = slashQuery === undefined ? [] : filterCommands(meta?.commands ?? [], slashQuery);
   const options = commands.length ? commands.map((command) => command.name) : suggestions;
+  // While the slash or @ menu is open the textarea acts as a combobox. Preact 11's types only allow role="textbox"
+  // on a textarea, so the role is set on the element directly.
+  const menuOpen = options.length > 0;
+  useEffect(() => {
+    if (menuOpen) {
+      input.current?.setAttribute("role", "combobox");
+    } else {
+      input.current?.removeAttribute("role");
+    }
+  }, [menuOpen]);
   const typed = /^\/(\S+) $/.exec(text)?.[1];
   const hint = typed ? meta?.commands?.find((command) => command.name === typed)?.argumentHint : undefined;
   const chips = files.filter((file) => text.includes(`@${file}`));
@@ -360,7 +370,6 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
           rows={compact ? 1 : 2}
           value={text}
           placeholder={hint ? hint : working ? "Queue a follow-up, @ to add files" : "Message Claude, @ to add files"}
-          role={options.length ? "combobox" : undefined}
           aria-expanded={options.length ? true : undefined}
           aria-activedescendant={options.length ? `cmp-${sessionId}-opt-${active}` : undefined}
           onInput={(event) => {
