@@ -384,10 +384,6 @@ function hookMain(): void {
     prs: []
   };
 
-  // A compaction reports the shell's current folder, not the session's.
-  if (input.cwd && input.hook_event_name === "SessionStart" && input.source !== "compact") {
-    record.cwd = input.cwd;
-  }
   if (input.transcript_path) {
     record.transcriptPath = input.transcript_path;
   }

@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- A chat no longer opens blank after a resume while its shell was in another folder: a session now keeps the
+  folder it started in, so Argus still finds its history.
+
 ## 0.8.1
 
 - Argus is no longer marked Preview on the Marketplace.
