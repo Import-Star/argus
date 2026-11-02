@@ -30,7 +30,9 @@ export async function runPicker(manager: ChatManager, session: ChatSession, name
       return pickEffort(manager, session);
     case "output-style": {
       const { outputStyle, outputStyles } = await session.initInfo();
-      return sendChoice(session, name, "Which output style?", plain(outputStyles), outputStyle);
+      // The style in use can be missing from the list (e.g. a renamed custom style), so add it to keep it marked.
+      const styles = outputStyle && !outputStyles.includes(outputStyle) ? [outputStyle, ...outputStyles] : outputStyles;
+      return sendChoice(session, name, "Which output style?", plain(styles), outputStyle);
     }
     case "advisor": {
       const { advisor } = await session.settings();
@@ -77,6 +79,9 @@ async function pickEffort(manager: ChatManager, session: ChatSession): Promise<v
     manager.remember(session.sessionId, { effort: picked.value as EffortLevel });
   } else {
     session.send(`/effort ${picked.value}`);
+    if (picked.value === "auto") {
+      session.clearEffort();
+    }
   }
 }
 

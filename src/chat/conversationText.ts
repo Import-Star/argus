@@ -51,7 +51,8 @@ export function conversationTurns(messages: readonly unknown[]): Turn[] {
       turns.push({ role: entry.type, text });
     }
   }
-  return turns;
+  // A slash command the CLI answered itself has no reply here, so leave it out.
+  return turns.filter((turn, index) => !(turn.role === "user" && turn.text.startsWith("/") && turns[index + 1]?.role !== "assistant"));
 }
 
 // n = 1 is the latest reply.

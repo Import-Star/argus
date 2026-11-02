@@ -378,6 +378,11 @@ export class ChatSession implements vscode.Disposable {
     this.update({ color });
   }
 
+  // `/effort auto` is text the SDK has no setter for, so the shown level is cleared rather than left stale.
+  public clearEffort(): void {
+    this.update({ effort: undefined });
+  }
+
   public async initInfo(): Promise<{ outputStyle: string; outputStyles: string[] }> {
     this.start();
     const init = await this.q?.initializationResult();

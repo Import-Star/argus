@@ -19,6 +19,16 @@ describe("conversationTurns", () => {
     assert.deepEqual(conversationTurns(messages).map((turn) => `${turn.role}: ${turn.text}`), ["user: Fix the bug", "assistant: Looking.", "assistant: Fixed.", "user: Thanks", "assistant: Welcome."]);
   });
 
+  it("leaves out slash commands the CLI answered itself", () => {
+    const local = [
+      say("user", "<command-name>/color</command-name><command-args>red</command-args>"),
+      say("user", "<local-command-stdout>Session color set to: red</local-command-stdout>"),
+      say("user", "<command-name>/review</command-name>"),
+      say("assistant", [{ type: "text", text: "Reviewed." }])
+    ];
+    assert.deepEqual(conversationTurns(local).map((turn) => turn.text), ["/review", "Reviewed."]);
+  });
+
   it("shows slash commands as typed", () => {
     assert.equal(cleanUserText("<command-name>/foo</command-name><command-args>bar</command-args>"), "/foo bar");
   });
