@@ -1,4 +1,5 @@
 import type { EffortLevel, PermissionMode, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
+import type { Panel, PanelKind } from "./panels";
 
 export type { EffortLevel, PermissionMode, SDKMessage };
 
@@ -39,8 +40,12 @@ export interface ChatMeta {
   cacheTtlMs?: number;
   // Claude in Chrome: whether this chat's process was started with --chrome.
   chrome?: boolean;
+  // The chat's accent colour name from /color; unset for the default.
+  color?: string;
   // Set while Remote Control is on: the claude.ai link that continues this chat.
   remoteControlUrl?: string;
+  // MCP servers that failed or need sign-in, for the header chip.
+  mcpIssues?: number;
   error?: string;
 }
 
@@ -171,6 +176,9 @@ export type HostMessage =
   | { type: "rewound"; sessionId: string; userMessageId: string; text: string }
   | { type: "draft"; sessionId: string; text: string }
   | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string }
+  // refresh: update the panel only if it is already open.
+  | { type: "panel"; sessionId: string; panel: Panel; refresh?: boolean }
+  | { type: "openPlan"; sessionId: string }
   | { type: "extension"; id: string; message: unknown };
 
 export type WebviewMessage =
@@ -205,4 +213,5 @@ export type WebviewMessage =
   | { type: "aside"; sessionId: string; askId: string; text: string }
   | { type: "asideClose"; sessionId: string }
   | { type: "pluginAction"; sessionId: string; key: string; itemId: string; value?: string }
+  | { type: "panelAction"; sessionId: string; kind: PanelKind; action: string; payload?: unknown }
   | { type: "extension"; id: string; message: unknown };

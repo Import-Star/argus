@@ -1,0 +1,36 @@
+.loops-title {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.loops-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.loops-row {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.loops-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.loops-muted {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.loops-prompt {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 4px 0 6px;
+  white-space: pre-wrap;
+}

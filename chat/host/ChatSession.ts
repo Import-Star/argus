@@ -1,4 +1,4 @@
-import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type RewindFilesResult, type SDKMessage, type SDKUserMessage, type SlashCommand } from "@anthropic-ai/claude-agent-sdk";
+import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type RewindFilesResult, type SDKMessage, type SDKUserMessage, type SessionCronSummary, type SlashCommand, type StopHookInput } from "@anthropic-ai/claude-agent-sdk";
 import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as os from "os";
@@ -7,6 +7,9 @@ import * as vscode from "vscode";
 import { MessageQueue, type QueueAction } from "./messageQueue";
 import { withLocalCommandOutput } from "./restore";
 import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
+import type { Panel } from "../../src/chat/panels";
+import { refreshPanel } from "./panels";
+import { countMcpIssues, toMcpServers, type McpStatus } from "../../src/chat/panels/mcp";
 import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
 
 export interface ChatSessionOptions {
@@ -22,6 +25,7 @@ export interface ChatSessionOptions {
   textOnly: boolean;
   // Claude in Chrome; unset leaves the CLI's default.
   chrome?: boolean;
+  color?: string;
   // Turn Remote Control on whenever the process starts (Claude Code's remoteControlAtStartup).
   remoteControlAtStartup?: boolean;
   log(line: string): void;
@@ -32,7 +36,15 @@ type RemoteControlQuery = Query & {
   enableRemoteControl?(enabled: boolean, name?: string): Promise<{ session_url?: string }>;
   getChromeBrowsers?(): Promise<{ browsers?: { device_id: string; name: string; os_platform?: string; current?: boolean }[] }>;
   selectChromeBrowser?(deviceId: string): Promise<unknown>;
+  getSettings?(): Promise<{ effective?: Record<string, unknown>; applied?: { effort?: string | null; advisor?: string | null; ultracode?: boolean } }>;
 };
+
+export interface SessionSettings {
+  effective: Record<string, unknown>;
+  effort?: string | null;
+  advisor?: string | null;
+  ultracode?: boolean;
+}
 
 class InputQueue implements AsyncIterable<SDKUserMessage> {
   private items: SDKUserMessage[] = [];
@@ -149,6 +161,7 @@ export class ChatSession implements vscode.Disposable {
       effort: options.effort,
       permissionMode: options.permissionMode,
       chrome: options.chrome,
+      color: options.color,
       models: []
     };
   }
@@ -178,6 +191,11 @@ export class ChatSession implements vscode.Disposable {
         // Under the SDK's default "sdk-ts" entrypoint the CLI turns the Artifact tools off; the to-do tools are off by default too.
         env: { ...process.env, CLAUDE_CODE_ENTRYPOINT: "claude-vscode", CLAUDE_CODE_ENABLE_TODO_TOOLS: "1", CLAUDE_CODE_ENABLE_TASKS: "1" },
         includePartialMessages: true,
+        hooks: { Stop: [{ hooks: [async (input) => {
+          this.sessionCrons = (input as StopHookInput).session_crons ?? this.sessionCrons;
+          void refreshPanel(this, "loops");
+          return {};
+        }] }] },
         canUseTool: (toolName, input, { signal, suggestions, decisionReason, blockedPath, toolUseID }) =>
           this.ask({ toolName, input, suggestions, decisionReason, blockedPath, toolUseId: toolUseID, signal }),
         stderr: (data) => log(`[${this.sessionId}] ${data.trimEnd()}`)
@@ -186,11 +204,15 @@ export class ChatSession implements vscode.Disposable {
     void this.pump(this.q);
     void this.loadModels(this.q);
     void this.loadCommands(this.q);
+    void this.loadMcpIssues(this.q);
     void this.loadCacheTtl(this.q);
     if (this.options.remoteControlAtStartup) {
       this.setRemoteControl(true).catch((error) => log(`remote control ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`));
     }
   }
+
+  // Session-only loops as of the last finished turn; undefined until the first one ends.
+  public sessionCrons?: SessionCronSummary[];
 
   public get claudePath(): string | undefined {
     return this.options.claudePath;
@@ -354,6 +376,27 @@ export class ChatSession implements vscode.Disposable {
     }
   }
 
+  public setColor(color: string | undefined): void {
+    this.update({ color });
+  }
+
+  // `/effort auto` is text the SDK has no setter for, so the shown level is cleared rather than left stale.
+  public clearEffort(): void {
+    this.update({ effort: undefined });
+  }
+
+  public async initInfo(): Promise<{ outputStyle: string; outputStyles: string[] }> {
+    this.start();
+    const init = await this.q?.initializationResult();
+    return { outputStyle: init?.output_style ?? "", outputStyles: init?.available_output_styles ?? [] };
+  }
+
+  public async settings(): Promise<SessionSettings> {
+    this.start();
+    const response = await (this.q as RemoteControlQuery | undefined)?.getSettings?.();
+    return { effective: response?.effective ?? {}, ...response?.applied };
+  }
+
   public async setPermissionMode(mode: PermissionMode): Promise<void> {
     this.start();
     await this.q?.setPermissionMode(mode);
@@ -426,6 +469,14 @@ export class ChatSession implements vscode.Disposable {
     );
     this.emitter.fire({ type: "permissionResolved", sessionId: this.sessionId, id });
     this.setStatus(this.pending.size > 0 ? "needs-you" : "working");
+  }
+
+  public showPanel(panel: Panel, refresh = false): void {
+    this.emitter.fire({ type: "panel", sessionId: this.sessionId, panel, refresh });
+  }
+
+  public showPlan(): void {
+    this.emitter.fire({ type: "openPlan", sessionId: this.sessionId });
   }
 
   public fillComposer(text: string): void {
@@ -548,6 +599,9 @@ export class ChatSession implements vscode.Disposable {
       this.queue.turnEnded();
       this.setStatus(this.pending.size > 0 ? "needs-you" : "idle");
       void this.loadContext();
+      if (this.q) {
+        void this.loadMcpIssues(this.q);
+      }
       if (this.pendingName && this.meta.status === "idle") {
         this.syncName(this.pendingName);
       }
@@ -573,6 +627,21 @@ export class ChatSession implements vscode.Disposable {
 
   private setCommands(commands: SlashCommand[]): void {
     this.update({ commands: withLocalCommands(commands.map(({ name, description, argumentHint }) => ({ name, description, argumentHint }))) });
+  }
+
+  private async loadMcpIssues(q: Query): Promise<void> {
+    try {
+      this.setMcpServers(toMcpServers(await q.mcpServerStatus()));
+    } catch (error) {
+      this.options.log(`mcp status ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  public setMcpServers(servers: readonly { status: McpStatus }[]): void {
+    const mcpIssues = countMcpIssues(servers);
+    if (mcpIssues !== (this.meta.mcpIssues ?? 0)) {
+      this.update({ mcpIssues });
+    }
   }
 
   private async loadModels(q: Query): Promise<void> {

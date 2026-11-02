@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type { ChatGroup, ChatStatus, SDKMessage } from "../../../src/chat/protocol";
+import { SESSION_COLORS } from "../../../src/chat/pickers";
 import { post, setUi, useSession, useStore, type State } from "../store";
 import { Icon } from "./Icon";
 import { SideQuestion } from "./SideQuestion";
@@ -76,11 +77,11 @@ function StatusPill({ status, since, error }: { status: ChatStatus; since: numbe
   );
 }
 
-function ContextMeter({ tokens, max }: { tokens: number; max: number }) {
+function ContextMeter({ sessionId, tokens, max }: { sessionId: string; tokens: number; max: number }) {
   const percent = Math.min(100, (tokens / max) * 100);
   const level = percent >= 90 ? "danger" : percent >= 75 ? "warn" : "";
   return (
-    <div class="hdr-context">
+    <button type="button" class="ghost hdr-context" title="Show what is using the context window" onClick={() => post({ type: "send", sessionId, text: "/context" })}>
       <span>Context</span>
       <div class={`hdr-bar ${level}`} role="meter" aria-label="Context used" aria-valuemin={0} aria-valuemax={max} aria-valuenow={tokens}>
         <div style={{ width: `${percent}%` }} />
@@ -88,7 +89,7 @@ function ContextMeter({ tokens, max }: { tokens: number; max: number }) {
       <span class="hdr-context-count">
         {formatTokens(tokens)} / {formatTokens(max)}
       </span>
-    </div>
+    </button>
   );
 }
 
@@ -151,10 +152,11 @@ export function Header({ sessionId }: { sessionId: string }) {
   const title = meta?.title || firstPrompt(messages) || "New chat";
   const pr = card?.prs.find((candidate) => candidate.state.toLowerCase() === "open");
   const reviewing = ui.side === "review";
+  const color = SESSION_COLORS[meta?.color as keyof typeof SESSION_COLORS];
   return (
-    <header class="chat-header">
+    <header class="chat-header" style={color ? { borderTop: `3px solid ${color}` } : undefined}>
       <div class="hdr-title">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color ?? "var(--accent)"} stroke-width="2" aria-hidden="true">
           <circle cx="12" cy="12" r="9" />
           <circle cx="12" cy="12" r="3" />
         </svg>
@@ -181,13 +183,18 @@ export function Header({ sessionId }: { sessionId: string }) {
           Remote Control
         </button>
       )}
+      {meta?.mcpIssues ? (
+        <button type="button" class="hdr-pr hdr-mcp" title="Some MCP servers failed or need authentication. Open /mcp." onClick={() => post({ type: "send", sessionId, text: "/mcp" })}>
+          MCP: {meta.mcpIssues} {meta.mcpIssues === 1 ? "issue" : "issues"}
+        </button>
+      ) : null}
       {meta?.chrome && (
         <span class="mono muted" title="Claude in Chrome is on: Claude can control your browser. /chrome off turns it off.">
           Chrome
         </span>
       )}
       <div class="hdr-end">
-        {meta?.contextTokens !== undefined && meta.contextMax ? <ContextMeter tokens={meta.contextTokens} max={meta.contextMax} /> : null}
+        {meta?.contextTokens !== undefined && meta.contextMax ? <ContextMeter sessionId={sessionId} tokens={meta.contextTokens} max={meta.contextMax} /> : null}
         <SideQuestion sessionId={sessionId} />
         <button
           type="button"

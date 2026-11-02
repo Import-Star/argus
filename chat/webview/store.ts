@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
+import type { Panel } from "../../src/chat/panels";
 import type { CardInfo, ChangeScope, ChatGroup, ChatMeta, FileChange, FileDiff, HostMessage, PermissionRequest, PlanUsage, QueuedMessage, RailSession,SDKMessage, WebviewMessage } from "../../src/chat/protocol";
 
 import { noteArrival } from "./backgroundTasks";
@@ -12,10 +13,11 @@ export function post(message: WebviewMessage): void {
   vscodeApi.postMessage(message);
 }
 
-export type SidePane = "details" | "plan" | "review" | "workflow";
+export type SidePane = "details" | "plan" | "review" | "workflow" | "panel";
 
 export interface SessionUi {
   side: SidePane;
+  panel?: Panel;
   reviewScope: ChangeScope;
   reviewFile?: string;
   prUrl?: string;
@@ -133,6 +135,16 @@ export function dispatch(message: HostMessage): void {
       return;
     case "openReview":
       setUi(message.sessionId, { side: "review", reviewScope: message.scope, worktree: message.worktree, prUrl: message.prUrl, reviewFile: undefined });
+      return;
+    case "panel": {
+      const ui = state.sessions[message.sessionId]?.ui;
+      if (!message.refresh || (ui?.side === "panel" && ui.panel?.kind === message.panel.kind)) {
+        setUi(message.sessionId, { side: "panel", panel: message.panel });
+      }
+      return;
+    }
+    case "openPlan":
+      setUi(message.sessionId, { side: "plan" });
       return;
     case "usage":
       updateSession(message.sessionId, (session) => ({ ...session, usage: message.usage }));

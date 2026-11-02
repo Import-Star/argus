@@ -1,5 +1,7 @@
 import { REVIEW_PROMPT_START, type SDKMessage } from "../../src/chat/protocol";
 import { findingsFromText } from "./findings";
+import { isPlainOutput } from "../../src/chat/commandOutput";
+import { cleanUserText } from "../../src/chat/conversationText";
 import { RECOMMENDED, questionsOf } from "./plan";
 
 export interface DiffLine {
@@ -33,7 +35,7 @@ export interface Finding {
 
 export type Item =
   | { kind: "user"; id: string; text: string; images: string[] }
-  | { kind: "text"; id: string; text: string; streaming?: boolean }
+  | { kind: "text"; id: string; text: string; streaming?: boolean; command?: boolean }
   | { kind: "thinking"; id: string; text: string; streaming?: boolean }
   | { kind: "lookups"; id: string; calls: Lookup[]; summary: string; pending: boolean }
   | { kind: "edit"; id: string; tool: string; path: string; added: number; removed: number; lines: DiffLine[]; hidden: number; pending: boolean; error?: string }
@@ -220,8 +222,6 @@ function applyTaskUpdate(tasks: { id?: string; todo: Todo }[], task: { id?: stri
   }
 }
 
-const USER_NOISE = /^<(local-command-caveat|local-command-stdout|task-notification|system-reminder|command-message)\b/;
-
 function userContent(content: unknown): { text: string; images: string[] } {
   if (typeof content === "string") {
     return { text: content, images: [] };
@@ -240,19 +240,6 @@ function userContent(content: unknown): { text: string; images: string[] } {
 function imageUrl(block: Block): string | undefined {
   const source = (block as { source?: unknown }).source as { type?: string; media_type?: string; data?: string } | undefined;
   return source?.type === "base64" && source.media_type?.startsWith("image/") && source.data ? `data:${source.media_type};base64,${source.data}` : undefined;
-}
-
-function cleanUserText(raw: string): string {
-  const text = raw.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, "").trim();
-  const command = /<command-name>([\s\S]*?)<\/command-name>(?:[\s\S]*?<command-args>([\s\S]*?)<\/command-args>)?/.exec(text);
-  // Argus sends /rename itself to keep the session name in step with the title.
-  if (command?.[1].trim() === "/rename") {
-    return "";
-  }
-  if (command) {
-    return `${command[1].trim()} ${(command[2] ?? "").trim()}`.trim();
-  }
-  return USER_NOISE.test(text) ? "" : text;
 }
 
 function resultNote(message: Raw, id: string): Item | undefined {
@@ -392,7 +379,9 @@ export function buildItems(messages: SDKMessage[]): Item[] {
     blocks(message.message?.content).forEach((block, index) => {
       const id = `${uuid}:${index}`;
       if (block.type === "text" && str(block.text).trim()) {
-        items.push({ kind: "text", id, text: str(block.text) });
+        const text = str(block.text);
+        // Local slash commands answer with a synthetic assistant message.
+        items.push({ kind: "text", id, text, command: message.message?.model === "<synthetic>" && isPlainOutput(text) });
       } else if (block.type === "thinking" && str(block.thinking).trim()) {
         items.push({ kind: "thinking", id, text: str(block.thinking) });
       } else if (block.type === "tool_use") {
