@@ -6,6 +6,9 @@ First public release.
 
 - 0.8.2 was tagged but never published: its build failed after the Preact 11 upgrade. This release fixes the build
   and is the first on the Marketplace with 0.8.2's changes.
+- Review's **This session** and **Last turn**, and the changed files in the details pane, no longer come up empty
+  when the session's folder is reached through a symlink or junction (macOS's `/tmp` is one) or a short Windows
+  path.
 
 ## 0.8.2
 

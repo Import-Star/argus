@@ -18,7 +18,9 @@ function saved(): Record<string, unknown> {
 }
 
 beforeEach(() => {
-  home = fs.mkdtempSync(path.join(os.tmpdir(), "argus-home-"));
+  // The real path: Windows runners' temp folder is a short 8.3 name and macOS's is behind a symlink, while the hook
+  // reports paths as git and the file system resolve them.
+  home = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "argus-home-")));
 });
 afterEach(() => {
   fs.rmSync(home, { recursive: true, force: true });

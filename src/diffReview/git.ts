@@ -253,6 +253,25 @@ async function repoRoot(start: string): Promise<string | undefined> {
   }
 }
 
+// The path with symlinks and short (8.3) names resolved, as `git rev-parse --show-toplevel` reports it. A path that
+// doesn't exist (a deleted file) resolves its nearest existing folder and keeps the rest.
+async function realPath(target: string): Promise<string> {
+  const rest: string[] = [];
+  let dir = target;
+  for (;;) {
+    try {
+      return path.join(await fs.realpath(dir), ...rest);
+    } catch {
+      const parent = path.dirname(dir);
+      if (parent === dir) {
+        return target;
+      }
+      rest.unshift(path.basename(dir));
+      dir = parent;
+    }
+  }
+}
+
 export interface TouchedFile extends DiffFile {
   // The repo the file is in, and its path there; `path` is relative to the folder the diff was asked for.
   root: string;
@@ -267,11 +286,12 @@ export async function loadTouchedDiff(folder: string, touched: string[], baseRef
     const root = await repoRoot(file);
     if (root) {
       const rels = byRoot.get(root) ?? new Set<string>();
-      rels.add(path.relative(root, file).split(path.sep).join("/"));
+      rels.add(path.relative(root, await realPath(file)).split(path.sep).join("/"));
       byRoot.set(root, rels);
     }
   }
   const home = await repoRoot(folder);
+  const realFolder = await realPath(folder);
   let base: string | undefined;
   const files: TouchedFile[] = [];
   for (const [root, rels] of byRoot) {
@@ -283,7 +303,7 @@ export async function loadTouchedDiff(folder: string, touched: string[], baseRef
       base = result.base;
     }
     for (const file of result.files.filter((entry) => rels.has(entry.path))) {
-      const shown = path.relative(folder, path.join(root, file.path)).split(path.sep).join("/");
+      const shown = path.relative(realFolder, path.join(root, file.path)).split(path.sep).join("/");
       files.push({ ...file, path: shown, root, rel: file.path });
     }
   }
