@@ -170,7 +170,8 @@ export type HostMessage =
   | { type: "openReview"; sessionId: string; scope: ChangeScope; worktree?: string; prUrl?: string }
   | { type: "rewound"; sessionId: string; userMessageId: string; text: string }
   | { type: "draft"; sessionId: string; text: string }
-  | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string };
+  | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string }
+  | { type: "extension"; id: string; message: unknown };
 
 export type WebviewMessage =
   | { type: "rename"; sessionId: string }
@@ -203,4 +204,5 @@ export type WebviewMessage =
   | { type: "fork"; sessionId: string; messageId: string; before?: boolean; draft?: string }
   | { type: "aside"; sessionId: string; askId: string; text: string }
   | { type: "asideClose"; sessionId: string }
-  | { type: "pluginAction"; sessionId: string; key: string; itemId: string; value?: string };
+  | { type: "pluginAction"; sessionId: string; key: string; itemId: string; value?: string }
+  | { type: "extension"; id: string; message: unknown };

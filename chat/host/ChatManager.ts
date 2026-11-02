@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import type { ChatDeps } from "../../src/chat/types";
+import type { ChatDeps, ChatExtensionHub } from "../../src/chat/types";
 import type { LiveChat } from "../../src/services/sessionColumn";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
@@ -15,6 +15,7 @@ import { ChatPanel } from "./ChatPanel";
 import { hasTranscript, readPanelState } from "./restore";
 import { ChatSession } from "./ChatSession";
 import { forkTranscript } from "./history";
+import { SavedTab, tabsToSave, unrestored } from "./savedTabs";
 
 interface Remembered {
   model?: string;
@@ -26,6 +27,8 @@ interface Remembered {
 
 const SESSION_CHOICES_KEY = "argus.chat.sessionChoices";
 const SESSION_CWDS_KEY = "argus.chat.sessionCwds";
+const SAVED_TABS_KEY = "argus.chat.savedTabs";
+const FOCUS_GROUP = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth"].map((nth) => `workbench.action.focus${nth}EditorGroup`);
 
 function gitBranch(folder: string): string | undefined {
   try {
@@ -47,13 +50,24 @@ export class ChatManager implements vscode.Disposable {
   public readonly onDidChangePending = this.pendingEmitter.event;
   private readonly subscriptions: vscode.Disposable[] = [];
   private readonly log: vscode.OutputChannel;
+  private reloadTimer: ReturnType<typeof setTimeout> | undefined;
+
+  public get extensions(): ChatExtensionHub {
+    return this.deps.chatExtensions;
+  }
+  private savedTabs: SavedTab[];
+  private closing = false;
 
   constructor(private readonly context: vscode.ExtensionContext, private readonly deps: ChatDeps) {
     this.log = vscode.window.createOutputChannel("Argus Chat");
+    this.savedTabs = context.workspaceState.get<SavedTab[]>(SAVED_TABS_KEY, []);
     this.subscriptions.push(
+      vscode.window.tabGroups.onDidChangeTabs(() => this.saveTabs()),
       this.log,
       deps.onDidChangeCards(() => this.broadcastCards()),
       deps.onDidChangePluginSections(() => this.broadcastCards()),
+      deps.chatExtensions.onDidChange(() => this.reloadPanels()),
+      deps.chatExtensions.onDidPost((id, message) => this.panels.forEach((panel) => panel.post({ type: "extension", id, message }))),
       vscode.window.registerWebviewPanelSerializer("argusChat", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "single", state) }),
       vscode.window.registerWebviewPanelSerializer("argusChatGrid", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "grid", state) }),
       vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration(MULTI_AGENT_SETTING) && this.panels.forEach((panel) => panel.sendLayout()))
@@ -102,7 +116,60 @@ export class ChatManager implements vscode.Disposable {
       panel.dispose();
       return;
     }
+    // Opened again before this tab was restored: keep the tab the user just clicked. Track it first so closing the
+    // other one doesn't count the chat as unused and stop it.
+    const duplicate = layout === "single" ? this.singlePanel(ids[0]) : undefined;
     this.track(new ChatPanel(this, this.context.extensionUri, layout, ids, undefined, state?.groupId, panel));
+    duplicate?.dispose();
+  }
+
+  private singlePanel(sessionId: string): ChatPanel | undefined {
+    return [...this.panels].find((panel) => panel.view === "single" && panel.sessionIds[0] === sessionId);
+  }
+
+  // VS Code restores a chat tab only when it's first shown, so until then Argus finds it by its saved label.
+  private unrestoredTabs(): vscode.Tab[] {
+    const isChat = (viewType: string) => viewType.endsWith("argusChat");
+    const tabs = vscode.window.tabGroups.all.flatMap((group) => group.tabs.filter((tab) => tab.input instanceof vscode.TabInputWebview && isChat(tab.input.viewType)));
+    return unrestored(tabs, [...this.panels].filter((panel) => isChat(panel.viewType)).map((panel) => panel.tabTitle));
+  }
+
+  private saveTabs(): void {
+    if (this.closing) {
+      return;
+    }
+    const live = [...this.panels].filter((panel) => panel.view === "single").map((panel) => ({ sessionId: panel.sessionIds[0], title: panel.tabTitle }));
+    const next = tabsToSave(this.savedTabs, live, this.unrestoredTabs().map((tab) => tab.label));
+    // Tab events fire on every focus change, so only write when the list actually changed.
+    if (JSON.stringify(next) === JSON.stringify(this.savedTabs)) {
+      return;
+    }
+    this.savedTabs = next;
+    void this.context.workspaceState.update(SAVED_TABS_KEY, this.savedTabs);
+  }
+
+  // Shows the chat's tab from before the restart, if it's still open, and waits for VS Code to restore it.
+  private async revealSavedTab(sessionId: string): Promise<boolean> {
+    const saved = this.savedTabs.find((tab) => tab.sessionId === sessionId);
+    const tab = saved && this.unrestoredTabs().find((entry) => entry.label === saved.title);
+    const focusGroup = tab && FOCUS_GROUP[tab.group.viewColumn - 1];
+    if (!tab || !focusGroup) {
+      return false;
+    }
+    try {
+      await vscode.commands.executeCommand(focusGroup);
+      await vscode.commands.executeCommand("workbench.action.openEditorAtIndex", tab.group.tabs.indexOf(tab));
+    } catch (error) {
+      this.log.appendLine(`reveal saved tab: ${error}`);
+      return false;
+    }
+    for (let waited = 0; waited < 3000; waited += 50) {
+      if (this.singlePanel(sessionId)) {
+        return true;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return false;
   }
 
   private revive(sessionId: string): ChatSession | undefined {
@@ -182,10 +249,10 @@ export class ChatManager implements vscode.Disposable {
       return;
     }
     this.deps.markRead(session.sessionId);
-    const existing = [...this.panels].find((panel) => panel.view === "single" && panel.sessionIds[0] === session.sessionId);
+    const existing = this.singlePanel(session.sessionId);
     if (existing) {
       existing.reveal();
-    } else {
+    } else if (!(await this.revealSavedTab(session.sessionId))) {
       this.track(new ChatPanel(this, this.context.extensionUri, "single", [session.sessionId], column));
     }
     if (prompt) {
@@ -432,7 +499,15 @@ export class ChatManager implements vscode.Disposable {
     return files.map((file) => path.relative(cwd, file.fsPath));
   }
 
+  // Plugins register and dispose chat extensions in bursts (startup, Reload Plugins): reload each tab once per burst.
+  private reloadPanels(): void {
+    clearTimeout(this.reloadTimer);
+    this.reloadTimer = setTimeout(() => this.panels.forEach((panel) => panel.reload()), 100);
+  }
+
   public dispose(): void {
+    clearTimeout(this.reloadTimer);
+    this.closing = true;
     this.idleTimers.forEach((timer) => clearTimeout(timer));
     this.panels.forEach((panel) => panel.dispose());
     this.sessions.forEach((session) => session.dispose());
@@ -546,6 +621,11 @@ export class ChatManager implements vscode.Disposable {
     this.sessions.set(session.sessionId, session);
     const cwds = this.context.globalState.get<Record<string, string>>(SESSION_CWDS_KEY) ?? {};
     void this.context.globalState.update(SESSION_CWDS_KEY, { ...cwds, [session.sessionId]: session.meta.cwd });
+    // Without its own entry a reopened chat follows settings.json, which a pick in any chat changes.
+    const { model, effort, permissionMode } = session.meta;
+    const choices = this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY) ?? {};
+    const started: Remembered = { ...(model !== "default" && { model }), ...(effort && { effort }), ...(permissionMode && { permissionMode }) };
+    void this.context.globalState.update(SESSION_CHOICES_KEY, { ...choices, [session.sessionId]: { ...started, ...choices[session.sessionId] } });
     let status = session.meta.status;
     session.onMessage((message) => {
       if (message.type === "meta" && message.meta.status !== status) {

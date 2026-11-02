@@ -1,5 +1,5 @@
 import type * as vscode from "vscode";
-import type { SessionCard } from "../types";
+import type { ArgusChatExtension, SessionCard } from "../types";
 import type { LiveChat } from "../services/sessionColumn";
 import type { ChatPluginSection } from "../services/chatDetails";
 import type { PermissionDecision, PermissionRequest } from "./protocol";
@@ -18,6 +18,16 @@ export interface ChatDeps {
   pluginSections(card: SessionCard): ChatPluginSection[];
   pluginAction(sessionId: string, key: string, itemId: string, value?: string): Promise<void>;
   onDidChangePluginSections(listener: () => void): { dispose(): void };
+  // Plugin scripts for the chat webview (ArgusApi.registerChatExtension).
+  chatExtensions: ChatExtensionHub;
+}
+
+export interface ChatExtensionHub {
+  list(): readonly ArgusChatExtension[];
+  media(): string[];
+  onDidChange(listener: () => void): { dispose(): void };
+  onDidPost(listener: (id: string, message: unknown) => void): { dispose(): void };
+  receive(id: string, message: unknown, reply: (message: unknown) => void): Promise<void>;
 }
 
 // What the core sees of the chat bundle (out/chat/host.js).

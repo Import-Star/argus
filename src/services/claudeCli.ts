@@ -42,3 +42,28 @@ export function installerShell(platform: NodeJS.Platform = process.platform): { 
   const command = "curl -fsSL https://claude.ai/install.sh | bash";
   return { shellPath: "/bin/bash", shellArgs: ["-c", `${command}; exec "\${SHELL:-/bin/bash}" -l`], command };
 }
+
+// Where Anthropic's installer reads the current version of each update channel.
+export function releaseUrl(channel: unknown): string {
+  return `https://downloads.claude.ai/claude-code-releases/${channel === "stable" ? "stable" : "latest"}`;
+}
+
+// "2.1.314 (Claude Code)" -> "2.1.314"
+export function parseVersion(text: string): string | undefined {
+  return /\d+\.\d+\.\d+/.exec(text)?.[0];
+}
+
+export function isOlder(current: string, latest: string): boolean {
+  const a = current.split(".").map(Number);
+  const b = latest.split(".").map(Number);
+  const i = a.findIndex((part, index) => part !== b[index]);
+  return i !== -1 && a[i] < b[i];
+}
+
+// `claude update` updates through whatever installed it (native, npm, Homebrew), in a shell that stays open.
+export function updaterShell(claude: string, platform: NodeJS.Platform = process.platform): { shellPath: string; shellArgs: string[] } {
+  if (platform === "win32") {
+    return { shellPath: "powershell.exe", shellArgs: ["-NoProfile", "-NoExit", "-Command", `& '${claude.replace(/'/g, "''")}' update`] };
+  }
+  return { shellPath: "/bin/bash", shellArgs: ["-c", `"$0" update; exec "\${SHELL:-/bin/bash}" -l`, claude] };
+}

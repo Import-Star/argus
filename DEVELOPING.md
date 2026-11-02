@@ -88,6 +88,7 @@ src/services/
   openSession.ts                  opens sessions in Argus chat
   archiveSession.ts               archive (one session or a batch) plus plugin-supplied cleanup (registerArchiveCleanup)
   chatDetails.ts                  plugin sections for the chat Details pane (registerChatDetails)
+  chatExtensions.ts               plugin scripts that run in the chat webview (registerChatExtension)
   importChats.ts                  builds session records from existing Claude Code transcripts (Import Existing Claude Chats)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse
   UsageService.ts                 Claude plan usage, reads from Anthropic's OAuth endpoint
@@ -230,6 +231,12 @@ These work without a tab:
   chat draws itself, so no plugin code runs in the chat webview. A select change or a button press calls `onAction`;
   call `.refresh()` on the returned handle when your sections change without a session change. It's optional on
   `ArgusApi`, so call it with `?.` to keep working on older Argus versions.
+- `argus.registerChatExtension?.({ id, script, style, media, onMessage(message, reply) })` runs your script inside
+  every Argus chat webview, after the chat's own bundle. The script calls `argusChat.registerExtension(id, { mount,
+  onMessage })`; `ctx.addReplyAction()` puts a button beside Copy under Claude's replies, and the reply it hands you
+  carries the rendered element, the markdown, `setActive()` and an `overlay` for floating controls. `media: ["data:"]`
+  (or `"blob:"`) lets the script play audio or video it builds. Registering or disposing reloads open chat tabs. Types
+  are in `argus-webview.d.ts`; check for it with `?.` like `registerChatDetails`.
 
 ### Start a linked session
 
@@ -327,8 +334,9 @@ VS Code profile (`code --profile-temp`) to confirm a first-time user can get ses
 
 ## Code review
 
-Every pull request from a branch in this repo is reviewed by Claude (`.github/workflows/claude-review.yml`, using
-`anthropics/claude-code-action`). It checks the change against `CLAUDE.md` and comments on the PR. Fork PRs are
-skipped, because GitHub gives them no secrets. To enable it on a fork, install the Claude GitHub App
-(<https://github.com/apps/claude>) on the repo and add a `CLAUDE_CODE_OAUTH_TOKEN` secret (from `claude setup-token`)
-or change the workflow to use `ANTHROPIC_API_KEY`.
+Claude reviews a pull request when the maintainer comments `/claude-review` on it
+(`.github/workflows/claude-review.yml`, using `anthropics/claude-code-action`). It reads the diff with `gh`, checks it
+against `CLAUDE.md` from the default branch, and comments on the PR. Only the GitHub user named in the
+`CLAUDE_REVIEWER` repository variable can start it; anyone else's comment is ignored. To use it on a fork, install
+the Claude GitHub App (<https://github.com/apps/claude>) on the repo, add a `CLAUDE_CODE_OAUTH_TOKEN` secret (from
+`claude setup-token`) or switch the workflow to `ANTHROPIC_API_KEY`, and set `CLAUDE_REVIEWER` to your GitHub login.
