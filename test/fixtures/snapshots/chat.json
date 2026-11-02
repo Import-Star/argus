@@ -9,6 +9,10 @@
       "multiAgent": true
     },
     {
+      "type": "keepAwake",
+      "mode": "auto"
+    },
+    {
       "type": "groups",
       "groups": [
         {

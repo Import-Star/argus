@@ -1,13 +1,14 @@
 import { ChildProcess, spawn } from "child_process";
 import * as vscode from "vscode";
 import { agentsBusy, inhibitorCommand, InhibitorCommand } from "./keepAwakeCommand";
+import { keepAwakeMode } from "./keepAwakeMode";
 import { output } from "./log";
 import { SessionStore } from "./SessionStore";
 
 // How long the lock outlives the last busy session, so a quick pause between turns doesn't drop and retake it.
 const RELEASE_AFTER_MS = 2 * 60_000;
 
-// argus.keepAwake.whileAgentsRun: stop the machine sleeping while any session in this window is working.
+// argus.keepAwake.mode: stop the machine sleeping always (on) or while any session in this window is working (auto).
 export class KeepAwake implements vscode.Disposable {
   private readonly item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 999);
   private readonly disposables: vscode.Disposable[] = [];
@@ -17,7 +18,7 @@ export class KeepAwake implements vscode.Disposable {
   private failedWarned = false;
 
   public constructor(private readonly store: SessionStore) {
-    this.item.command = "argus.openSettings";
+    this.item.command = "argus.keepAwake.choose";
     this.disposables.push(
       store.onDidChange(() => this.update()),
       vscode.workspace.onDidChangeConfiguration((event) => {
@@ -32,12 +33,13 @@ export class KeepAwake implements vscode.Disposable {
 
   private config() {
     const config = vscode.workspace.getConfiguration("argus.keepAwake");
-    return { enabled: config.get<boolean>("whileAgentsRun", false), keepScreenOn: config.get<boolean>("keepScreenOn", true) };
+    return { mode: keepAwakeMode(), keepScreenOn: config.get<boolean>("keepScreenOn", true) };
   }
 
   private update(): void {
-    const { enabled } = this.config();
-    const busy = enabled && agentsBusy(this.store.getCards().map((card) => card.column));
+    const { mode } = this.config();
+    const enabled = mode !== "off";
+    const busy = mode === "on" || (mode === "auto" && agentsBusy(this.store.getCards().map((card) => card.column)));
     if (busy) {
       if (this.releaseTimer) {
         clearTimeout(this.releaseTimer);
@@ -123,7 +125,9 @@ export class KeepAwake implements vscode.Disposable {
       return;
     }
     this.item.text = "$(coffee) Awake";
-    this.item.tooltip = this.releaseTimer
+    this.item.tooltip = keepAwakeMode() === "on"
+      ? `Argus is keeping this machine awake until you turn it off (${this.current.label}). Closing the lid still sleeps it.`
+      : this.releaseTimer
       ? `Argus is keeping this machine awake for a couple more minutes after the last agent finished (${this.current.label}). Closing the lid still sleeps it.`
       : `Argus is keeping this machine awake while agents run (${this.current.label}). Closing the lid still sleeps it.`;
     this.item.show();

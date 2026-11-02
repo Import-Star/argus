@@ -15,6 +15,7 @@ import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
 import { TrackingMonitor } from "./services/TrackingMonitor";
 import { KeepAwake } from "./services/KeepAwake";
+import { chooseKeepAwakeMode } from "./services/keepAwakeMode";
 import { registerClaudeSetup } from "./services/claudeSetup";
 import { findChats, readChat, writeChats } from "./services/importChats";
 import { newChat, openSession, openWorktree, routeChatsTo, routeCloseTo } from "./services/openSession";
@@ -144,6 +145,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
 
   register("argus.openControlCenter", (tabId?: unknown) => api.openControlCenter(typeof tabId === "string" ? tabId : undefined));
   register("argus.openSettings", () => api.openControlCenter("settings"));
+  register("argus.keepAwake.choose", chooseKeepAwakeMode);
   register("argus.sessions.newChat", () => newChat());
   register("argus.sessions.refresh", () => vscode.window.withProgress({ location: { viewId: "argusSessions" } }, () => sessions.refreshPrs()));
   register("argus.sessions.open", async (arg) => {
