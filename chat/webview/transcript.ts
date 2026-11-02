@@ -43,7 +43,7 @@ export type Item =
   | { kind: "tool"; id: string; name: string; summary: string; pending: boolean; error?: string }
   | { kind: "findings"; id: string; level?: string; findings: Finding[]; pending: boolean; error?: string }
   | { kind: "answers"; id: string; pairs: Answer[]; pending: boolean; skipped?: boolean }
-  | { kind: "note"; id: string; text: string; tone: "muted" | "error" }
+  | { kind: "note"; id: string; text: string; tone: "muted" | "error"; reply?: boolean }
   | { kind: "usage"; id: string; input: number; output: number; cacheRead: number; cacheWrite: number; cost?: number };
 
 type Block = { type: string; [key: string]: unknown };
@@ -294,7 +294,7 @@ function systemNote(message: Raw, id: string): Item | undefined {
     return { kind: "note", id, text: `Conversation compacted${tokens ? ` · ${Math.round(tokens / 1000)}k tokens before` : ""}`, tone: "muted" };
   }
   if (message.subtype === "local_command_output" && str(message.content).trim()) {
-    return { kind: "note", id, text: str(message.content).trim(), tone: "muted" };
+    return { kind: "note", id, text: str(message.content).trim(), tone: "muted", reply: true };
   }
   return undefined;
 }
@@ -519,7 +519,7 @@ const CALL_KINDS = new Set<Item["kind"]>(["edit", "bash", "todos", "agent", "wor
 
 const callCount = (item: Item): number => (item.kind === "lookups" ? item.calls.length : CALL_KINDS.has(item.kind) ? 1 : 0);
 
-const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || item.kind === "findings" || (item.kind === "note" && item.tone === "error");
+const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || item.kind === "findings" || (item.kind === "note" && (item.tone === "error" || item.reply === true));
 
 export function textOnlyRows(items: Item[]): Row[] {
   const rows: Row[] = [];

@@ -5,7 +5,7 @@ First public release.
 ## Unreleased
 
 - A reopened chat now shows the reply from a command that ran in its own subagent (such as a forked skill), which
-  used to show only the prompt.
+  used to show only the prompt. **Text only** now shows these replies too.
 
 ## 0.8.3
 
