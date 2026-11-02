@@ -13,6 +13,14 @@ const execFileAsync = promisify(execFile);
 // archived (e.g. "remove work card: ..."), alongside the worktree removals core always offers.
 export class ArchiveCleanupRegistry {
   private readonly providers = new Set<(card: SessionCard) => Promise<CleanupItem[]> | CleanupItem[]>();
+  private readonly changed = new vscode.EventEmitter<void>();
+  public readonly onDidChangeArchiving = this.changed.event;
+  public readonly archiving = new Set<string>();
+
+  public setArchiving(ids: readonly string[], on: boolean): void {
+    ids.forEach((id) => (on ? this.archiving.add(id) : this.archiving.delete(id)));
+    this.changed.fire();
+  }
 
   public register(provider: (card: SessionCard) => Promise<CleanupItem[]> | CleanupItem[]): vscode.Disposable {
     this.providers.add(provider);
@@ -62,12 +70,21 @@ export async function archiveWithCleanup(sessions: SessionStore, cleanup: Archiv
 // Archives several sessions with one confirmation covering all their cleanup (plugin items and worktrees no other
 // active session uses). Sessions with nothing to clean up are archived without asking.
 export async function archiveManyWithCleanup(sessions: SessionStore, cleanup: ArchiveCleanupRegistry, sessionIds: readonly string[]): Promise<void> {
-  const ids = new Set(sessionIds);
+  const ids = new Set(sessionIds.filter((id) => !cleanup.archiving.has(id)));
   const cards = sessions.getCards().filter((candidate) => ids.has(candidate.record.sessionId) && candidate.column !== "archived");
   if (cards.length === 0) {
     return;
   }
+  const cardIds = cards.map((card) => card.record.sessionId);
+  cleanup.setArchiving(cardIds, true);
+  try {
+    await archiveCards(sessions, cleanup, cards, ids);
+  } finally {
+    cleanup.setArchiving(cardIds, false);
+  }
+}
 
+async function archiveCards(sessions: SessionStore, cleanup: ArchiveCleanupRegistry, cards: SessionCard[], ids: Set<string>): Promise<void> {
   const cleanupItems = (await Promise.all(cards.map((card) => cleanup.collect(card)))).flat();
   const sharedWith = new Set(
     sessions
@@ -94,6 +111,7 @@ export async function archiveManyWithCleanup(sessions: SessionStore, cleanup: Ar
     if (!choice) {
       return;
     }
+    closeChats(cards);
     if (choice !== "Archive only") {
       for (const item of cleanupItems) {
         try {
@@ -108,9 +126,11 @@ export async function archiveManyWithCleanup(sessions: SessionStore, cleanup: Ar
       }
     }
   }
+  closeChats(cards);
   sessions.setArchivedMany(cards.map((card) => card.record.sessionId), true);
-  for (const card of cards) {
-    // Archiving closes the session's Argus chat and stops its process.
-    closeChatSession(card.record.sessionId);
-  }
+}
+
+// Archiving closes the session's Argus chat and stops its process, before the slower cleanup runs.
+function closeChats(cards: SessionCard[]): void {
+  cards.forEach((card) => closeChatSession(card.record.sessionId));
 }

@@ -48,7 +48,6 @@ export function createSessionsTab(
   tracking: TrackingMonitor
 ): { tab: ArgusTab; attach(handle: TabHandle): void; disposables: vscode.Disposable[] } {
   let handle: TabHandle | undefined;
-  const archiving = new Set<string>();
 
   const push = () => {
     if (!handle) {
@@ -72,13 +71,14 @@ export function createSessionsTab(
       column: group.column,
       summary: group.summary
     }));
-    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, refreshing: sessions.prsRefreshing, archiving: [...archiving], chat: Boolean(host), multiAgent, tracking: tracking.message });
+    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, refreshing: sessions.prsRefreshing, archiving: [...archiveCleanup.archiving], chat: Boolean(host), multiAgent, tracking: tracking.message });
     handle.setBadge(sessions.needsYou().length || undefined);
   };
 
   let pendingListener = chat.host?.onDidChangePending(() => push());
   const disposables: vscode.Disposable[] = [
     sessions.onDidChange(() => push()),
+    archiveCleanup.onDidChangeArchiving(() => push()),
     tracking.onDidChange(() => push()),
     chips.onDidRefresh(() => push()),
     chat.onDidChange((host) => {
@@ -120,19 +120,8 @@ export function createSessionsTab(
           return;
         case "archiveSession":
         case "archiveSessions": {
-          const ids = (msg.type === "archiveSession" ? [msg.sessionId] : Array.isArray(msg.sessionIds) ? msg.sessionIds : [])
-            .filter((id): id is string => typeof id === "string" && !archiving.has(id));
-          if (ids.length === 0) {
-            return;
-          }
-          ids.forEach((id) => archiving.add(id));
-          push();
-          try {
-            await archiveManyWithCleanup(sessions, archiveCleanup, ids);
-          } finally {
-            ids.forEach((id) => archiving.delete(id));
-            push();
-          }
+          const ids = (msg.type === "archiveSession" ? [msg.sessionId] : Array.isArray(msg.sessionIds) ? msg.sessionIds : []).filter((id): id is string => typeof id === "string");
+          await archiveManyWithCleanup(sessions, archiveCleanup, ids);
           return;
         }
         case "unarchiveSessions":
