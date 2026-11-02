@@ -1,4 +1,5 @@
 import { REVIEW_PROMPT_START, type SDKMessage } from "../../src/chat/protocol";
+import { findingsFromText } from "./findings";
 import { RECOMMENDED, questionsOf } from "./plan";
 
 export interface DiffLine {
@@ -43,7 +44,7 @@ export type Item =
   | { kind: "tool"; id: string; name: string; summary: string; pending: boolean; error?: string }
   | { kind: "findings"; id: string; level?: string; findings: Finding[]; pending: boolean; error?: string }
   | { kind: "answers"; id: string; pairs: Answer[]; pending: boolean; skipped?: boolean }
-  | { kind: "note"; id: string; text: string; tone: "muted" | "error" }
+  | { kind: "note"; id: string; text: string; tone: "muted" | "error"; reply?: boolean }
   | { kind: "usage"; id: string; input: number; output: number; cacheRead: number; cacheWrite: number; cost?: number };
 
 type Block = { type: string; [key: string]: unknown };
@@ -284,19 +285,20 @@ function usageItem(message: Raw, id: string, lastCost: number | undefined, human
   return item.input + item.output + item.cacheRead + item.cacheWrite > 0 ? item : undefined;
 }
 
-function systemNote(message: Raw, id: string): Item | undefined {
+function systemNote(message: Raw, id: string): Item[] {
   if (message.subtype === "api_retry") {
     const seconds = Math.round((message.retry_delay_ms ?? 0) / 1000);
-    return { kind: "note", id, text: `API error${message.error_status ? ` ${message.error_status}` : ""}, retrying in ${seconds}s (attempt ${message.attempt}/${message.max_retries})`, tone: "muted" };
+    return [{ kind: "note", id, text: `API error${message.error_status ? ` ${message.error_status}` : ""}, retrying in ${seconds}s (attempt ${message.attempt}/${message.max_retries})`, tone: "muted" }];
   }
   if (message.subtype === "compact_boundary") {
     const tokens = message.compact_metadata?.pre_tokens;
-    return { kind: "note", id, text: `Conversation compacted${tokens ? ` · ${Math.round(tokens / 1000)}k tokens before` : ""}`, tone: "muted" };
+    return [{ kind: "note", id, text: `Conversation compacted${tokens ? ` · ${Math.round(tokens / 1000)}k tokens before` : ""}`, tone: "muted" }];
   }
   if (message.subtype === "local_command_output" && str(message.content).trim()) {
-    return { kind: "note", id, text: str(message.content).trim(), tone: "muted" };
+    const text = str(message.content).trim();
+    return findingsFromText(text, id) ?? [{ kind: "note", id, text, tone: "muted", reply: true }];
   }
-  return undefined;
+  return [];
 }
 
 export function buildItems(messages: SDKMessage[]): Item[] {
@@ -481,10 +483,7 @@ export function buildItems(messages: SDKMessage[]): Item[] {
           agent.error = message.status === "completed" ? agent.error : message.status;
         }
       } else {
-        const note = systemNote(message, id);
-        if (note) {
-          items.push(note);
-        }
+        items.push(...systemNote(message, id));
       }
     }
   });
@@ -519,7 +518,7 @@ const CALL_KINDS = new Set<Item["kind"]>(["edit", "bash", "todos", "agent", "wor
 
 const callCount = (item: Item): number => (item.kind === "lookups" ? item.calls.length : CALL_KINDS.has(item.kind) ? 1 : 0);
 
-const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || item.kind === "findings" || (item.kind === "note" && item.tone === "error");
+const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || item.kind === "findings" || (item.kind === "note" && (item.tone === "error" || item.reply === true));
 
 export function textOnlyRows(items: Item[]): Row[] {
   const rows: Row[] = [];

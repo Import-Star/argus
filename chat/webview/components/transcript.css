@@ -331,6 +331,10 @@
   color: var(--strong);
 }
 
+.tr-fold .tr-finding-title.open {
+  white-space: normal;
+}
+
 .tr-sev {
   flex: none;
   min-width: 34px;

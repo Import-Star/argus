@@ -2,6 +2,12 @@
 
 First public release.
 
+## Unreleased
+
+- A reopened chat now shows the reply from a command that ran in its own subagent (such as a forked skill), which
+  used to show only the prompt. **Text only** now shows these replies too, and a forked `/code-review` shows its
+  findings in the findings card.
+
 ## 0.8.3
 
 - 0.8.2 was tagged but never published: its build failed after the Preact 11 upgrade. This release fixes the build

@@ -259,7 +259,7 @@ function FindingRow({ finding, index, sessionId, forceOpen }: { finding: Finding
         <Fold open={open} onToggle={toggle}>
           {severity && <span class={`tr-sev tr-sev-${severity}`}>{SEVERITY_LABEL[severity]}</span>}
           {finding.outcome && <span class="tr-chip">{finding.outcome}</span>}
-          <span class="tr-label tr-finding-title">{finding.title}</span>
+          <span class={`tr-label tr-finding-title${open ? " open" : ""}`}>{finding.title}</span>
         </Fold>
         <button type="button" class="mono tr-finding-file" title={finding.file} onClick={() => post({ type: "openFile", sessionId, path: finding.file, line: finding.line })}>
           {where}
