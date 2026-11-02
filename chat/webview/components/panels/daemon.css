@@ -1,0 +1,56 @@
+.daemon-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.daemon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.daemon-dot.on {
+  background: var(--vscode-testing-iconPassed, #3fb950);
+}
+
+.daemon-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  margin: 0 0 8px;
+}
+
+.daemon-fields dt {
+  color: var(--muted);
+}
+
+.daemon-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.daemon-raw {
+  margin: 0 0 10px;
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.daemon-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.daemon-title {
+  margin: 14px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+}

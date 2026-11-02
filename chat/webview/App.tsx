@@ -2,6 +2,7 @@ import { Composer } from "./components/Composer";
 import { DetailsPane } from "./components/DetailsPane";
 import { Grid } from "./components/Grid";
 import { Header } from "./components/Header";
+import { CommandPanel } from "./components/panels/CommandPanel";
 import { PlanPane } from "./components/PlanPane";
 import { ReviewPane } from "./components/ReviewPane";
 import { Transcript } from "./components/Transcript";
@@ -17,6 +18,8 @@ function SidePane({ sessionId }: { sessionId: string }) {
       return <PlanPane sessionId={sessionId} />;
     case "workflow":
       return <WorkflowPane sessionId={sessionId} />;
+    case "panel":
+      return <CommandPanel sessionId={sessionId} />;
     default:
       return <DetailsPane sessionId={sessionId} />;
   }

@@ -2,15 +2,30 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { agentFolders, agentSlug, agentTemplate, memoryFiles, parseToggle, settingsFiles, type FileChoice, type LocalCommandName } from "../../src/chat/localCommands";
+import { CLI_COMMANDS, PANEL_COMMANDS, PICKER_COMMANDS, TERMINAL_COMMANDS, agentFolders, agentSlug, agentTemplate, isOneOf, memoryFiles, parseToggle, type FileChoice, type LocalCommandName, type TerminalCommandName } from "../../src/chat/localCommands";
 import type { ChatManager } from "./ChatManager";
 import type { ChatSession } from "./ChatSession";
+import { runCliCommand } from "./cliCommands";
+import { openPanel } from "./panels";
+import { runPicker } from "./pickers";
 
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 // Runs a slash command the CLI only has in its terminal UI. Feedback goes to VS Code notifications, not the transcript.
 export async function runLocalCommand(manager: ChatManager, session: ChatSession, name: LocalCommandName, args: string): Promise<void> {
   try {
+    if (isOneOf(PANEL_COMMANDS, name)) {
+      return await openPanel(session, name);
+    }
+    if (isOneOf(PICKER_COMMANDS, name)) {
+      return await runPicker(manager, session, name);
+    }
+    if (isOneOf(CLI_COMMANDS, name)) {
+      return await runCliCommand(manager, session, name, args);
+    }
+    if (isOneOf(TERMINAL_COMMANDS, name)) {
+      return terminal(session, name);
+    }
     switch (name) {
       case "remote-control":
         return await remoteControl(session, args);
@@ -18,20 +33,12 @@ export async function runLocalCommand(manager: ChatManager, session: ChatSession
         return await chrome(manager, session, args);
       case "add-dir":
         return await addDir(session, args);
-      case "permissions":
-        return await openFile(settingsFiles(session.meta.cwd, os.homedir()), "Edit permission rules in which settings file?", "{}\n");
-      case "hooks":
-        return await openFile(settingsFiles(session.meta.cwd, os.homedir()), "Edit hooks in which settings file?", "{}\n");
       case "memory":
         return await openFile(memoryFiles(session.meta.cwd, os.homedir()), "Open which memory file?", "");
       case "agents":
         return await agents(session);
       case "resume":
         return await resume(manager, session);
-      case "login":
-      case "logout":
-      case "plugin":
-        return terminal(session, name);
     }
   } catch (error) {
     void vscode.window.showErrorMessage(`Argus: /${name} failed: ${errorText(error)}`);
@@ -207,8 +214,7 @@ async function resume(manager: ChatManager, session: ChatSession): Promise<void>
   }
 }
 
-// These need the CLI's interactive screens, so they run `claude /<command>` in a VS Code terminal.
-function terminal(session: ChatSession, name: "login" | "logout" | "plugin"): void {
+function terminal(session: ChatSession, name: TerminalCommandName): void {
   const shell = vscode.window.createTerminal({ name: `Claude /${name}`, cwd: session.meta.cwd, shellPath: session.claudePath ?? "claude", shellArgs: [`/${name}`] });
   shell.show();
   if (name === "plugin") {

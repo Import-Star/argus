@@ -8,6 +8,7 @@ import type { ChatSession } from "./ChatSession";
 import { parseLocalCommand } from "../../src/chat/localCommands";
 import { rewind } from "./history";
 import { runLocalCommand } from "./localCommands";
+import { panelAction } from "./panels";
 import { commentsPrompt, fileDiff, listChanges } from "./review";
 import { SideQuestion } from "./sideQuestion";
 import { taskOutput } from "./tasks";
@@ -320,6 +321,9 @@ export class ChatPanel implements vscode.Disposable {
         case "asideClose":
           this.asides.get(session.sessionId)?.dispose();
           this.asides.delete(session.sessionId);
+          return;
+        case "panelAction":
+          await panelAction(session, message.kind, message.action, message.payload);
           return;
         case "pluginAction":
           await this.manager.pluginAction(session.sessionId, message.key, message.itemId, message.value);

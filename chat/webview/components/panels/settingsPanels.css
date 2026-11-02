@@ -1,0 +1,88 @@
+.setp-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.setp-tab {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.setp-tab[aria-selected="true"] {
+  border-bottom-color: var(--strong);
+  color: var(--strong);
+}
+
+.setp-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.setp-text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.setp-src {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.setp-add {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.setp-add input,
+.setp-add select {
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--strong);
+  font: inherit;
+  font-size: 12px;
+  padding: 2px 6px;
+}
+
+.setp-add input {
+  flex: 1;
+  min-width: 0;
+}
+
+.setp-note {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 8px 0;
+}
+
+.setp-error {
+  color: var(--vscode-errorForeground);
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.setp-h {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.setp-h small {
+  color: var(--muted);
+  font-weight: 400;
+}

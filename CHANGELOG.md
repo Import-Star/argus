@@ -7,6 +7,19 @@ First public release.
 - A reopened chat now shows the reply from a command that ran in its own subagent (such as a forked skill), which
   used to show only the prompt. **Text only** now shows these replies too, and a forked `/code-review` shows its
   findings in the findings card.
+- Chat slash commands now match the Claude Code terminal instead of printing text or "use the terminal":
+  - `/mcp` is a panel of MCP servers (status, errors, tools) with Enable/Disable, Reconnect and Authenticate. The
+    header flags servers that failed or need authentication.
+  - `/permissions` adds and removes allow, ask and deny rules and folders. `/hooks` lists hooks by event.
+  - `/context`, `/usage` and `/skills` show bars and ranked lists. Clicking the header Context meter opens `/context`.
+  - `/config` is a searchable settings panel. `/loops` lists and deletes loops. `/daemon` shows and stops the
+    background service.
+  - `/model`, `/effort`, `/output-style`, `/advisor`, `/autocompact` and `/color` open a picker when typed bare; with
+    an argument they run as before. `/color` tints the chat header.
+  - `/export`, `/copy`, `/branch` (`/fork`) and `/plan` run in Argus.
+  - `/feedback`, `/privacy-settings`, `/install-github-app`, `/install-slack-app`, `/web-setup`, `/remote-env`,
+    `/teleport`, `/ultraplan`, `/ultrareview` and `/autofix-pr` open in a terminal, like `/login`.
+- A command's plain-text output (`/skill-doctor`, `/list-agents`) shows in a monospace block, so its columns line up.
 
 ## 0.8.3
 

@@ -12,9 +12,19 @@ describe("parseLocalCommand", () => {
 
   it("leaves commands Claude handles, and plain text, alone", () => {
     assert.equal(parseLocalCommand("/compact"), undefined);
-    assert.equal(parseLocalCommand("/mcp"), undefined);
     assert.equal(parseLocalCommand("please run /chrome"), undefined);
     assert.equal(parseLocalCommand("/chromeish"), undefined);
+  });
+});
+
+describe("bare-only commands", () => {
+  it("handles the bare command and sends it to Claude when it has arguments", () => {
+    assert.deepEqual(parseLocalCommand("/mcp"), { name: "mcp", args: "" });
+    assert.deepEqual(parseLocalCommand("/model"), { name: "model", args: "" });
+    assert.equal(parseLocalCommand("/model opus"), undefined);
+    assert.equal(parseLocalCommand("/config autoCompact=false"), undefined);
+    assert.deepEqual(parseLocalCommand("/permissions extra"), { name: "permissions", args: "extra" });
+    assert.deepEqual(parseLocalCommand("/fork"), { name: "branch", args: "" });
   });
 });
 

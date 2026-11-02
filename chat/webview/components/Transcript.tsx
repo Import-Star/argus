@@ -49,7 +49,7 @@ function useToggle(forced = false): [boolean, () => void] {
   return [open || forced, () => setOpen((value) => !(value || forced))];
 }
 
-function Text({ text, streaming }: { text: string; streaming?: boolean }) {
+function Text({ text, streaming, command }: { text: string; streaming?: boolean; command?: boolean }) {
   const actions = useReplyActions();
   let html = renderMarkdown(text);
   if (streaming) {
@@ -57,7 +57,7 @@ function Text({ text, streaming }: { text: string; streaming?: boolean }) {
   }
   return (
     <div class="tr-reply">
-      <div class="tr-text" dangerouslySetInnerHTML={{ __html: html }} />
+      {command ? <pre class="tr-cmdout">{text}</pre> : <div class="tr-text" dangerouslySetInnerHTML={{ __html: html }} />}
       {!streaming && (
         <button type="button" class="copy-btn tr-reply-copy" title="Copy response" aria-label="Copy response" data-copy={text}>
           <Icon d="M9 9h11v11H9zM5 15H4V4h11v1" />
@@ -392,7 +392,7 @@ function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId: strin
         </div>
       );
     case "text":
-      return <Text text={item.text} streaming={item.streaming} />;
+      return <Text text={item.text} streaming={item.streaming} command={item.command} />;
     case "thinking":
       return <Thinking text={item.text} streaming={item.streaming} forceOpen={forceOpen} />;
     case "lookups":

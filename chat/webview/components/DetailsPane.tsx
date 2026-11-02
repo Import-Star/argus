@@ -90,7 +90,7 @@ function usePlanUsage(sessionId: string, busy: boolean, applies: boolean): void 
   }, [sessionId, busy, applies]);
 }
 
-function formatReset(resetsAt: number, now: number): string {
+export function formatReset(resetsAt: number, now: number): string {
   const left = resetsAt - now;
   if (left <= 0) {
     return "Resetting";

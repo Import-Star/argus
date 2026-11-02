@@ -1,0 +1,89 @@
+.mcp-row {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+}
+
+.mcp-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.mcp-name {
+  font-weight: 600;
+}
+
+.mcp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dim);
+}
+
+.mcp-dot-connected {
+  background: var(--green);
+}
+
+.mcp-dot-failed {
+  background: var(--danger);
+}
+
+.mcp-dot-needs-auth,
+.mcp-dot-pending {
+  background: var(--amber);
+}
+
+.mcp-meta,
+.mcp-desc {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mcp-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+}
+
+.mcp-error {
+  margin: 4px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mcp-tools {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.mcp-tools summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.mcp-tools ul {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.mcp-tools li {
+  padding: 2px 0;
+}
+
+.mcp-badge {
+  margin-left: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.mcp-badge-destructive {
+  color: var(--danger);
+  border-color: var(--danger);
+}

@@ -23,6 +23,7 @@ interface Remembered {
   permissionMode?: PermissionMode;
   textOnly?: boolean;
   chrome?: boolean;
+  color?: string;
 }
 
 const SESSION_CHOICES_KEY = "argus.chat.sessionChoices";
@@ -650,7 +651,7 @@ export class ChatManager implements vscode.Disposable {
 
   // A resumed chat keeps its own last model/effort; without one, the CLI restores the model from the transcript.
   // New chats follow Claude Code's own settings; a reopened chat keeps the model/effort last picked in it.
-  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; textOnly: boolean; chrome?: boolean; remoteControlAtStartup?: boolean; log(line: string): void } {
+  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; textOnly: boolean; chrome?: boolean; color?: string; remoteControlAtStartup?: boolean; log(line: string): void } {
     const config = vscode.workspace.getConfiguration("argus.chat");
     const claude = readClaudeSettings(cwd);
     const remembered = (resumeId && this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY)?.[resumeId]) || {};
@@ -663,6 +664,7 @@ export class ChatManager implements vscode.Disposable {
       textOnly: remembered.textOnly ?? config.get<boolean>("textOnlyDefault", false),
       // SDK sessions ignore Claude Code's own "/chrome → Enabled by default", so Argus applies it.
       chrome: remembered.chrome ?? (chromeDefaultEnabled() || undefined),
+      color: remembered.color,
       remoteControlAtStartup: claude.remoteControlAtStartup,
       log: (line) => this.log.appendLine(line)
     };
