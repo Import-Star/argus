@@ -3,7 +3,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { describe, it } from "node:test";
-import { hasTranscript, readPanelState } from "../chat/host/restore.ts";
+import { hasTranscript, readPanelState, withLocalCommandOutput } from "../chat/host/restore.ts";
 import { columnFor, withLiveChats, type RegistryEntry } from "../src/services/sessionColumn.ts";
 import type { SessionRecord } from "../src/types.ts";
 
@@ -42,5 +42,19 @@ describe("panel restore", () => {
     assert.equal(hasTranscript("a", dir), false);
     fs.writeFileSync(path.join(dir, "-x", "a.jsonl"), "");
     assert.equal(hasTranscript("a", dir), true);
+  });
+  it("puts a local command's output back after the nearest message history kept", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "argus-proj-"));
+    fs.mkdirSync(path.join(dir, "-x"));
+    const lines = [
+      { type: "user", uuid: "prompt", parentUuid: null },
+      { type: "user", uuid: "caveat", parentUuid: "prompt", isMeta: true },
+      { type: "system", subtype: "local_command", uuid: "out", parentUuid: "caveat", sessionId: "a", content: "<local-command-stdout>Findings</local-command-stdout>" },
+      { type: "system", subtype: "local_command", uuid: "empty", parentUuid: "prompt", content: "<local-command-stdout></local-command-stdout>" }
+    ];
+    fs.writeFileSync(path.join(dir, "-x", "a.jsonl"), lines.map((line) => JSON.stringify(line)).join("\n"));
+    const merged = withLocalCommandOutput([{ uuid: "prompt" }, { uuid: "reply" }], "a", dir);
+    assert.deepEqual(merged, [{ uuid: "prompt" }, { type: "system", subtype: "local_command_output", content: "Findings", uuid: "out", session_id: "a" }, { uuid: "reply" }]);
+    assert.deepEqual(withLocalCommandOutput([{ uuid: "prompt" }], "missing", dir), [{ uuid: "prompt" }]);
   });
 });

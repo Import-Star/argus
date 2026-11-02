@@ -5,6 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import { MessageQueue, type QueueAction } from "./messageQueue";
+import { withLocalCommandOutput } from "./restore";
 import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
 
@@ -255,7 +256,7 @@ export class ChatSession implements vscode.Disposable {
     this.historyLoaded ??= getSessionMessages(this.sessionId, { dir: this.options.cwd })
       .then((messages) => {
         this.restoreLastResponse(messages as unknown as { type: string; parent_tool_use_id?: string | null; timestamp?: string }[]);
-        return messages as unknown as SDKMessage[];
+        return withLocalCommandOutput(messages, this.sessionId) as unknown as SDKMessage[];
       })
       .catch((error) => {
         this.options.log(`history ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
