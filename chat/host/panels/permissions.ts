@@ -22,12 +22,15 @@ export const permissionsPanel: PanelHandler<PermissionsPanelData> = {
   },
   action: async (session, action, payload) => {
     const { list, text, file } = payload as Payload;
+    if (!settingsFiles(session.meta.cwd, os.homedir()).some((choice) => choice.file === file)) {
+      throw new Error("Unknown settings file");
+    }
     if (action === "open") {
       await vscode.window.showTextDocument(vscode.Uri.file(file));
       return;
     }
-    if (!settingsFiles(session.meta.cwd, os.homedir()).some((choice) => choice.file === file) || !RULE_LISTS.includes(list)) {
-      throw new Error("Unknown settings file or list");
+    if (!RULE_LISTS.includes(list)) {
+      throw new Error("Unknown rule list");
     }
     const { json, error } = parseSettings(readRaw(file));
     if (error) {
