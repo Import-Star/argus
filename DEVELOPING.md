@@ -317,12 +317,15 @@ installed from the Marketplace.
 
 1. Create a publisher at <https://marketplace.visualstudio.com/manage>.
 2. In `package.json`, set `publisher` to yours, and update `repository`, `bugs` and `homepage`.
-3. Bump `version` and update `CHANGELOG.md`, then tag the release `vX.Y.Z`.
+3. Bump `version` (in `package.json` and `package-lock.json`) and turn `## Unreleased` in `CHANGELOG.md` into
+   `## X.Y.Z`. Merge that to `main`; don't tag it.
 4. Publish with Trusted Publishing, which needs no token. On your publisher's page choose Trusted Publishing, then
    Create, and enter your GitHub owner, repo, workflow file (`publish.yml`) and environment (`marketplace`). Create
-   a `marketplace` environment in the repo settings (require a reviewer, allow only `v*` tags). Then run
-   **Publish to Marketplace** (`.github/workflows/publish.yml`) from the tag. Tick `dry_run` to only build the
-   `.vsix`. The workflow runs `vsce publish --oidc`.
+   a `marketplace` environment in the repo settings (require a reviewer, allow only `main`). Then run
+   **Publish to Marketplace** (`.github/workflows/publish.yml`) from `main`. It refuses a version that isn't higher
+   than the last `v*` tag, publishes with `vsce publish --oidc`, then tags `vX.Y.Z` and creates a GitHub release
+   with the `.vsix` attached. If you protect `v*` tags with a ruleset, let GitHub Actions bypass it so the workflow
+   can create the tag. Tick `dry_run` to only build the `.vsix`.
 5. Without CI, the old route still works until 2026-12-01, when Azure DevOps global Personal Access Tokens are
    retired: create a PAT (scope `Marketplace > Manage`), `npx @vscode/vsce login <publisher>`, then
    `npm run publish:store`. To only build the file, `npm run package:vsix`.
