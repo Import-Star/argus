@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.9.0
 
 - Archiving a chat from its header now closes the chat as soon as you confirm. Worktree and plugin cleanup runs
   afterwards, with the session's card showing "archiving…" until it's done.
