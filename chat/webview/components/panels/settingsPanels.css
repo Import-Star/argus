@@ -42,6 +42,11 @@
   white-space: nowrap;
 }
 
+.setp-text .setp-src {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .setp-add {
   display: flex;
   gap: 6px;

@@ -9,7 +9,7 @@ const COLORS: Record<string, string> = {
   mcp_instructions: "var(--green)",
   custom_agents: "var(--amber)",
   memory_files: "var(--danger)",
-  skills: "var(--text)",
+  skills: "var(--muted)",
   messages: "var(--strong)"
 };
 

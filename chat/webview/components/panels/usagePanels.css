@@ -74,6 +74,10 @@
   flex: 0 0 38%;
 }
 
+.up-window .up-name {
+  white-space: normal;
+}
+
 .up-track {
   flex: 1;
   height: 6px;

@@ -72,6 +72,7 @@
 
 .mcp-tools li {
   padding: 2px 0;
+  overflow-wrap: anywhere;
 }
 
 .mcp-badge {

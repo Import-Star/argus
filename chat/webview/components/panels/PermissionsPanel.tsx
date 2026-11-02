@@ -9,7 +9,7 @@ const PLACEHOLDERS: Record<RuleList, string> = { allow: "Bash(npm test:*)", ask:
 export function PermissionsPanel({ sessionId, data }: { sessionId: string; data: PermissionsPanelData }) {
   const [list, setList] = useState<RuleList>("allow");
   const [text, setText] = useState("");
-  const [file, setFile] = useState(data.files[data.files.length - 1].file);
+  const [file, setFile] = useState((data.files.filter((entry) => !entry.error).pop() ?? data.files[data.files.length - 1]).file);
   const send = (action: string, payload: { list?: RuleList; text?: string; file: string }) => panelAction(sessionId, "permissions", action, { list, ...payload });
   const add = () => {
     if (text.trim()) {
@@ -38,7 +38,7 @@ export function PermissionsPanel({ sessionId, data }: { sessionId: string; data:
       <div class="setp-add">
         <input value={text} placeholder={PLACEHOLDERS[list]} onInput={(event) => setText(event.currentTarget.value)} onKeyDown={(event) => event.key === "Enter" && add()} />
         <select value={file} onChange={(event) => setFile(event.currentTarget.value)}>
-          {data.files.map((entry) => <option value={entry.file}>{entry.label}</option>)}
+          {data.files.map((entry) => <option value={entry.file} disabled={!!entry.error}>{entry.label}</option>)}
         </select>
         <button type="button" class="cmdp-btn" onClick={add}>Add</button>
       </div>
