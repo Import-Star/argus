@@ -6,6 +6,8 @@ First public release.
 
 - A chat no longer opens blank after a resume while its shell was in another folder: a session now keeps the
   folder it started in, so Argus still finds its history.
+- A worktree made with `cd <repo> && git worktree add ../<folder>` now shows on the session card. The hook used to resolve the
+  path from the session's folder, not the `cd`.
 
 ## 0.8.1
 
