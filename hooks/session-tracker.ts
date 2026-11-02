@@ -170,6 +170,10 @@ function worktreeAddPath(command: string, cwd: string): string | undefined {
   if (!match) {
     return undefined;
   }
+  // A `cd` earlier in the same command moves where a relative path starts.
+  for (const cd of command.slice(0, match.index).matchAll(/(?:^|[;&|]\s*)cd\s+(\S+)/g)) {
+    cwd = path.resolve(cwd, cd[1].replace(/^["']|["']$/g, "").replace(/^~(?=$|[\\/])/, os.homedir()));
+  }
   const words = match[2].trim().split(/\s+/);
   for (let i = 0; i < words.length; i++) {
     if (WORKTREE_ADD_VALUE_FLAGS.has(words[i])) {
