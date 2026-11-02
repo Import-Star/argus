@@ -1,0 +1,837 @@
+{
+  "base": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "11111111-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/docs-search",
+        "status": "idle",
+        "statusSince": "@now-60000",
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "title": "Wire up docs search"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000010",
+        "message": {
+          "role": "user",
+          "content": "Add a search box to the docs page."
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000011",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_11",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Done. The search box filters the list as you type."
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "panels": {
+    "mcp": {
+      "kind": "mcp",
+      "data": {
+        "started": true,
+        "servers": [
+          {
+            "name": "acme-docs",
+            "status": "failed",
+            "scope": "project",
+            "version": "1.4.2",
+            "error": "spawn npx ENOENT: could not start `npx -y @acme/docs-mcp --root /Users/jane/projects/acme-platform-monorepo/services/documentation-search` (exit code 127)",
+            "tools": []
+          },
+          {
+            "name": "example-issues",
+            "status": "needs-auth",
+            "scope": "user",
+            "error": "Authentication required. Run /mcp to sign in.",
+            "tools": []
+          },
+          {
+            "name": "acme-search",
+            "status": "connected",
+            "scope": "local",
+            "version": "0.9.0",
+            "tools": [
+              {
+                "name": "search_documents",
+                "description": "Full-text search over published documents with optional filters.",
+                "readOnly": true
+              },
+              {
+                "name": "delete_document",
+                "description": "Permanently delete a document by id.",
+                "destructive": true
+              },
+              {
+                "name": "mcp__acme_search__rebuild_index_for_all_collections_and_namespaces_with_long_name",
+                "description": "Rebuilds every index."
+              }
+            ]
+          },
+          {
+            "name": "example-files",
+            "status": "pending",
+            "scope": "user",
+            "tools": []
+          },
+          {
+            "name": "jane-notes",
+            "status": "disabled",
+            "scope": "user",
+            "tools": []
+          }
+        ]
+      }
+    },
+    "mcp-empty": {
+      "kind": "mcp",
+      "data": {
+        "started": false,
+        "servers": []
+      }
+    },
+    "permissions": {
+      "kind": "permissions",
+      "data": {
+        "rules": {
+          "allow": [
+            {
+              "text": "Bash(npm test:*)",
+              "file": "/work/orders/.claude/settings.json",
+              "label": "Project"
+            },
+            {
+              "text": "Bash(git diff:*)",
+              "file": "/work/orders/.claude/settings.json",
+              "label": "Project"
+            },
+            {
+              "text": "WebFetch(domain:example.com)",
+              "file": "/Users/jane/.claude/settings.json",
+              "label": "User"
+            },
+            {
+              "text": "mcp__acme-docs__search_documents_with_a_really_long_rule_name_that_should_wrap(path:/Users/jane/projects/acme-platform-monorepo/**)",
+              "file": "/Users/jane/.claude/settings.json",
+              "label": "User"
+            }
+          ],
+          "ask": [
+            {
+              "text": "Bash(git push:*)",
+              "file": "/work/orders/.claude/settings.json",
+              "label": "Project"
+            }
+          ],
+          "deny": [
+            {
+              "text": "Read(./.env)",
+              "file": "/work/orders/.claude/settings.json",
+              "label": "Project"
+            }
+          ],
+          "folders": [
+            {
+              "text": "../shared-fixtures",
+              "file": "/work/orders/.claude/settings.json",
+              "label": "Project"
+            }
+          ]
+        },
+        "files": [
+          {
+            "label": "User",
+            "description": "All your projects",
+            "file": "/Users/jane/.claude/settings.json",
+            "exists": true
+          },
+          {
+            "label": "Project",
+            "description": "Shared with the team",
+            "file": "/work/orders/.claude/settings.json",
+            "exists": true,
+            "error": "Invalid JSON at line 7: Unexpected token }"
+          },
+          {
+            "label": "Local",
+            "description": "Only you, this project",
+            "file": "/Users/jane/projects/acme-platform-monorepo/services/documentation-search/.claude/settings.local.json",
+            "exists": false
+          }
+        ],
+        "sessionFolders": [
+          "/work/orders-extras",
+          "/tmp/acme-scratch"
+        ]
+      }
+    },
+    "hooks": {
+      "kind": "hooks",
+      "data": {
+        "groups": [
+          {
+            "event": "PreToolUse",
+            "matchers": [
+              {
+                "matcher": "Bash",
+                "hooks": [
+                  {
+                    "type": "command",
+                    "command": "node .claude/hooks/check-command.js --strict",
+                    "timeout": 10,
+                    "file": "/work/orders/.claude/settings.json",
+                    "label": "Project"
+                  }
+                ]
+              },
+              {
+                "matcher": "",
+                "hooks": [
+                  {
+                    "type": "command",
+                    "command": "/Users/jane/projects/acme-platform-monorepo/tools/hooks/audit-every-tool-call-and-write-the-result-to-the-shared-log.sh --verbose --format=json",
+                    "file": "/Users/jane/.claude/settings.json",
+                    "label": "User"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "event": "Stop",
+            "matchers": [
+              {
+                "matcher": "",
+                "hooks": [
+                  {
+                    "type": "command",
+                    "command": "say done",
+                    "file": "/Users/jane/.claude/settings.json",
+                    "label": "User"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "files": [
+          {
+            "label": "User",
+            "file": "/Users/jane/.claude/settings.json",
+            "exists": true
+          },
+          {
+            "label": "Project",
+            "file": "/work/orders/.claude/settings.json",
+            "exists": true,
+            "error": "Invalid JSON at line 7: Unexpected token }"
+          },
+          {
+            "label": "Local",
+            "file": "/work/orders/.claude/settings.local.json",
+            "exists": false
+          }
+        ]
+      }
+    },
+    "context": {
+      "kind": "context",
+      "data": {
+        "total": 312000,
+        "max": 1000000,
+        "percent": 31,
+        "model": "claude-sonnet-5",
+        "segments": [
+          {
+            "id": "system_prompt",
+            "name": "System prompt",
+            "tokens": 8200,
+            "percent": 0.82,
+            "kind": "used"
+          },
+          {
+            "id": "system_tools",
+            "name": "System tools",
+            "tokens": 16400,
+            "percent": 1.64,
+            "kind": "used"
+          },
+          {
+            "id": "mcp_tools",
+            "name": "MCP tools",
+            "tokens": 21000,
+            "percent": 2.1,
+            "kind": "used"
+          },
+          {
+            "id": "custom_agents",
+            "name": "Custom agents",
+            "tokens": 3100,
+            "percent": 0.31,
+            "kind": "used"
+          },
+          {
+            "id": "memory_files",
+            "name": "Memory files",
+            "tokens": 9800,
+            "percent": 0.98,
+            "kind": "used"
+          },
+          {
+            "id": "skills",
+            "name": "Skills",
+            "tokens": 4500,
+            "percent": 0.45,
+            "kind": "used"
+          },
+          {
+            "id": "messages",
+            "name": "Messages",
+            "tokens": 249000,
+            "percent": 24.9,
+            "kind": "used"
+          },
+          {
+            "id": "deferred",
+            "name": "MCP tools (deferred)",
+            "tokens": 12000,
+            "percent": 1.2,
+            "kind": "deferred"
+          },
+          {
+            "id": "free",
+            "name": "Free space",
+            "tokens": 620000,
+            "percent": 62,
+            "kind": "free"
+          },
+          {
+            "id": "buffer",
+            "name": "Autocompact buffer",
+            "tokens": 68000,
+            "percent": 6.8,
+            "kind": "buffer"
+          }
+        ],
+        "items": [
+          {
+            "group": "Memory file",
+            "name": "orders/CLAUDE.md (Project)",
+            "tokens": 5200
+          },
+          {
+            "group": "MCP tool",
+            "name": "acme-search: search_documents",
+            "tokens": 1800
+          },
+          {
+            "group": "Skill",
+            "name": "example-release-notes-generator-with-a-very-long-name",
+            "tokens": 900
+          },
+          {
+            "group": "Agent",
+            "name": "code-reviewer",
+            "tokens": 700
+          }
+        ]
+      }
+    },
+    "usage": {
+      "kind": "usage",
+      "data": {
+        "plan": {
+          "windows": [
+            {
+              "key": "five_hour",
+              "label": "Current session",
+              "percent": 42,
+              "resetsAt": "@now+7200000"
+            },
+            {
+              "key": "seven_day",
+              "label": "Current week (all models)",
+              "percent": 83,
+              "resetsAt": "@now+259200000"
+            },
+            {
+              "key": "seven_day_opus",
+              "label": "Current week (Opus)",
+              "percent": 97,
+              "resetsAt": "@now+259200000"
+            }
+          ]
+        },
+        "session": {
+          "costUsd": 1.234,
+          "tokens": 412000,
+          "durationMs": 1865000
+        },
+        "periods": [
+          {
+            "label": "Last 24 hours",
+            "requests": 318,
+            "sessions": 4,
+            "behaviors": [
+              {
+                "name": "Long context",
+                "pct": 38
+              },
+              {
+                "name": "Subagent heavy",
+                "pct": 12
+              }
+            ],
+            "agents": [
+              {
+                "name": "code-reviewer",
+                "pct": 22
+              }
+            ],
+            "skills": [
+              {
+                "name": "example-release-notes",
+                "pct": 9
+              }
+            ]
+          },
+          {
+            "label": "Last 7 days",
+            "requests": 2210,
+            "sessions": 19,
+            "behaviors": [
+              {
+                "name": "Long context",
+                "pct": 41
+              }
+            ],
+            "agents": [],
+            "skills": []
+          }
+        ]
+      }
+    },
+    "usage-basic": {
+      "kind": "usage",
+      "data": {
+        "plan": null,
+        "periods": []
+      }
+    },
+    "config": {
+      "kind": "config",
+      "data": {
+        "settings": [
+          {
+            "key": "verbose",
+            "kind": "boolean",
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "key": "autoCompactEnabled",
+            "kind": "boolean",
+            "options": [
+              "true",
+              "false"
+            ]
+          },
+          {
+            "key": "theme",
+            "kind": "enum",
+            "options": [
+              "dark",
+              "light",
+              "dark-daltonized",
+              "light-daltonized",
+              "dark-ansi",
+              "light-ansi"
+            ]
+          },
+          {
+            "key": "editorMode",
+            "kind": "enum",
+            "options": [
+              "normal",
+              "vim"
+            ]
+          },
+          {
+            "key": "preferredNotifChannel",
+            "kind": "text",
+            "options": []
+          },
+          {
+            "key": "defaultPermissionModeForNewSessionsWithAVeryLongSettingName",
+            "kind": "text",
+            "options": []
+          }
+        ],
+        "values": {
+          "verbose": "true",
+          "theme": "dark",
+          "preferredNotifChannel": "terminal_bell"
+        }
+      }
+    },
+    "skills": {
+      "kind": "skills",
+      "data": {
+        "hasTokens": true,
+        "skills": [
+          {
+            "name": "release-notes",
+            "source": "user",
+            "description": "Draft release notes from merged pull requests. Use when asked to write a changelog or summarise what shipped since the last tag.",
+            "tokens": 420
+          },
+          {
+            "name": "acme-docs:search-and-summarise-documents-across-all-collections",
+            "source": "acme-docs",
+            "description": "",
+            "tokens": 310
+          },
+          {
+            "name": "deploy-check",
+            "source": "project",
+            "description": "Check the deploy pipeline for the current branch.",
+            "tokens": 95
+          }
+        ]
+      }
+    },
+    "skills-notokens": {
+      "kind": "skills",
+      "data": {
+        "hasTokens": false,
+        "skills": [
+          {
+            "name": "release-notes",
+            "source": "user",
+            "description": "Draft release notes from merged pull requests."
+          }
+        ]
+      }
+    },
+    "loops": {
+      "kind": "loops",
+      "data": {
+        "durable": [
+          {
+            "id": "a1b2c3d4",
+            "schedule": "*/15 * * * *",
+            "recurring": true,
+            "prompt": "Check the CI status of the open pull request and tell me if anything failed. Include the failing job names and the first error line of each."
+          },
+          {
+            "id": "e5f6a7b8",
+            "schedule": "0 9 * * 1-5",
+            "recurring": true,
+            "prompt": "Summarise yesterday's merged pull requests"
+          }
+        ]
+      }
+    },
+    "loops-session": {
+      "kind": "loops",
+      "data": {
+        "durable": [],
+        "session": [
+          {
+            "id": "c9d0e1f2",
+            "schedule": "30 14 2 11 *",
+            "recurring": false,
+            "prompt": "Remind me to rebase the branch"
+          }
+        ]
+      }
+    },
+    "daemon": {
+      "kind": "daemon",
+      "data": {
+        "status": {
+          "running": true,
+          "fields": [
+            {
+              "label": "PID",
+              "value": "48213"
+            },
+            {
+              "label": "Version",
+              "value": "2.1.0"
+            },
+            {
+              "label": "Uptime",
+              "value": "3h 12m"
+            }
+          ]
+        },
+        "raw": "running\npid: 48213\nversion: 2.1.0\nuptime: 3h 12m\nsocket: /Users/jane/.claude/daemon/daemon.sock",
+        "configFile": "/Users/jane/.claude/daemon.json",
+        "config": [
+          {
+            "key": "idleTimeoutMinutes",
+            "value": "30"
+          },
+          {
+            "key": "jobs",
+            "value": "2 entries"
+          },
+          {
+            "key": "apiToken",
+            "value": "[hidden]"
+          }
+        ]
+      }
+    },
+    "daemon-off": {
+      "kind": "daemon",
+      "data": {
+        "status": {
+          "running": false,
+          "fields": []
+        },
+        "raw": "not running",
+        "config": []
+      }
+    }
+  },
+  "cmdout": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "11111111-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/docs-search",
+        "status": "idle",
+        "statusSince": "@now-60000",
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "title": "Wire up docs search"
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000020",
+        "message": {
+          "role": "user",
+          "content": "/skill-doctor"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000021",
+        "message": {
+          "role": "assistant",
+          "model": "<synthetic>",
+          "id": "msg_21",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Skill doctor: 3 skills checked\n\nNAME             SOURCE    TOKENS  STATUS\nrelease-notes    user         420  ok\ndeploy-check     project       95  ok\nacme-docs:search plugin       310  warn: description is empty\n\nOne skill needs attention. Run /skills to see every skill."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000022",
+        "message": {
+          "role": "user",
+          "content": "/context"
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000023",
+        "message": {
+          "role": "assistant",
+          "model": "<synthetic>",
+          "id": "msg_23",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "## Context Usage\n\n**Model:** claude-sonnet-5\n**Tokens:** 312k / 1M (31%)\n\n| Category | Tokens | Percentage |\n|----------|--------|------------|\n| System prompt | 8.2k | 0.8% |\n| Messages | 249k | 24.9% |\n| Free space | 620k | 62% |"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "header": [
+    {
+      "type": "layout",
+      "view": "single",
+      "sessionIds": [
+        "11111111-0000-4000-8000-000000000001"
+      ]
+    },
+    {
+      "type": "meta",
+      "meta": {
+        "sessionId": "11111111-0000-4000-8000-000000000001",
+        "cwd": "/work/orders",
+        "branch": "feat/docs-search-with-a-long-branch-name-here",
+        "status": "idle",
+        "statusSince": "@now-60000",
+        "model": "claude-sonnet-5",
+        "effort": "high",
+        "permissionMode": "default",
+        "models": [
+          {
+            "value": "claude-sonnet-5",
+            "displayName": "Sonnet 5",
+            "efforts": [
+              "low",
+              "medium",
+              "high",
+              "xhigh",
+              "max"
+            ]
+          }
+        ],
+        "contextTokens": 312000,
+        "contextMax": 1000000,
+        "title": "Wire up docs search",
+        "color": "purple",
+        "mcpIssues": 2,
+        "remoteControlUrl": "https://example.com/chat/abc",
+        "chrome": true
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "user",
+        "uuid": "00000000-0000-4000-8000-000000000010",
+        "message": {
+          "role": "user",
+          "content": "Add a search box to the docs page."
+        }
+      }
+    },
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "session_id": "11111111-0000-4000-8000-000000000001",
+        "parent_tool_use_id": null,
+        "type": "assistant",
+        "uuid": "00000000-0000-4000-8000-000000000011",
+        "message": {
+          "role": "assistant",
+          "model": "claude-sonnet-5",
+          "id": "msg_11",
+          "type": "message",
+          "content": [
+            {
+              "type": "text",
+              "text": "Done. The search box filters the list as you type."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

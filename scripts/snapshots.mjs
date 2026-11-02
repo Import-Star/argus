@@ -12,6 +12,8 @@ const TABS = [
   { id: "settings", title: "Settings" }
 ];
 
+const LIGHT_THEME = `:root { color-scheme: light; --vscode-editor-background: #ffffff; --vscode-editor-foreground: #3b3b3b; --vscode-foreground: #3b3b3b; --vscode-descriptionForeground: #717171; --vscode-disabledForeground: #a0a0a0; --vscode-errorForeground: #cd3131; --vscode-sideBar-background: #f8f8f8; --vscode-editorWidget-background: #f3f3f3; --vscode-widget-border: #c8c8c8; --vscode-panel-border: #e5e5e5; --vscode-input-background: #ffffff; --vscode-dropdown-background: #ffffff; --vscode-dropdown-foreground: #3b3b3b; --vscode-list-hoverBackground: #e8e8e8; --vscode-charts-green: #388a34; --vscode-charts-blue: #1a85ff; --vscode-charts-yellow: #bf8803; }`;
+
 const fixture = (name) => resolveTimes(JSON.parse(readFileSync(path.join(root, "test", "fixtures", "snapshots", `${name}.json`), "utf8")));
 
 function resolveTimes(value) {
@@ -179,6 +181,113 @@ async function questionSteps(page) {
   }
 }
 
+const SESSION_ID = "11111111-0000-4000-8000-000000000001";
+const panelMessage = (name) => ({ type: "panel", sessionId: SESSION_ID, panel: fixture("panels").panels[name] });
+const panelBase = (name) => () => [...fixture("panels").base, panelMessage(name)];
+
+async function actions(page) {
+  return page.evaluate(() => window.__posted.filter((message) => message.type === "panelAction").map(({ kind, action, payload }) => ({ kind, action, payload })));
+}
+
+async function expectActions(page, expected) {
+  const sent = await actions(page);
+  if (JSON.stringify(sent) !== JSON.stringify(expected)) throw new Error(`unexpected panelAction messages: ${JSON.stringify(sent)} (wanted ${JSON.stringify(expected)})`);
+}
+
+const row = (page, name) => page.locator(".mcp-row", { has: page.locator(".mcp-name", { hasText: name }) });
+
+async function mcpSteps(page) {
+  await row(page, "acme-docs").getByRole("button", { name: "Reconnect" }).click();
+  await row(page, "example-issues").getByRole("button", { name: "Authenticate" }).click();
+  await row(page, "acme-search").getByRole("button", { name: "Disable" }).click();
+  await row(page, "jane-notes").getByRole("button", { name: "Enable" }).click();
+  await row(page, "acme-search").locator("summary").click();
+  await page.getByRole("button", { name: "Refresh" }).click();
+  await expectActions(page, [
+    { kind: "mcp", action: "reconnect", payload: "acme-docs" },
+    { kind: "mcp", action: "authenticate", payload: "example-issues" },
+    { kind: "mcp", action: "disable", payload: "acme-search" },
+    { kind: "mcp", action: "enable", payload: "jane-notes" },
+    { kind: "mcp", action: "refresh" }
+  ]);
+}
+
+async function permissionsSteps(page) {
+  await page.getByRole("tab", { name: /^Deny/ }).click();
+  await page.getByRole("button", { name: "Remove" }).click();
+  await page.getByRole("tab", { name: /^Allow/ }).click();
+  await page.getByPlaceholder("Bash(npm test:*)").fill("Bash(npm run lint:*)");
+  if (!(await page.locator(".setp-add option", { hasText: "Project" }).isDisabled())) throw new Error("a settings file with invalid JSON can be picked for a new rule");
+  await page.locator(".setp-add select").selectOption({ label: "User" });
+  await page.locator(".setp-add").getByRole("button", { name: "Add" }).click();
+  await page.getByRole("tab", { name: /^Folders/ }).click();
+  await page.getByRole("button", { name: "Open file" }).first().click();
+  await page.getByRole("tab", { name: /^Allow/ }).click();
+  await expectActions(page, [
+    { kind: "permissions", action: "remove", payload: { list: "deny", text: "Read(./.env)", file: "/work/orders/.claude/settings.json" } },
+    { kind: "permissions", action: "add", payload: { list: "allow", text: "Bash(npm run lint:*)", file: "/Users/jane/.claude/settings.json" } },
+    { kind: "permissions", action: "open", payload: { list: "folders", file: "/Users/jane/.claude/settings.json" } }
+  ]);
+  if ((await page.getByPlaceholder("Bash(npm test:*)").inputValue()) !== "") throw new Error("add box was not cleared");
+}
+
+async function hooksSteps(page) {
+  await page.getByRole("button", { name: "Open file" }).first().click();
+  await expectActions(page, [{ kind: "hooks", action: "open", payload: { file: "/work/orders/.claude/settings.json", event: "PreToolUse" } }]);
+}
+
+async function closeSteps(page) {
+  await page.getByRole("button", { name: "Close" }).click();
+  await page.locator(".cmdp").waitFor({ state: "detached" });
+}
+
+async function contextSteps(page) {
+  await page.getByRole("button", { name: "Refresh" }).click();
+  await expectActions(page, [{ kind: "context", action: "refresh" }]);
+}
+
+async function configSteps(page) {
+  await page.locator(".cfg-row", { hasText: "autoCompactEnabled" }).getByRole("button", { name: "Off" }).click();
+  await page.locator(".cfg-row", { hasText: "theme" }).locator("select").selectOption("light");
+  await page.locator(".cfg-row", { hasText: "preferredNotifChannel" }).getByRole("button", { name: "Set" }).waitFor();
+  await page.locator(".cfg-row", { hasText: "editorMode" }).locator("select").selectOption("vim");
+  await page.getByPlaceholder("Search settings").fill("zzz");
+  await page.locator(".cmdp-empty", { hasText: "No settings match" }).waitFor();
+  await page.getByPlaceholder("Search settings").fill("");
+  await expectActions(page, [
+    { kind: "config", action: "set", payload: { key: "autoCompactEnabled", value: "false" } },
+    { kind: "config", action: "set", payload: { key: "theme", value: "light" } },
+    { kind: "config", action: "set", payload: { key: "editorMode", value: "vim" } }
+  ]);
+}
+
+async function loopsSteps(page) {
+  await page.getByRole("button", { name: "New loop" }).click();
+  await page.getByRole("button", { name: "Delete" }).first().click();
+  await expectActions(page, [
+    { kind: "loops", action: "new" },
+    { kind: "loops", action: "delete", payload: "a1b2c3d4" }
+  ]);
+}
+
+async function daemonSteps(page) {
+  await page.getByRole("button", { name: "Logs" }).click();
+  await page.getByRole("button", { name: "Open config" }).click();
+  await page.getByRole("button", { name: "Stop" }).click();
+  await expectActions(page, [
+    { kind: "daemon", action: "logs" },
+    { kind: "daemon", action: "open-config" },
+    { kind: "daemon", action: "stop" }
+  ]);
+}
+
+async function headerSteps(page) {
+  await page.locator(".hdr-mcp").click();
+  await page.locator(".hdr-context").click();
+  const sent = await page.evaluate(() => window.__posted.filter((message) => message.type === "send").map((message) => message.text));
+  if (JSON.stringify(sent) !== JSON.stringify(["/mcp", "/context"])) throw new Error(`unexpected header sends: ${JSON.stringify(sent)}`);
+}
+
 const CHAT_PAGE = { html: "chat.html" };
 const CENTER_PAGE = { html: "center.html" };
 
@@ -203,6 +312,27 @@ const SCREENS = [
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
   { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
   { name: "aside", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: asideSteps, expect: { panel: ".aside-panel", questions: ".aside-question", answer: ".aside-answer pre", streaming: ".aside-answer[aria-busy=\"true\"]", form: ".aside-form button" } },
+  { name: "panel-mcp", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp"), steps: mcpSteps, expect: { panel: ".cmdp", failed: ".mcp-dot-failed", needsAuth: ".mcp-dot-needs-auth", error: ".mcp-error", tools: ".mcp-tools li", destructive: ".mcp-badge-destructive", disabled: ".mcp-dot-disabled" } },
+  { name: "panel-mcp-narrow", ...CHAT_PAGE, width: 900, fixture: "panels", messages: panelBase("mcp"), expect: { panel: ".cmdp", failed: ".mcp-dot-failed", error: ".mcp-error" } },
+  { name: "panel-mcp-light", ...CHAT_PAGE, theme: "light", fixture: "panels", messages: panelBase("mcp"), expect: { panel: ".cmdp", failed: ".mcp-dot-failed" } },
+  { name: "panel-mcp-empty", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp-empty"), expect: { panel: ".cmdp", empty: ".cmdp-empty" } },
+  { name: "panel-closed", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp-empty"), steps: closeSteps, expect: { details: ".det-section" } },
+  { name: "panel-permissions", ...CHAT_PAGE, fixture: "panels", messages: panelBase("permissions"), steps: permissionsSteps, expect: { panel: ".cmdp", tabs: ".setp-tab", error: ".setp-error", rows: ".setp-row", add: ".setp-add input", files: ".setp-h" } },
+  { name: "panel-permissions-narrow", ...CHAT_PAGE, width: 900, fixture: "panels", messages: panelBase("permissions"), expect: { panel: ".cmdp", tabs: ".setp-tab", error: ".setp-error", add: ".setp-add input" } },
+  { name: "panel-hooks", ...CHAT_PAGE, fixture: "panels", messages: panelBase("hooks"), steps: hooksSteps, expect: { error: ".setp-error", rows: ".setp-row", heading: ".setp-h" } },
+  { name: "panel-context", ...CHAT_PAGE, fixture: "panels", messages: panelBase("context"), steps: contextSteps, expect: { panel: ".cmdp", total: ".up-total", stack: ".up-stack > div", legend: ".up-legend li", sub: ".up-sub" } },
+  { name: "panel-usage", ...CHAT_PAGE, fixture: "panels", messages: panelBase("usage"), expect: { panel: ".cmdp", windows: ".up-window", warn: ".up-track.warn", danger: ".up-track.danger", session: ".up-legend li", shares: ".up-share", periods: ".up-sub" } },
+  { name: "panel-usage-narrow", ...CHAT_PAGE, width: 900, fixture: "panels", messages: panelBase("usage"), expect: { panel: ".cmdp", windows: ".up-window" } },
+  { name: "panel-usage-basic", ...CHAT_PAGE, fixture: "panels", messages: panelBase("usage-basic"), expect: { panel: ".cmdp", note: ".cmdp-empty" } },
+  { name: "panel-config", ...CHAT_PAGE, fixture: "panels", messages: panelBase("config"), steps: configSteps, expect: { panel: ".cmdp", search: ".cfg-search", rows: ".cfg-row", on: ".cfg-on", select: "select.cfg-input" } },
+  { name: "panel-skills", ...CHAT_PAGE, fixture: "panels", messages: panelBase("skills"), expect: { panel: ".cmdp", skills: ".up-skills li", tokens: ".up-skill-head .up-num" } },
+  { name: "panel-skills-notokens", ...CHAT_PAGE, fixture: "panels", messages: panelBase("skills-notokens"), expect: { note: ".up-note", skills: ".up-skills li" } },
+  { name: "panel-loops", ...CHAT_PAGE, fixture: "panels", messages: panelBase("loops"), steps: loopsSteps, expect: { panel: ".cmdp", rows: ".loops-row", unknown: ".cmdp-empty" } },
+  { name: "panel-loops-session", ...CHAT_PAGE, fixture: "panels", messages: panelBase("loops-session"), expect: { rows: ".loops-row", none: ".cmdp-empty" } },
+  { name: "panel-daemon", ...CHAT_PAGE, fixture: "panels", messages: panelBase("daemon"), steps: daemonSteps, expect: { state: ".daemon-dot.on", fields: ".daemon-fields dt", raw: ".daemon-raw", actions: ".daemon-actions button", configured: ".daemon-title" } },
+  { name: "panel-daemon-off", ...CHAT_PAGE, fixture: "panels", messages: panelBase("daemon-off"), expect: { state: ".daemon-dot", raw: ".daemon-raw", actions: ".daemon-actions button" } },
+  { name: "header-chips", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").header, steps: headerSteps, expect: { header: ".chat-header", mcp: ".hdr-mcp", context: ".hdr-context", remote: ".hdr-pr" } },
+  { name: "command-output", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").cmdout, expect: { table: "pre.tr-cmdout", markdown: ".tr-text table" } },
   { name: "mermaid", html: "mermaid.html", steps: mermaidSteps, expect: { diagrams: ".mermaid-diagram:not([hidden]) svg", toggle: ".mermaid-toggle:not([hidden])", error: ".mermaid-error:not([hidden])", fallback: ".mermaid-block[data-state=error] .code-block" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } }
 ];
@@ -223,6 +353,7 @@ async function shoot(browser, screen, errors) {
     const mark = readFileSync(path.join(root, "media", "logo-mono.svg"), "utf8").replace(/<title>.*?<\/title>/s, "").replace('width="24" height="24"', 'width="16" height="16"');
     await page.evaluate((svg) => (document.querySelector(".mark").innerHTML = `<span>${svg}</span>Argus`), mark);
   }
+  if (screen.theme === "light") await page.addStyleTag({ content: LIGHT_THEME });
   await page.evaluate((messages) => window.__harness.play(messages), screen.messages ? screen.messages() : data.messages);
   await screen.steps?.(page, data);
   await page.mouse.move(0, 0);
