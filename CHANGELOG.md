@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- A worktree made with `cd <repo> && git worktree add ../<folder>` now shows on the session card. The hook used to resolve the
+  path from the session's folder, not the `cd`.
+
 ## 0.8.1
 
 - Argus is no longer marked Preview on the Marketplace.
