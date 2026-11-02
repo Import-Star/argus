@@ -130,6 +130,7 @@ export function CacheCountdown({ expiresAt }: { expiresAt: number }) {
 }
 
 const selectMultiAgent = (state: State) => state.multiAgent;
+const selectKeepAwake = (state: State) => state.keepAwake;
 
 function AgentsChip({ group, sessionId }: { group: ChatGroup; sessionId: string }) {
   const label = `${group.members.length} agents`;
@@ -149,6 +150,7 @@ export function Header({ sessionId }: { sessionId: string }) {
   const { meta, card, messages, ui } = useSession(sessionId);
   const group = useStore(useCallback((state: State) => state.groups.find((entry) => entry.members.some((member) => member.sessionId === sessionId)), [sessionId]));
   const multiAgent = useStore(selectMultiAgent);
+  const keepAwake = useStore(selectKeepAwake);
   const title = meta?.title || firstPrompt(messages) || "New chat";
   const pr = card?.prs.find((candidate) => candidate.state.toLowerCase() === "open");
   const reviewing = ui.side === "review";
@@ -188,6 +190,16 @@ export function Header({ sessionId }: { sessionId: string }) {
           MCP: {meta.mcpIssues} {meta.mcpIssues === 1 ? "issue" : "issues"}
         </button>
       ) : null}
+      {keepAwake !== "off" && (
+        <button
+          type="button"
+          class="hdr-pr"
+          title={keepAwake === "on" ? "Keeping this machine awake until you turn it off. Click to change." : "Keeping this machine awake while agents run. Click to change."}
+          onClick={() => post({ type: "chooseKeepAwake" })}
+        >
+          Awake: {keepAwake === "on" ? "On" : "Auto"}
+        </button>
+      )}
       {meta?.chrome && (
         <span class="mono muted" title="Claude in Chrome is on: Claude can control your browser. /chrome off turns it off.">
           Chrome

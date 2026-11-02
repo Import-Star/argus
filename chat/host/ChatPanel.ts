@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import * as path from "path";
 import * as vscode from "vscode";
 import { multiAgentEnabled } from "../../src/chat/multiAgent";
+import { keepAwakeMode } from "../../src/services/keepAwakeMode";
 import type { HostMessage, WebviewMessage } from "../../src/chat/protocol";
 import type { ChatManager } from "./ChatManager";
 import type { ChatSession } from "./ChatSession";
@@ -51,7 +52,8 @@ export class ChatPanel implements vscode.Disposable {
     this.subscriptions.push(
       this.panel.webview.onDidReceiveMessage((message: WebviewMessage) => void this.handle(message)),
       this.panel.onDidDispose(() => this.dispose()),
-      this.panel.onDidChangeViewState((event) => event.webviewPanel.active && this.focusEmitter.fire())
+      this.panel.onDidChangeViewState((event) => event.webviewPanel.active && this.focusEmitter.fire()),
+      vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration("argus.keepAwake") && this.post({ type: "keepAwake", mode: keepAwakeMode() }))
     );
     this.watchSessions();
   }
@@ -168,6 +170,7 @@ export class ChatPanel implements vscode.Disposable {
   private async sendAll(ids: readonly string[] = this.ids): Promise<void> {
     this.sendLayout();
     this.post({ type: "groups", groups: this.manager.groups() });
+    this.post({ type: "keepAwake", mode: keepAwakeMode() });
     this.post({ type: "rail", sessions: this.manager.rail() });
     for (const id of ids) {
       const session = this.manager.session(id);
@@ -212,6 +215,10 @@ export class ChatPanel implements vscode.Disposable {
     }
     if (message.type === "addAgent") {
       await this.manager.addAgent(message.sessionId);
+      return;
+    }
+    if (message.type === "chooseKeepAwake") {
+      await vscode.commands.executeCommand("argus.keepAwake.choose");
       return;
     }
     if (message.type === "openGroup") {

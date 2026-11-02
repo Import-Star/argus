@@ -159,6 +159,7 @@ export interface DiffComment {
 export type HostMessage =
   | { type: "layout"; view: "single" | "grid"; sessionIds: string[]; groupId?: string; multiAgent: boolean }
   | { type: "groups"; groups: ChatGroup[] }
+  | { type: "keepAwake"; mode: "off" | "on" | "auto" }
   | { type: "meta"; meta: ChatMeta }
   | { type: "card"; card: CardInfo }
   | { type: "rail"; sessions: RailSession[] }
@@ -200,6 +201,7 @@ export type WebviewMessage =
   | { type: "newChat" }
   | { type: "addAgent"; sessionId: string }
   | { type: "openGroup"; sessionId: string }
+  | { type: "chooseKeepAwake" }
   | { type: "grid"; action: "add" | "remove" | "expand"; sessionId: string }
   | { type: "changes"; sessionId: string; scope: ChangeScope; files?: string[]; prUrl?: string; worktree?: string }
   | { type: "fileDiff"; sessionId: string; scope: ChangeScope; path: string; files?: string[]; prUrl?: string; worktree?: string }

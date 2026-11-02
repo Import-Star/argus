@@ -58,6 +58,10 @@
         "title": "Argus: Open Control Center"
       },
       {
+        "command": "argus.keepAwake.choose",
+        "title": "Argus: Keep Machine Awake…"
+      },
+      {
         "command": "argus.openSettings",
         "title": "Argus: Settings"
       },
@@ -188,9 +192,25 @@
           ],
           "description": "Which sessions this VS Code window shows. Set it in Workspace settings to choose per window. With no folder open, all sessions are shown."
         },
+        "argus.keepAwake.mode": {
+          "type": "string",
+          "enum": [
+            "off",
+            "on",
+            "auto"
+          ],
+          "enumDescriptions": [
+            "Let this machine sleep as normal.",
+            "Keep this machine awake until you turn it off, whatever the agents are doing.",
+            "Keep this machine awake while any Claude session in this window is working or scheduled, and for 2 minutes after."
+          ],
+          "default": "off",
+          "description": "Stop this machine sleeping. Uses a Windows power request, caffeinate on macOS, or systemd-inhibit on Linux. Closing the lid still sleeps it. Change it from the Awake button in the chat header or the status bar."
+        },
         "argus.keepAwake.whileAgentsRun": {
           "type": "boolean",
           "default": false,
+          "deprecationMessage": "Use argus.keepAwake.mode. When mode isn't set, true here means auto.",
           "description": "Stop this machine sleeping while any Claude session in this window is working or scheduled, and for 2 minutes after. Uses a Windows power request, caffeinate on macOS, or systemd-inhibit on Linux. Closing the lid still sleeps it."
         },
         "argus.keepAwake.keepScreenOn": {

@@ -6,6 +6,10 @@ First public release.
 
 - Archiving a chat from its header now closes the chat as soon as you confirm. Worktree and plugin cleanup runs
   afterwards, with the session's card showing "archiving…" until it's done.
+- **Keep awake** has three modes in `argus.keepAwake.mode`: `off`, `on` (keeps the machine awake whatever the
+  agents are doing) and `auto` (the old while-agents-run behaviour). When it isn't off, an **Awake** button in the
+  chat header shows the mode and switches it. `argus.keepAwake.whileAgentsRun` is deprecated; `true` still means
+  `auto` until you pick a mode.
 - A reopened chat now shows the reply from a command that ran in its own subagent (such as a forked skill), which
   used to show only the prompt. **Text only** now shows these replies too, and a forked `/code-review` shows its
   findings in the findings card.
