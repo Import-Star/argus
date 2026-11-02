@@ -21,6 +21,7 @@ function repo(dir: string, files: Record<string, string>): void {
 describe("loadTouchedDiff", () => {
   it("diffs files in a repo nested in the session's folder, in that repo", async () => {
     const parent = fs.mkdtempSync(path.join(os.tmpdir(), "argus-touched-"));
+    const realParent = fs.realpathSync.native(parent);
     try {
       repo(parent, { "a.txt": "one\n", "other.txt": "x\n" });
       const nested = path.join(parent, "apps", "inner");
@@ -35,7 +36,7 @@ describe("loadTouchedDiff", () => {
 
       assert.equal(base, "main");
       assert.deepEqual(
-        files.map((file) => [file.path, file.rel, path.relative(parent, file.root).split(path.sep).join("/")]),
+        files.map((file) => [file.path, file.rel, path.relative(realParent, file.root).split(path.sep).join("/")]),
         [
           ["a.txt", "a.txt", ""],
           ["apps/inner/src/b.txt", "src/b.txt", "apps/inner"],
@@ -51,6 +52,22 @@ describe("loadTouchedDiff", () => {
         ]
       );
     } finally {
+      fs.rmSync(parent, { recursive: true, force: true });
+    }
+  });
+
+  it("finds the changes when the session's folder is reached through a link", async () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "argus-touched-"));
+    const link = `${parent}-link`;
+    try {
+      repo(parent, { "a.txt": "one\n" });
+      fs.writeFileSync(path.join(parent, "a.txt"), "one!\n");
+      // A junction on Windows needs no admin rights; elsewhere it's a plain directory symlink.
+      fs.symlinkSync(parent, link, "junction");
+      const { files } = await loadTouchedDiff(link, [path.join(link, "a.txt")], "main", 3);
+      assert.deepEqual(files.map((file) => [file.path, file.rel]), [["a.txt", "a.txt"]]);
+    } finally {
+      fs.rmSync(link, { force: true, recursive: false });
       fs.rmSync(parent, { recursive: true, force: true });
     }
   });

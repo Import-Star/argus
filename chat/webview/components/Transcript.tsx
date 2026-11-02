@@ -479,8 +479,8 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
   const root = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
-  const anchor = useRef<Anchor>();
-  const revealId = useRef<string>();
+  const anchor = useRef<Anchor | undefined>(undefined);
+  const revealId = useRef<string | undefined>(undefined);
   const searchBox = useRef<HTMLInputElement>(null);
   const hits = useRef<Range[]>([]);
   const jump = useRef(false);
