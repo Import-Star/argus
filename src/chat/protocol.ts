@@ -176,7 +176,8 @@ export type HostMessage =
   | { type: "rewound"; sessionId: string; userMessageId: string; text: string }
   | { type: "draft"; sessionId: string; text: string }
   | { type: "aside"; sessionId: string; askId: string; text: string; status: "streaming" | "done" | "error"; error?: string }
-  | { type: "panel"; sessionId: string; panel: Panel }
+  // refresh: update the panel only if it is already open.
+  | { type: "panel"; sessionId: string; panel: Panel; refresh?: boolean }
   | { type: "openPlan"; sessionId: string }
   | { type: "extension"; id: string; message: unknown };
 

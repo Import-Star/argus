@@ -36,7 +36,7 @@ export function ContextPanel({ data }: { sessionId: string; data: ContextPanelDa
         {data.segments.map((segment) => (
           <li key={segment.id} class={segment.kind === "deferred" ? "muted" : ""}>
             <i style={{ background: color(segment.id, segment.kind) }} />
-            <span class="up-name">{segment.name}{segment.kind === "deferred" ? " (not loaded)" : ""}</span>
+            <span class="up-name">{segment.name}</span>
             <span class="up-num">{segment.tokens.toLocaleString()}</span>
             <span class="up-num muted">{segment.percent.toFixed(1)}%</span>
           </li>

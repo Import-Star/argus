@@ -8,6 +8,7 @@ import { MessageQueue, type QueueAction } from "./messageQueue";
 import { withLocalCommandOutput } from "./restore";
 import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { Panel } from "../../src/chat/panels";
+import { refreshPanel } from "./panels";
 import { countMcpIssues, toMcpServers, type McpStatus } from "../../src/chat/panels/mcp";
 import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
 
@@ -192,6 +193,7 @@ export class ChatSession implements vscode.Disposable {
         includePartialMessages: true,
         hooks: { Stop: [{ hooks: [async (input) => {
           this.sessionCrons = (input as StopHookInput).session_crons ?? this.sessionCrons;
+          void refreshPanel(this, "loops");
           return {};
         }] }] },
         canUseTool: (toolName, input, { signal, suggestions, decisionReason, blockedPath, toolUseID }) =>
@@ -469,8 +471,8 @@ export class ChatSession implements vscode.Disposable {
     this.setStatus(this.pending.size > 0 ? "needs-you" : "working");
   }
 
-  public showPanel(panel: Panel): void {
-    this.emitter.fire({ type: "panel", sessionId: this.sessionId, panel });
+  public showPanel(panel: Panel, refresh = false): void {
+    this.emitter.fire({ type: "panel", sessionId: this.sessionId, panel, refresh });
   }
 
   public showPlan(): void {

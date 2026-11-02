@@ -28,6 +28,10 @@ export async function openPanel(session: ChatSession, kind: PanelKind): Promise<
   session.showPanel({ kind, data: await HANDLERS[kind].load(session) } as Panel);
 }
 
+export async function refreshPanel(session: ChatSession, kind: PanelKind): Promise<void> {
+  session.showPanel({ kind, data: await HANDLERS[kind].load(session) } as Panel, true);
+}
+
 export async function panelAction(session: ChatSession, kind: PanelKind, action: string, payload: unknown): Promise<void> {
   try {
     if (action !== "refresh") {

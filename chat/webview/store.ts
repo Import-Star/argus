@@ -136,9 +136,13 @@ export function dispatch(message: HostMessage): void {
     case "openReview":
       setUi(message.sessionId, { side: "review", reviewScope: message.scope, worktree: message.worktree, prUrl: message.prUrl, reviewFile: undefined });
       return;
-    case "panel":
-      setUi(message.sessionId, { side: "panel", panel: message.panel });
+    case "panel": {
+      const ui = state.sessions[message.sessionId]?.ui;
+      if (!message.refresh || (ui?.side === "panel" && ui.panel?.kind === message.panel.kind)) {
+        setUi(message.sessionId, { side: "panel", panel: message.panel });
+      }
       return;
+    }
     case "openPlan":
       setUi(message.sessionId, { side: "plan" });
       return;

@@ -239,6 +239,9 @@ async function hooksSteps(page) {
 async function closeSteps(page) {
   await page.getByRole("button", { name: "Close" }).click();
   await page.locator(".cmdp").waitFor({ state: "detached" });
+  // A refresh must not reopen a closed panel.
+  await page.evaluate((messages) => window.__harness.play(messages), [{ ...panelMessage("loops-session"), refresh: true }]);
+  if (await page.locator(".cmdp").count()) throw new Error("a refresh reopened a closed panel");
 }
 
 async function contextSteps(page) {
@@ -268,6 +271,9 @@ async function loopsSteps(page) {
     { kind: "loops", action: "new" },
     { kind: "loops", action: "delete", payload: "a1b2c3d4" }
   ]);
+  // The turn that deletes a loop ends with a refresh of the open panel.
+  await page.evaluate((messages) => window.__harness.play(messages), [{ ...panelMessage("loops-session"), refresh: true }]);
+  await page.getByText("Remind me to rebase the branch").waitFor();
 }
 
 async function daemonSteps(page) {
