@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.8.2
 
 - A chat no longer opens blank after a resume while its shell was in another folder: a session now keeps the
   folder it started in, so Argus still finds its history.
