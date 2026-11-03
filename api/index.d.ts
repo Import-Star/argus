@@ -194,9 +194,9 @@ export interface ArgusApi {
     // Cards for this window's scope (argus.sessions.scope), sorted by column then age.
     getCards(): readonly SessionCard[];
     readonly onDidChange: vscode.Event<readonly SessionCard[]>;
-    // Reveals the session's Claude Code tab, resuming it if needed.
+    // Opens the session in Argus chat, resuming it if needed.
     open(sessionId: string): Promise<void>;
-    // Opens a new Claude Code tab with the prompt filled in. With `link`, the session's record.links[plugin] = id
+    // Starts a new Argus chat with the prompt. With `link`, the session's record.links[plugin] = id
     // once its first prompt is submitted (the core appends a marker the hook strips).
     start(options: { prompt: string; link?: { plugin: string; id: string }; viewColumn?: vscode.ViewColumn }): Promise<void>;
   };

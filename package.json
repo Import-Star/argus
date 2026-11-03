@@ -411,7 +411,8 @@
     "publish:store": "npx @vscode/vsce publish --no-dependencies",
     "test": "tsc -p tsconfig.test.json && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/*.test.ts",
     "watch:chat": "node scripts/build-chat.mjs --watch",
-    "snapshots": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs"
+    "snapshots": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs",
+    "docs:reference": "node scripts/docs-reference.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

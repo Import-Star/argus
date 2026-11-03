@@ -4,6 +4,8 @@ First public release.
 
 ## Unreleased
 
+- Documentation site at [import-star.github.io/argus](https://import-star.github.io/argus/): features, every
+  setting and command, plugins and the plugin API. The README has new screenshots.
 - Sessions cards no longer have **add to grid**. Multi-agent grids are set up from inside a chat (**+ Agent**, or a grid tile's header).
 - Grid tiles have **Pop out** (moves the agent to its own tab, as the old remove button did) and **Archive** (archives
   the agent as its board card would and removes its tile).

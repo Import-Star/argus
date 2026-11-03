@@ -1,0 +1,14 @@
+title: Argus
+description: Mission control for Claude Code in VS Code.
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins:
+  - jekyll-remote-theme
+color_scheme: dark
+search_enabled: true
+heading_anchors: true
+aux_links:
+  "Argus on GitHub": "https://github.com/Import-Star/argus"
+  "VS Code Marketplace": "https://marketplace.visualstudio.com/items?itemName=importstar.argus-control-center"
+footer_content: "Argus is MIT licensed. Made by Import Star."
+exclude:
+  - README.md
