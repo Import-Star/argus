@@ -2,6 +2,23 @@
 
 First public release.
 
+## Unreleased
+
+- Sessions cards no longer have **add to grid**. Multi-agent grids are set up from inside a chat (**+ Agent**, or a grid tile's header).
+- Grid tiles have **Pop out** (moves the agent to its own tab, as the old remove button did) and **Archive** (archives
+  the agent as its board card would and removes its tile).
+- One **+** with an arrow sits in the same place in a chat header and a grid bar: **+** starts a new agent, the
+  arrow adds an existing chat. It replaces the grid's **+ Agent** and **Add session** buttons.
+- A grid tile's expand button now fills the grid tab with that agent instead of opening it in a new tab. Click it
+  again to see every agent.
+- Header and grid action buttons are outlined.
+- `/mcp` shows Reconnect, Enable and Disable on the server's row: "Reconnecting…" while it runs, then "Reconnected"
+  or the error, instead of a toast. Servers that need authentication show **Authenticate** without Reconnect.
+- The context meter moved from the chat header to **Usage** in the details panel. Clicking it still opens `/context`.
+- The chat header no longer shows a PR badge: it only showed one PR. Every PR is listed in the details panel.
+- The grid has the single chat's details panel (changed files, worktrees, PRs, subagents, usage) for one agent at a
+  time: click a tile or pick its tab. A focused tile always shows it; the bar's panel button hides it otherwise.
+
 ## 0.9.0
 
 - Archiving a chat from its header now closes the chat as soon as you confirm. Worktree and plugin cleanup runs

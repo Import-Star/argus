@@ -22,6 +22,8 @@ export interface McpPanelData {
   // False until the chat has started, when the SDK can't be asked yet.
   started: boolean;
   servers: McpServer[];
+  // The outcome of the last Reconnect, Enable or Disable, shown on that server's row.
+  result?: { server: string; action: string; error?: string };
 }
 
 const ORDER: Record<McpStatus, number> = { failed: 0, "needs-auth": 1, pending: 2, connected: 3, disabled: 4 };

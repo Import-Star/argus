@@ -386,7 +386,6 @@
       const unread = item.members.some((member) => member.column === "needs-you" && member.record.state === "done");
       const actions = [
         `<button data-action="open-card" data-session-id="${id}">open ↵</button>`,
-        !grouped && this.state.multiAgent && card.column !== "archived" ? `<button data-action="add-to-grid" data-session-id="${id}" title="Show this chat in the side-by-side grid">add to grid</button>` : "",
         unread ? `<button data-action="read-session" data-session-id="${id}">read</button>` : "",
         item.column === "archived"
           ? `<button data-action="unarchive-session" data-session-id="${id}">unarchive</button>`
@@ -575,8 +574,7 @@
         "open-card": () => (sessionId) => this.openCard(sessionId),
         "read-session": () => (sessionId) => this.readCard(sessionId),
         "archive-session": () => (sessionId) => this.archiveCard(sessionId),
-        "unarchive-session": () => (sessionId) => this.unarchiveCard(sessionId),
-        "add-to-grid": () => (sessionId) => this.ctx.post({ type: "addToGrid", sessionId })
+        "unarchive-session": () => (sessionId) => this.unarchiveCard(sessionId)
       };
       for (const [action, makeHandler] of Object.entries(actions)) {
         const handler = makeHandler();

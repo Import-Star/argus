@@ -118,7 +118,7 @@ board; opening one while it is running there warns you first, since two processe
   - `/export [file]` saves the conversation as Markdown, `/copy [N]` copies Claude's latest (or Nth-latest) reply,
     `/branch` (`/fork`) copies the chat into a new one, and `/plan` turns on plan mode, or opens the plan pane if it's on.
   - `/context`, `/usage` and `/skills` open a side panel: a context window breakdown by category (also opened by
-    clicking the header Context meter), plan limit bars with session cost and what is contributing, and the loaded
+    clicking the Context meter in the details panel), plan limit bars with session cost and what is contributing, and the loaded
     skills ranked by context cost.
   - `/mcp` opens a side panel of MCP servers: status, errors and tools, with Enable/Disable, Reconnect and
     Authenticate (in a terminal). The header shows **MCP: N issues** when a server failed or needs authentication.
@@ -144,13 +144,15 @@ board; opening one while it is running there warns you first, since two processe
 **Agents (experimental).** Turn on `argus.chat.experimentalMultiAgent` to run several agents on one task side by
 side. With it off, forks open in their own tab and each agent has its own card.
 
-- **+ Agent** in a chat's header starts another chat in the same folder (optionally with a first message) and
-  opens the group in a grid. Agents in a group share one Sessions card: it sits in the column of its most urgent
+- **+** in a chat's header, or a group grid's bar, starts another chat in the same folder (optionally with a first
+  message) and opens the group in a grid. The arrow next to it adds an existing chat to the group instead. Agents in a group share one Sessions card: it sits in the column of its most urgent
   agent, lists each agent with its status, and opens them all side by side when clicked. Archiving the card
   archives every agent. Groups are stored in `~/.claude/argus/board.json` (`groupOf`).
 - **Argus: Open Chats Side by Side** shows several chats in a grid, each with its transcript and a message box.
-  Tiles that need you are outlined. Add, remove or expand a tile from its header. **add to grid** on a Sessions
-  card adds its chat to the grid.
+  Tiles that need you are outlined. A details panel on the right (changed files, worktrees, PRs, subagents, usage) follows the tile you click or the
+  tab you pick; the panel button in the bar hides it. Each tile's header can focus it (fill the tab with that agent and
+  its details; click again to go back), pop it out to its own tab, or archive it (as
+  its board card would, removing the tile).
 
 `argus.chat.claudePath` sets the `claude` executable (empty: `claude` on your PATH, then `~/.local/bin`, where Claude
 Code's installer puts it). Without Claude Code, Argus offers to install it: **Argus: Install or Update Claude Code** runs
@@ -251,7 +253,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (tool calls hidden). Each chat remembers its own toggle. |
 | `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name (`Haiku 4.5`) or id. A chat's current model stays listed. |
 | `argus.chat.backgroundIdleMinutes` | `60` | How long a chat with no open tab keeps its Claude process after it goes idle. `0` stops it when its turn ends. |
-| `argus.chat.experimentalMultiAgent` | `false` | Experiment: **+ Agent**, the side-by-side grid and group cards. Off: forks open in their own tab. |
+| `argus.chat.experimentalMultiAgent` | `false` | Experiment: **+** for agents, the side-by-side grid and group cards. Off: forks open in their own tab. |
 | `argus.plugins.config` | `{}` | Settings for locally installed plugins, keyed by plugin id. See [Plugins](#plugins). |
 | `argus.plugins.paths` | `[]` | Extra plugin folders to load, on top of everything in `~/.claude/argus/plugins`. |
 

@@ -202,7 +202,7 @@ export type WebviewMessage =
   | { type: "addAgent"; sessionId: string }
   | { type: "openGroup"; sessionId: string }
   | { type: "chooseKeepAwake" }
-  | { type: "grid"; action: "add" | "remove" | "expand"; sessionId: string }
+  | { type: "grid"; action: "add" | "remove"; sessionId: string }
   | { type: "changes"; sessionId: string; scope: ChangeScope; files?: string[]; prUrl?: string; worktree?: string }
   | { type: "fileDiff"; sessionId: string; scope: ChangeScope; path: string; files?: string[]; prUrl?: string; worktree?: string }
   | { type: "sendComments"; sessionId: string; comments: DiffComment[] }

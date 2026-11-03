@@ -88,3 +88,16 @@
   color: var(--danger);
   border-color: var(--danger);
 }
+
+.mcp-busy,
+.mcp-done {
+  font-size: 12px;
+}
+
+.mcp-busy {
+  color: var(--muted);
+}
+
+.mcp-done {
+  color: var(--green);
+}

@@ -3,12 +3,16 @@ import { toMcpServers, type McpPanelData } from "../../../src/chat/panels/mcp";
 import type { ChatSession } from "../ChatSession";
 import type { PanelHandler } from "./types";
 
+const results = new WeakMap<ChatSession, McpPanelData["result"]>();
+
 export const mcpPanel: PanelHandler<McpPanelData> = {
   load: async (session) => {
     const statuses = await session.activeQuery?.mcpServerStatus();
     const servers = toMcpServers(statuses ?? []);
     session.setMcpServers(servers);
-    return { started: Boolean(statuses), servers };
+    const result = results.get(session);
+    results.delete(session);
+    return { started: Boolean(statuses), servers, result };
   },
   action: async (session, action, payload) => {
     const name = String(payload);
@@ -16,10 +20,15 @@ export const mcpPanel: PanelHandler<McpPanelData> = {
       return authenticate(session);
     }
     const q = session.activeQuery;
-    if (action === "enable" || action === "disable") {
-      await q?.toggleMcpServer(name, action === "enable");
-    } else if (action === "reconnect") {
-      await q?.reconnectMcpServer(name);
+    try {
+      if (action === "enable" || action === "disable") {
+        await q?.toggleMcpServer(name, action === "enable");
+      } else if (action === "reconnect") {
+        await q?.reconnectMcpServer(name);
+      }
+      results.set(session, { server: name, action });
+    } catch (error) {
+      results.set(session, { server: name, action, error: error instanceof Error ? error.message : String(error) });
     }
   }
 };
