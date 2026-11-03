@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.10.0
 
 - Documentation site at [import-star.github.io/argus](https://import-star.github.io/argus/): features, every
   setting and command, plugins and the plugin API. The README has new screenshots.
