@@ -290,7 +290,7 @@
         "argus.chat.experimentalMultiAgent": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Experiment: several agents on one task, shown side by side in one tab. Adds **+ Agent**, the board's **add to grid**, and opening a group's card as a grid. Off: forks open in their own tab."
+          "markdownDescription": "Experiment: several agents on one task, shown side by side in one tab. Adds **+** (new or existing agent) and opening a group's card as a grid. Off: forks open in their own tab."
         },
         "argus.chat.textOnlyDefault": {
           "type": "boolean",

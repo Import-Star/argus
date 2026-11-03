@@ -33,7 +33,6 @@ type FromWebview =
   | { type: "chipClick"; sessionId: string; index: number }
   | { type: "search"; query: string }
   | { type: "chatRespond"; sessionId: string; id: string; decision: "allow" | "always" | "deny"; answers?: unknown }
-  | { type: "addToGrid"; sessionId: string }
   | { type: "openGrid"; sessionIds: string[]; groupId?: string }
   | { type: "setUpTracking" };
 
@@ -154,9 +153,6 @@ export function createSessionsTab(
           chat.host.respond(msg.sessionId, msg.id, { behavior: "allow", always: msg.decision === "always" || undefined, updatedInput });
           return;
         }
-        case "addToGrid":
-          chat.host?.addToGrid(msg.sessionId);
-          return;
         case "openGrid": {
           const ids = Array.isArray(msg.sessionIds) ? msg.sessionIds.filter((id): id is string => typeof id === "string") : [];
           if (ids.length > 0) {

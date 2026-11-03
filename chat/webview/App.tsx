@@ -1,29 +1,12 @@
 import { Composer } from "./components/Composer";
-import { DetailsPane } from "./components/DetailsPane";
 import { Grid } from "./components/Grid";
 import { Header } from "./components/Header";
-import { CommandPanel } from "./components/panels/CommandPanel";
-import { PlanPane } from "./components/PlanPane";
 import { ReviewPane } from "./components/ReviewPane";
+import { SidePane } from "./components/SidePane";
 import { Transcript } from "./components/Transcript";
-import { WorkflowPane } from "./components/WorkflowPane";
 import { useSession, useStore, type State } from "./store";
 
 const selectLayout = (state: State) => `${state.view}:${state.sessionIds.join(",")}`;
-
-function SidePane({ sessionId }: { sessionId: string }) {
-  const { ui } = useSession(sessionId);
-  switch (ui.side) {
-    case "plan":
-      return <PlanPane sessionId={sessionId} />;
-    case "workflow":
-      return <WorkflowPane sessionId={sessionId} />;
-    case "panel":
-      return <CommandPanel sessionId={sessionId} />;
-    default:
-      return <DetailsPane sessionId={sessionId} />;
-  }
-}
 
 function SessionView({ sessionId }: { sessionId: string }) {
   const { ui } = useSession(sessionId);

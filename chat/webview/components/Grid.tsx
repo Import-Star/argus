@@ -1,7 +1,10 @@
 import { useEffect, useState } from "preact/hooks";
-import type { ChatGroup, ChatStatus } from "../../../src/chat/protocol";
+import type { ChatStatus } from "../../../src/chat/protocol";
 import { post, useSession, useStore, type State } from "../store";
+import { AddAgent } from "./AddAgent";
 import { Composer } from "./Composer";
+import { ReviewPane } from "./ReviewPane";
+import { SidePane } from "./SidePane";
 import { Transcript } from "./Transcript";
 import "./grid.css";
 
@@ -50,13 +53,12 @@ function Icon({ path }: { path: string }) {
   );
 }
 
-function Tile({ sessionId, now }: { sessionId: string; now: number }) {
+function Tile({ sessionId, now, focused, selected, onFocus, onSelect }: { sessionId: string; now: number; focused: boolean; selected: boolean; onFocus: () => void; onSelect: () => void }) {
   const { meta } = useSession(sessionId);
-  const rail = useStore(selectRail);
   const status = meta?.status ?? "starting";
-  const title = meta?.title || rail.find((entry) => entry.sessionId === sessionId)?.title || "Untitled chat";
+  const title = useTitle(sessionId);
   return (
-    <section class={`grid-tile${status === "needs-you" ? " needs" : ""}`} aria-label={title}>
+    <section class={`grid-tile${status === "needs-you" ? " needs" : ""}${selected ? " selected" : ""}`} aria-label={title} onPointerDown={onSelect} onFocusIn={onSelect}>
       <header class="grid-tile-head">
         <Glyph status={status} />
         <span class="grid-tile-title">{title}</span>
@@ -64,46 +66,21 @@ function Tile({ sessionId, now }: { sessionId: string; now: number }) {
           {STATUS_TEXT[status]}
           {meta ? ` · ${age(meta.statusSince, now)}` : ""}
         </span>
-        <button class="ghost grid-icon" aria-label={`Expand ${title}`} title="Expand" onClick={() => post({ type: "grid", action: "expand", sessionId })}>
-          <Icon path="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+        <button class="ghost grid-icon" aria-pressed={focused} aria-label={`${focused ? "Back to all agents" : "Focus"} ${title}`} title={focused ? "Back to all agents" : "Focus: fill the tab with this agent"} onClick={onFocus}>
+          <Icon path={focused ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"} />
         </button>
-        <button class="ghost grid-icon" aria-label={`Move ${title} to its own tab`} title="Move to its own tab" onClick={() => post({ type: "grid", action: "remove", sessionId })}>
-          <Icon path="M6 6l12 12M18 6L6 18" />
+        <button class="ghost grid-icon" aria-label={`Pop out ${title}`} title="Pop out to its own tab" onClick={() => post({ type: "grid", action: "remove", sessionId })}>
+          <Icon path="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" />
+        </button>
+        <button class="ghost grid-icon" aria-label={`Archive ${title}`} title="Archive: like archiving its board card" onClick={() => post({ type: "archive", sessionId })}>
+          <Icon path="M3 7h18M5 7v12h14V7M9 11h6M4 4h16v3H4z" />
         </button>
       </header>
       <div class="grid-tile-body">
-        <Transcript sessionId={sessionId} compact />
+        <Transcript sessionId={sessionId} compact={!focused} />
       </div>
-      <Composer sessionId={sessionId} compact />
+      <Composer sessionId={sessionId} compact={!focused} />
     </section>
-  );
-}
-
-function AddPicker({ ids }: { ids: string[] }) {
-  const [open, setOpen] = useState(false);
-  const rail = useStore(selectRail);
-  const available = rail.filter((entry) => !ids.includes(entry.sessionId));
-  const add = (sessionId: string) => {
-    post({ type: "grid", action: "add", sessionId });
-    setOpen(false);
-  };
-  return (
-    <div class="grid-add" onKeyDown={(event) => event.key === "Escape" && setOpen(false)}>
-      <button class="primary" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen(!open)}>
-        Add session
-      </button>
-      {open && (
-        <div class="grid-picker" role="menu" aria-label="Sessions not in the grid">
-          {available.length === 0 && <div class="grid-picker-empty muted">Every session is already here.</div>}
-          {available.map((entry) => (
-            <button key={entry.sessionId} class="ghost grid-picker-item" role="menuitem" onClick={() => add(entry.sessionId)}>
-              <span class="grid-picker-title">{entry.title}</span>
-              <span class="muted">{entry.repo}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -130,39 +107,89 @@ function Summary({ ids, group }: { ids: string[]; group: boolean }) {
   );
 }
 
-const selectGroup = (state: State) => state.groups.find((entry) => entry.id === state.groupId);
+function useTitle(sessionId: string): string {
+  const { meta } = useSession(sessionId);
+  const rail = useStore(selectRail);
+  return meta?.title || rail.find((entry) => entry.sessionId === sessionId)?.title || "Untitled chat";
+}
 
-function GroupName({ group }: { group: ChatGroup }) {
+function AgentTab({ sessionId, selected, onSelect }: { sessionId: string; selected: boolean; onSelect: () => void }) {
+  const { meta } = useSession(sessionId);
+  const title = useTitle(sessionId);
+  return (
+    <button type="button" class="grid-side-tab" aria-pressed={selected} title={title} onClick={onSelect}>
+      <Glyph status={meta?.status ?? "starting"} />
+      <span>{title}</span>
+    </button>
+  );
+}
+
+// The details panel of one agent at a time: the selected tile's, or the focused one's.
+function AgentSide({ ids, sessionId, onSelect }: { ids: string[]; sessionId: string; onSelect: (id: string) => void }) {
+  const { ui } = useSession(sessionId);
   return (
     <>
-      <span class="grid-group" title={group.title}>
-        {group.title}
-      </span>
-      <button class="grid-add-agent" title="Start another agent in this folder" onClick={() => post({ type: "addAgent", sessionId: group.members[0].sessionId })}>
-        + Agent
-      </button>
+      <aside class="chat-side grid-side" aria-label="Agent details">
+        {ids.length > 1 && (
+          <div class="grid-side-tabs">
+            {ids.map((id) => (
+              <AgentTab key={id} sessionId={id} selected={id === sessionId} onSelect={() => onSelect(id)} />
+            ))}
+          </div>
+        )}
+        <SidePane sessionId={sessionId} />
+      </aside>
+      {ui.side === "review" && <ReviewPane sessionId={sessionId} />}
     </>
   );
 }
+
+const selectGroup = (state: State) => state.groups.find((entry) => entry.id === state.groupId);
 
 export function Grid() {
   const ids = useStore(selectIds);
   const group = useStore(selectGroup);
   const now = useNow();
+  const [focus, setFocus] = useState<string>();
+  const [picked, setPicked] = useState<string>();
+  const [panel, setPanel] = useState(true);
+  const shown = focus && ids.includes(focus) ? [focus] : ids;
+  const selected = shown.length === 1 ? shown[0] : picked && ids.includes(picked) ? picked : ids[0];
+  const showSide = Boolean(selected) && (panel || shown.length === 1);
   return (
     <div class="chat-grid">
       <header class="grid-bar">
-        {group && <GroupName group={group} />}
+        {group && (
+          <span class="grid-group" title={group.title}>
+            {group.title}
+          </span>
+        )}
         <Summary ids={ids} group={Boolean(group)} />
-        <AddPicker ids={ids} />
+        <span class="grid-bar-end">
+          <button type="button" class="ghost hdr-icon" aria-pressed={showSide} aria-label="Agent details" title={showSide ? "Hide agent details" : "Show agent details"} onClick={() => setPanel(!showSide)}>
+            <Icon path="M4 4h16v16H4zM15 4v16" />
+          </button>
+          <AddAgent exclude={ids} newFrom={group?.members[0].sessionId} />
+        </span>
       </header>
       {ids.length === 0 ? (
         <div class="chat-empty">No sessions in the grid. Add one to start.</div>
       ) : (
-        <div class="grid-tiles">
-          {ids.map((id) => (
-            <Tile key={id} sessionId={id} now={now} />
-          ))}
+        <div class="grid-body">
+          <div class="grid-tiles">
+            {shown.map((id) => (
+              <Tile
+                key={id}
+                sessionId={id}
+                now={now}
+                focused={shown.length === 1 && id === focus}
+                selected={showSide && shown.length > 1 && id === selected}
+                onFocus={() => setFocus(focus === id ? undefined : id)}
+                onSelect={() => setPicked(id)}
+              />
+            ))}
+          </div>
+          {showSide && selected && <AgentSide ids={ids} sessionId={selected} onSelect={(id) => (focus ? setFocus(id) : setPicked(id))} />}
         </div>
       )}
     </div>

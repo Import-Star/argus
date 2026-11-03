@@ -111,7 +111,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 14px;
+  gap: 6px 8px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -129,6 +129,19 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
+}
+
+.chat-side .hdr-context {
+  width: 100%;
+  padding: 2px 0;
+}
+
+.chat-side .hdr-bar {
+  flex: 1;
+}
+
+.chat-side .hdr-context > span:first-child {
+  color: var(--muted);
 }
 
 .hdr-context-count {
@@ -183,4 +196,14 @@
   width: 22px;
   height: 22px;
   flex: none;
+}
+
+button.hdr-icon:not(.hdr-rename),
+button.ghost.grid-icon {
+  border-color: var(--border);
+}
+
+button.hdr-icon:not(.hdr-rename):hover,
+button.ghost.grid-icon:hover {
+  border-color: var(--accent);
 }

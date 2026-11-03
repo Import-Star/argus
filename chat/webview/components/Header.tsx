@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "preact/hooks";
 import type { ChatGroup, ChatStatus, SDKMessage } from "../../../src/chat/protocol";
 import { SESSION_COLORS } from "../../../src/chat/pickers";
 import { post, setUi, useSession, useStore, type State } from "../store";
+import { AddAgent } from "./AddAgent";
 import { Icon } from "./Icon";
 import { SideQuestion } from "./SideQuestion";
 import "./header.css";
@@ -77,7 +78,7 @@ function StatusPill({ status, since, error }: { status: ChatStatus; since: numbe
   );
 }
 
-function ContextMeter({ sessionId, tokens, max }: { sessionId: string; tokens: number; max: number }) {
+export function ContextMeter({ sessionId, tokens, max }: { sessionId: string; tokens: number; max: number }) {
   const percent = Math.min(100, (tokens / max) * 100);
   const level = percent >= 90 ? "danger" : percent >= 75 ? "warn" : "";
   return (
@@ -152,7 +153,6 @@ export function Header({ sessionId }: { sessionId: string }) {
   const multiAgent = useStore(selectMultiAgent);
   const keepAwake = useStore(selectKeepAwake);
   const title = meta?.title || firstPrompt(messages) || "New chat";
-  const pr = card?.prs.find((candidate) => candidate.state.toLowerCase() === "open");
   const reviewing = ui.side === "review";
   const color = SESSION_COLORS[meta?.color as keyof typeof SESSION_COLORS];
   return (
@@ -173,11 +173,6 @@ export function Header({ sessionId }: { sessionId: string }) {
         <span class="mono muted" title={card.worktree}>
           {basename(card.worktree)}
         </span>
-      )}
-      {pr && (
-        <button type="button" class="hdr-pr" title={pr.title} onClick={() => post({ type: "openUrl", url: pr.url })}>
-          PR {prLabel(pr)} open
-        </button>
       )}
       {group && multiAgent && <AgentsChip group={group} sessionId={sessionId} />}
       {meta?.remoteControlUrl && (
@@ -206,7 +201,6 @@ export function Header({ sessionId }: { sessionId: string }) {
         </span>
       )}
       <div class="hdr-end">
-        {meta?.contextTokens !== undefined && meta.contextMax ? <ContextMeter sessionId={sessionId} tokens={meta.contextTokens} max={meta.contextMax} /> : null}
         <SideQuestion sessionId={sessionId} />
         <button
           type="button"
@@ -218,11 +212,7 @@ export function Header({ sessionId }: { sessionId: string }) {
         >
           <Icon d="M6 3v12M18 9v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM18 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 9h6l-2-2M18 15h-6l2 2" />
         </button>
-        {multiAgent && (
-          <button type="button" class="ghost hdr-icon" aria-label="Add agent" title="Add agent: start another agent in this folder" onClick={() => post({ type: "addAgent", sessionId })}>
-            <Icon d="M12 5v14M5 12h14" />
-          </button>
-        )}
+        {multiAgent && <AddAgent exclude={group ? group.members.map((member) => member.sessionId) : [sessionId]} newFrom={sessionId} />}
         <button type="button" class="ghost hdr-icon" aria-label="Archive" title="Archive: like archiving its board card" onClick={() => post({ type: "archive", sessionId })}>
           <Icon d="M3 7h18M5 7v12h14V7M9 11h6M4 4h16v3H4z" />
         </button>

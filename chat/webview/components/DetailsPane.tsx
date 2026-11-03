@@ -5,7 +5,7 @@ import { sessionArtifacts } from "../sessionArtifacts";
 import { sessionFiles } from "../sessionFiles";
 import { post, setUi, useSession } from "../store";
 import { formatDuration } from "../workflow";
-import { CacheCountdown, formatTokens, prLabel } from "./Header";
+import { CacheCountdown, ContextMeter, formatTokens, prLabel } from "./Header";
 import "./details.css";
 
 interface AgentRun {
@@ -412,7 +412,8 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
           ))}
           {cacheExpiresAt !== undefined && <CacheCountdown expiresAt={cacheExpiresAt} />}
           {card?.usedTokens !== undefined && <Row label="Tokens this session" value={formatTokens(card.usedTokens)} />}
-          {meta?.contextTokens !== undefined && <Row label="Context" value={meta.contextMax ? `${formatTokens(meta.contextTokens)} / ${formatTokens(meta.contextMax)}` : formatTokens(meta.contextTokens)} />}
+          {meta?.contextTokens !== undefined &&
+            (meta.contextMax ? <ContextMeter sessionId={sessionId} tokens={meta.contextTokens} max={meta.contextMax} /> : <Row label="Context" value={formatTokens(meta.contextTokens)} />)}
           {card?.compactions !== undefined && <Row label="Compacted" value={`${card.compactions} ${card.compactions === 1 ? "time" : "times"}`} />}
         </Section>
       )}
