@@ -18,6 +18,28 @@ glance, know which ones are waiting on you, and work with them in Argus's own ch
 
 **Full documentation: [import-star.github.io/argus](https://import-star.github.io/argus/)**
 
+## Contents
+
+- [Getting started](#getting-started)
+- [Features](#features)
+  - [Sessions board](#sessions-board)
+  - [Control Center](#control-center)
+  - [Settings tab](#settings-tab)
+  - [Diff review](#diff-review)
+  - [Argus chat](#argus-chat)
+  - [Claude plan usage](#claude-plan-usage)
+- [Plugins](#plugins)
+  - [Installing one](#installing-one)
+  - [Configuring one](#configuring-one)
+  - [Writing one](#writing-one)
+- [Requirements](#requirements)
+- [Settings](#settings)
+- [Commands](#commands)
+- [What Argus reads and writes](#what-argus-reads-and-writes)
+- [Troubleshooting](#troubleshooting)
+- [Uninstalling](#uninstalling)
+- [License](#license)
+
 ## Getting started
 
 1. Install Argus, and make sure you have the [requirements](#requirements), in particular Node.js 24 or newer.
