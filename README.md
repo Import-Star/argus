@@ -14,7 +14,9 @@ glance, know which ones are waiting on you, and work with them in Argus's own ch
 - **Plan usage**: your Claude plan usage in the status bar.
 - **Plugins**: add your own Control Center tabs, card chips and archive steps through a plugin API.
 
-![Argus Demo](assets/demo.gif)
+![The Argus Control Center: sessions sorted into Needs you, Working, Idle and PR open](docs/assets/dashboard.png)
+
+**Full documentation: [import-star.github.io/argus](https://import-star.github.io/argus/)**
 
 ## Getting started
 
@@ -85,6 +87,8 @@ Settings UI filtered to Argus.
 
 ### Diff review
 
+![Reviewing a session's changes and sending line comments to Claude](docs/assets/git-diff.gif)
+
 - A card with a worktree gets a `± <worktree>` chip; a card with an open PR gets `± #<number>`. Click either to
   open the session's chat with that diff in its review panel.
 - Comment on lines and send the comments to the agent from the review panel.
@@ -143,6 +147,8 @@ board; opening one while it is running there warns you first, since two processe
 
 **Agents (experimental).** Turn on `argus.chat.experimentalMultiAgent` to run several agents on one task side by
 side. With it off, forks open in their own tab and each agent has its own card.
+
+![Several agents working side by side in one grid](docs/assets/multi-agent.gif)
 
 - **+** in a chat's header, or a group grid's bar, starts another chat in the same folder (optionally with a first
   message) and opens the group in a grid. The arrow next to it adds an existing chat to the group instead. Agents in a group share one Sessions card: it sits in the column of its most urgent

@@ -69,5 +69,8 @@ Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins` that
   is separate); only `src/services/UsageService.ts` reads it.
 - Update the relevant README and CHANGELOG when behaviour changes. List any new network call in the README's
   Network use line.
+- The docs site (`docs/`, GitHub Pages at https://import-star.github.io/argus/) covers the same behaviour in more
+  depth: update its page too. `docs/settings.md` and `docs/commands.md` are generated: run `npm run docs:reference`
+  after changing settings or commands in `package.json`. Images live in `docs/assets/`, shared with the README.
 - Windows, macOS and Linux must all work: use `path`, `os.homedir()` and `execFile` with argument arrays, never
   shell strings.

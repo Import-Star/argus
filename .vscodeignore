@@ -11,6 +11,7 @@ DEVELOPING.md
 .claude/**
 test/**
 assets/**
+docs/**
 .github/**
 plugins/**
 chat/**
