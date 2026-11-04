@@ -49,6 +49,16 @@ async function reviewSteps(page, { then }) {
   await page.evaluate((messages) => window.__harness.play(messages), then);
 }
 
+async function reviewMarkdownSteps(page) {
+  await page.locator(".det-fold > summary").first().click();
+  await page.locator(".det-file").first().click();
+  await page.locator(".review-file", { hasText: "README.md" }).click();
+  await page.getByRole("button", { name: "Show rendered" }).click();
+  const table = page.locator('[data-line="README.md:new:5"]');
+  await table.locator(".review-block").click();
+  await table.locator("textarea").fill("Add a row for multiply once it lands?");
+}
+
 // Diagrams draw after Mermaid's bundle loads, so wait for both, and for the broken one to fall back to code.
 async function mermaidSteps(page) {
   await page.locator(".mermaid-diagram:not([hidden]) svg").nth(1).waitFor();
@@ -304,6 +314,7 @@ const SCREENS = [
   { name: "question", ...CHAT_PAGE, steps: questionSteps, expect: { card: ".perm-card.question", answered: ".q-row", options: ".q-option", recommended: ".q-badge", receipt: ".tr-answer-list dd" } },
   { name: "plan", ...CHAT_PAGE, steps: planSteps, expect: { planPane: ".plan-pane", planBlocks: ".plan-block", comment: ".plan-comment", approve: ".plan-foot button" } },
   { name: "review", ...CHAT_PAGE, steps: reviewSteps, expect: { overlay: ".review", threads: ".review-thread", answered: ".review-claude:not(.review-working)", inProgress: ".review-working", files: ".review-file" } },
+  { name: "review-markdown", ...CHAT_PAGE, fixture: "review", steps: reviewMarkdownSteps, expect: { overlay: ".review", rendered: ".review-rendered table", changed: ".review-block-add", thread: ".review-rendered .review-thread" } },
   { name: "review-pr", ...CHAT_PAGE, messages: () => [...fixture("review").messages, ...fixture("review-pr").messages], steps: reviewPrSteps, expect: { overlay: ".review", prTab: '.review-tabs [aria-selected="true"]', files: ".review-file", deleted: ".review-k-del", gapCollapsed: ".review-gap", gapExpanded: ".review-line.review-k-ctx" } },
   { name: "grid", ...CHAT_PAGE, expect: { tiles: ".grid-tile", needsYou: ".grid-tile.needs", summary: ".grid-needs", groupName: ".grid-group", addAgent: ".add-agent.split" } },
   { name: "board", ...CENTER_PAGE, height: 1200, tab: "sessions", messages: () => fixture("board").messages, steps: boardSteps, expect: { cards: ".row", permission: ".pending-code", question: ".pending-q", columns: ".scol", group: ".row.group", agents: ".row.group .agent", groupPending: ".row.group .agent-pending .pending-code" } },

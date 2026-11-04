@@ -36,5 +36,9 @@ Click a line to comment on it, then send the comments to Claude. Each comment ge
 answer under it. Unchanged lines between changes are folded; click a gap to expand it (small gaps in full, larger
 ones 20 lines at a time). Expanded lines can be commented on too.
 
+Long lines wrap. A changed Markdown file has **Show rendered** in its header to read the new version rendered.
+Click a rendered block (paragraph, heading, list, table, code) to comment on it; the comment is on the block's first
+line. Blocks with added lines are highlighted. Comments on deleted lines show at the top. **Show diff** goes back.
+
 `argus.diffReview.baseRef` sets the base branch (empty: `origin/HEAD`, then `origin/main`, `origin/master`, `main`,
 `master`) and `argus.diffReview.contextLines` the unchanged lines shown around each change.
