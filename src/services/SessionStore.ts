@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord } from "../types";
+import { PrCheck, PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord } from "../types";
 import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
@@ -410,7 +410,7 @@ export class SessionStore implements vscode.Disposable {
   // Only PRs still linked from a session, so the file doesn't grow forever.
   private savePrCache(): void {
     const linked = new Set(this.readRecords().flatMap((record) => record.prs));
-    const prs = Object.fromEntries([...this.prByUrl].filter(([url, summary]) => linked.has(url) && !summary.error));
+    const prs = Object.fromEntries([...this.prByUrl].filter(([url, summary]) => linked.has(url) && !summary.error).map(([url, summary]) => [url, { ...summary, checks: cachedChecks(summary.checks) }]));
     try {
       const tmp = `${PR_CACHE_FILE}.${process.pid}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(prs));
@@ -527,4 +527,12 @@ function readPrCache(): Map<string, PrSummary> {
   } catch {
     return new Map();
   }
+}
+
+// Cards only show failing counts and running/passing, so keep every failing check and one of each other kind.
+function cachedChecks(checks: PrCheck[]): PrCheck[] {
+  const failing = checks.filter((check) => check.conclusion && !["SUCCESS", "SKIPPED", "NEUTRAL"].includes(check.conclusion));
+  const running = checks.find((check) => !check.conclusion && check.status !== "COMPLETED");
+  const passing = checks.find((check) => !failing.includes(check) && check !== running);
+  return [...failing, ...(running ? [running] : []), ...(passing ? [passing] : [])];
 }
