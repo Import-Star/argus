@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ArgusApi, ArgusChatExtension, ArgusTab, ChatDetailsProvider, ChatExtensionHandle, CleanupItem, PrSummary, SessionCard, SessionChip, TabHandle } from "./types";
+import { ArgusApi, ArgusChatExtension, ArgusTab, ChatDetailsProvider, ChatExtensionHandle, CleanupItem, NewChatOptions, PrSummary, SessionCard, SessionChip, TabHandle } from "./types";
 import { ChatDetailsRegistry } from "./services/chatDetails";
 import { ChatExtensionRegistry } from "./services/chatExtensions";
 import { ArchiveCleanupRegistry } from "./services/archiveSession";
@@ -67,7 +67,7 @@ export function createApi(services: ArgusServices): ArgusApi {
       async open(sessionId: string): Promise<void> {
         await vscode.commands.executeCommand("argus.sessions.open", { record: { sessionId } });
       },
-      async start(options: { prompt: string; link?: { plugin: string; id: string }; viewColumn?: vscode.ViewColumn }): Promise<void> {
+      async start(options: { prompt: string; link?: { plugin: string; id: string }; viewColumn?: vscode.ViewColumn } & NewChatOptions): Promise<void> {
         let prompt = options.prompt;
         if (options.link) {
           if (!LINK_PLUGIN.test(options.link.plugin) || !LINK_ID.test(options.link.id)) {
@@ -75,7 +75,7 @@ export function createApi(services: ArgusServices): ArgusApi {
           }
           prompt = `${prompt}\n\n[argus:${options.link.plugin}:${options.link.id}]`;
         }
-        await startChat(prompt, options.viewColumn);
+        await startChat(prompt, options.viewColumn, { model: options.model, effort: options.effort, cwd: options.cwd });
       }
     },
 

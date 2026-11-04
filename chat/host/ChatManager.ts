@@ -4,6 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import type { ChatDeps, ChatExtensionHub } from "../../src/chat/types";
+import type { NewChatOptions } from "../../src/types";
 import type { LiveChat } from "../../src/services/sessionColumn";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
@@ -242,8 +243,8 @@ export class ChatManager implements vscode.Disposable {
   }
 
   // Opens a session in its own tab: an existing chat, a board session resumed here, or a new chat when no id is given.
-  public async open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn): Promise<void> {
-    const session = sessionId ? await this.resume(sessionId) : await this.create();
+  public async open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn, options?: NewChatOptions): Promise<void> {
+    const session = sessionId ? await this.resume(sessionId) : await this.create(options);
     if (!session) {
       return;
     }
@@ -550,8 +551,9 @@ export class ChatManager implements vscode.Disposable {
     }
   }
 
-  private spawn(cwd: string): ChatSession {
-    return this.add(new ChatSession({ cwd, resume: false, ...this.defaults(cwd) }));
+  private spawn(cwd: string, overrides?: Pick<NewChatOptions, "model" | "effort">): ChatSession {
+    const defaults = this.defaults(cwd);
+    return this.add(new ChatSession({ cwd, resume: false, ...defaults, model: overrides?.model ?? defaults.model, effort: overrides?.effort ?? defaults.effort }));
   }
 
   // The SDK's own binary package isn't shipped in the VSIX, so chat needs the user's Claude Code install.
@@ -563,9 +565,12 @@ export class ChatManager implements vscode.Disposable {
     return false;
   }
 
-  private async create(): Promise<ChatSession | undefined> {
+  private async create(options?: NewChatOptions): Promise<ChatSession | undefined> {
     if (!this.claudeReady()) {
       return undefined;
+    }
+    if (options?.cwd) {
+      return this.spawn(options.cwd, options);
     }
     const folders = vscode.workspace.workspaceFolders ?? [];
     const ask = folders.length > 1 && vscode.workspace.getConfiguration("argus.chat").get<boolean>("askForFolder", false);
@@ -574,7 +579,7 @@ export class ChatManager implements vscode.Disposable {
     if (ask && !folder) {
       return undefined;
     }
-    return this.spawn(folder?.uri.fsPath ?? os.homedir());
+    return this.spawn(folder?.uri.fsPath ?? os.homedir(), options);
   }
 
   private async resume(sessionId: string): Promise<ChatSession | undefined> {

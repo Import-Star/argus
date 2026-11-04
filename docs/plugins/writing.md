@@ -141,7 +141,10 @@ These work without a tab:
 ```ts
 await argus.sessions.start({
   prompt: "Fix the login bug",
-  link: { plugin: "my-plugin", id: card.id } // sets record.links["my-plugin"] = card.id once the prompt is submitted
+  link: { plugin: "my-plugin", id: card.id }, // sets record.links["my-plugin"] = card.id once the prompt is submitted
+  model: "sonnet", // optional: model, effort and cwd override the chat's defaults for this session
+  effort: "high",
+  cwd: "/path/to/repo"
 });
 ```
 

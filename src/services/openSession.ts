@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { SessionCard } from "../types";
+import { NewChatOptions, SessionCard } from "../types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type ChatRoute = (sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn) => Promise<void>;
+type ChatRoute = (sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn, options?: NewChatOptions) => Promise<void>;
 let chatRoute: ChatRoute | undefined;
 
 // Set once Argus chat has loaded: every session opens there.
@@ -22,12 +22,12 @@ export function closeChatSession(sessionId: string): boolean {
   return chatClose?.(sessionId) ?? false;
 }
 
-export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn): Promise<void> {
+export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn, options?: NewChatOptions): Promise<void> {
   if (!chatRoute) {
     void vscode.window.showErrorMessage("Argus: chat hasn't started. Reload the window, or check the Argus output for why.");
     return;
   }
-  await chatRoute(sessionId, prompt, column);
+  await chatRoute(sessionId, prompt, column, options);
 }
 
 export async function newChat(column?: vscode.ViewColumn): Promise<void> {
@@ -35,8 +35,8 @@ export async function newChat(column?: vscode.ViewColumn): Promise<void> {
 }
 
 // Used by ArgusApi.sessions.start; the caller (core or a plugin) has already appended any link marker.
-export async function startChat(prompt: string, column?: vscode.ViewColumn): Promise<void> {
-  await openClaudeTab(undefined, prompt, column);
+export async function startChat(prompt: string, column?: vscode.ViewColumn, options?: NewChatOptions): Promise<void> {
+  await openClaudeTab(undefined, prompt, column, options);
 }
 
 export async function openWorktree(folder: string): Promise<void> {

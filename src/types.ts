@@ -20,7 +20,8 @@ export type {
   ArgusApi,
   PluginConfig,
   ArgusPluginContext,
-  ArgusPluginModule
+  ArgusPluginModule,
+  NewChatOptions
 } from "../api";
 
 // Core-internal state, not part of the plugin API.

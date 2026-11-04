@@ -9,6 +9,13 @@
 
 import type * as vscode from "vscode";
 
+// Overrides for a new Argus chat. `model` is an alias or id (e.g. "sonnet"); `cwd` is the folder it starts in.
+export interface NewChatOptions {
+  model?: string;
+  effort?: "low" | "medium" | "high" | "xhigh" | "max";
+  cwd?: string;
+}
+
 export type SessionState = "idle" | "working" | "permission" | "question" | "done" | "ended";
 
 export type SessionColumn = "needs-you" | "working" | "scheduled" | "pr-open" | "idle" | "archived";
@@ -198,7 +205,8 @@ export interface ArgusApi {
     open(sessionId: string): Promise<void>;
     // Starts a new Argus chat with the prompt. With `link`, the session's record.links[plugin] = id
     // once its first prompt is submitted (the core appends a marker the hook strips).
-    start(options: { prompt: string; link?: { plugin: string; id: string }; viewColumn?: vscode.ViewColumn }): Promise<void>;
+    // `model`, `effort` and `cwd` override the chat's defaults for this session only.
+    start(options: { prompt: string; link?: { plugin: string; id: string }; viewColumn?: vscode.ViewColumn } & NewChatOptions): Promise<void>;
   };
 
   prs: {
