@@ -72,7 +72,8 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
 - Cards show open PRs with their checks, review decision and unresolved review comments (`💬 2`). A
   `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to hide them. A card stays in
   **PR open** while one of its PRs merged or closed after the session's last prompt, so newly finished work is easy
-  to spot.
+  to spot. PR states are saved to `~/.claude/argus/prs.json`, so cards show the last synced state on startup while
+  the first `gh` lookup runs.
 - Keyboard: `/` to search, `j`/`k` to move, `Enter` to open, `e` to archive, `x` to select for bulk actions, `Esc`
   to clear the selection, `n` for a new chat.
 

@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Session cards show the last synced PR states on startup, from `~/.claude/argus/prs.json`, instead of waiting for
+  the first `gh` lookup.
+
 ## 0.10.0
 
 - Documentation site at [import-star.github.io/argus](https://import-star.github.io/argus/): features, every
