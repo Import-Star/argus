@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord } from "../types";
+import { PrCheck, PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord } from "../types";
 import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
@@ -14,6 +14,7 @@ const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
 export const SESSIONS_DIR = path.join(ARGUS_DIR, "sessions");
 const REGISTRY_DIR = path.join(os.homedir(), ".claude", "sessions");
 const BOARD_STATE_FILE = path.join(ARGUS_DIR, "board.json");
+const PR_CACHE_FILE = path.join(ARGUS_DIR, "prs.json");
 
 export const COLUMN_ORDER: SessionColumn[] = ["needs-you", "working", "scheduled", "idle", "pr-open", "archived"];
 export const COLUMN_LABEL: Record<SessionColumn, string> = {
@@ -32,7 +33,7 @@ export class SessionStore implements vscode.Disposable {
   private cards: SessionCard[] = [];
   private groupOf: GroupOf = {};
   private groups: CardGroup<SessionCard>[] = [];
-  private prByUrl = new Map<string, PrSummary>();
+  private prByUrl = readPrCache();
   private readonly prsLookedUp = new Set<string>();
   public prsRefreshedAt?: number;
   public prsRefreshing = false;
@@ -165,6 +166,7 @@ export class SessionStore implements vscode.Disposable {
       for (const [url, summary] of fresh) {
         this.prByUrl.set(url, summary);
       }
+      this.savePrCache();
       this.refresh();
     });
   }
@@ -221,6 +223,7 @@ export class SessionStore implements vscode.Disposable {
         }
       }
       this.prsRefreshedAt = Date.now();
+      this.savePrCache();
       if (failed.length > 0) {
         output.appendLine(`${new Date().toISOString()} PR lookup failed, kept last known state:\n  ${failed.join("\n  ")}`);
       }
@@ -404,6 +407,19 @@ export class SessionStore implements vscode.Disposable {
     return withLiveChats(map, this.liveChats(), process.pid);
   }
 
+  // Only PRs still linked from a session, so the file doesn't grow forever.
+  private savePrCache(): void {
+    const linked = new Set(this.readRecords().flatMap((record) => record.prs));
+    const prs = Object.fromEntries([...this.prByUrl].filter(([url, summary]) => linked.has(url) && !summary.error).map(([url, summary]) => [url, { ...summary, checks: cachedChecks(summary.checks) }]));
+    try {
+      const tmp = `${PR_CACHE_FILE}.${process.pid}.tmp`;
+      fs.writeFileSync(tmp, JSON.stringify(prs));
+      fs.renameSync(tmp, PR_CACHE_FILE);
+    } catch (error) {
+      output.appendLine(`Argus: could not save PR cache: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   private readBoardState(): SessionBoardState {
     try {
       const parsed = JSON.parse(fs.readFileSync(BOARD_STATE_FILE, "utf8")) as Partial<SessionBoardState>;
@@ -502,4 +518,21 @@ export async function renameSessionPrompt(store: SessionStore, sessionId: string
   if (title !== undefined) {
     store.rename(sessionId, title.trim());
   }
+}
+
+// Last synced PR states, so cards show their chips on startup before the first gh lookup finishes.
+function readPrCache(): Map<string, PrSummary> {
+  try {
+    return new Map(Object.entries(JSON.parse(fs.readFileSync(PR_CACHE_FILE, "utf8")) as Record<string, PrSummary>));
+  } catch {
+    return new Map();
+  }
+}
+
+// Cards only show failing counts and running/passing, so keep every failing check and one of each other kind.
+function cachedChecks(checks: PrCheck[]): PrCheck[] {
+  const failing = checks.filter((check) => check.conclusion && !["SUCCESS", "SKIPPED", "NEUTRAL"].includes(check.conclusion));
+  const running = checks.find((check) => !check.conclusion && check.status !== "COMPLETED");
+  const passing = checks.find((check) => !failing.includes(check) && check !== running);
+  return [...failing, ...(running ? [running] : []), ...(passing ? [passing] : [])];
 }

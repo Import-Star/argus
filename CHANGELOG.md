@@ -4,6 +4,8 @@ First public release.
 
 ## Unreleased
 
+- Session cards show the last synced PR states on startup, from `~/.claude/argus/prs.json`, instead of waiting for
+  the first `gh` lookup.
 - Diff review wraps long lines instead of scrolling sideways.
 - Diff review has **Show rendered** for changed Markdown files. Click a rendered block to comment on it.
 
