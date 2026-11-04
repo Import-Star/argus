@@ -114,6 +114,7 @@ Settings UI filtered to Argus.
 - A card with a worktree gets a `± <worktree>` chip; a card with an open PR gets `± #<number>`. Click either to
   open the session's chat with that diff in its review panel.
 - Comment on lines and send the comments to the agent from the review panel.
+- Long lines wrap. A changed Markdown file has **Show rendered** to read and comment on it rendered.
 
 ### Argus chat
 

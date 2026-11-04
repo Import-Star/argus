@@ -1,5 +1,6 @@
 import { Marked, type Tokens } from "marked";
 import { highlightCode } from "./highlight";
+import { blockLines } from "./markdownBlocks";
 
 const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (char) => ENTITIES[char]);
@@ -44,4 +45,16 @@ export function renderMarkdown(text: string): string {
     cache.set(text, html);
   }
   return html;
+}
+
+export interface MarkdownBlock {
+  start: number;
+  end: number;
+  html: string;
+}
+
+// Each top-level block rendered on its own, with its source lines, so it can carry line comments.
+export function renderMarkdownBlocks(text: string): MarkdownBlock[] {
+  const tokens = marked.lexer(text);
+  return blockLines(tokens).map(({ token, start, end }) => ({ start, end, html: marked.parser(Object.assign([token], { links: tokens.links })) }));
 }

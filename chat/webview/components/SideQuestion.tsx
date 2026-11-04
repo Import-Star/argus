@@ -70,7 +70,7 @@ window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
   setAside(message.sessionId, { ...current, asks });
 });
 
-function onLinkClick(event: MouseEvent): void {
+export function onLinkClick(event: MouseEvent): void {
   const link = (event.target as HTMLElement).closest("a");
   const url = link?.dataset.href || link?.href;
   if (url) {
