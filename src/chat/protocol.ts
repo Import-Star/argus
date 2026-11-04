@@ -145,6 +145,7 @@ export interface DiffLine {
 export interface FileDiff {
   path: string;
   lines: DiffLine[];
+  markdown?: string;
 }
 
 export interface DiffComment {

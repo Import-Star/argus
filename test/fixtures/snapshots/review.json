@@ -423,6 +423,12 @@
           "added": 6,
           "removed": 0,
           "status": "added"
+        },
+        {
+          "path": "README.md",
+          "added": 11,
+          "removed": 0,
+          "status": "modified"
         }
       ]
     },
@@ -470,8 +476,103 @@
             "kind": "add",
             "newNo": 7,
             "text": "}"
+          },
+          {
+            "kind": "add",
+            "newNo": 8,
+            "text": "// subtract mirrors add so callers can swap between them without changing the argument order, which keeps the reducer in orders/totals.ts readable when it folds refunds into the running balance"
           }
         ]
+      }
+    },
+    {
+      "type": "fileDiff",
+      "sessionId": "44444444-0000-4000-8000-000000000001",
+      "scope": "session",
+      "diff": {
+        "path": "README.md",
+        "lines": [
+          {
+            "kind": "ctx",
+            "newNo": 1,
+            "text": "# Math helpers",
+            "oldNo": 1
+          },
+          {
+            "kind": "ctx",
+            "newNo": 2,
+            "text": "",
+            "oldNo": 2
+          },
+          {
+            "kind": "ctx",
+            "newNo": 3,
+            "text": "Adds `subtract` next to `add`. See [the PR](https://example.com/pr/412).",
+            "oldNo": 3
+          },
+          {
+            "kind": "ctx",
+            "newNo": 4,
+            "text": "",
+            "oldNo": 4
+          },
+          {
+            "kind": "add",
+            "newNo": 5,
+            "text": "| Fn | Args |"
+          },
+          {
+            "kind": "add",
+            "newNo": 6,
+            "text": "| --- | --- |"
+          },
+          {
+            "kind": "add",
+            "newNo": 7,
+            "text": "| add | a, b |"
+          },
+          {
+            "kind": "add",
+            "newNo": 8,
+            "text": "| subtract | a, b |"
+          },
+          {
+            "kind": "add",
+            "newNo": 9,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 10,
+            "text": "- Both reject `NaN`"
+          },
+          {
+            "kind": "add",
+            "newNo": 11,
+            "text": "- Both are **pure**"
+          },
+          {
+            "kind": "add",
+            "newNo": 12,
+            "text": ""
+          },
+          {
+            "kind": "add",
+            "newNo": 13,
+            "text": "```ts"
+          },
+          {
+            "kind": "add",
+            "newNo": 14,
+            "text": "subtract(5, 3); // 2"
+          },
+          {
+            "kind": "add",
+            "newNo": 15,
+            "text": "```"
+          }
+        ],
+        "markdown": "# Math helpers\n\nAdds `subtract` next to `add`. See [the PR](https://example.com/pr/412).\n\n| Fn | Args |\n| --- | --- |\n| add | a, b |\n| subtract | a, b |\n\n- Both reject `NaN`\n- Both are **pure**\n\n```ts\nsubtract(5, 3); // 2\n```\n"
       }
     },
     {

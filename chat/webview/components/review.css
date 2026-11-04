@@ -203,9 +203,12 @@
   padding: 2px 8px;
 }
 
+.review-diff-head button + button {
+  margin-left: 0;
+}
+
 .review-lines {
   padding: 6px 0;
-  min-width: max-content;
   font-family: var(--mono);
   font-size: 12px;
   line-height: 1.75;
@@ -213,7 +216,7 @@
 
 .review-line {
   display: flex;
-  white-space: pre;
+  white-space: pre-wrap;
   tab-size: 4;
 }
 
@@ -273,7 +276,40 @@
 }
 
 .review-text {
+  flex: 1;
+  min-width: 0;
   padding-right: 14px;
+  overflow-wrap: anywhere;
+}
+
+.review-rendered {
+  padding: 8px 0;
+  max-width: 900px;
+}
+
+.review-rendered .review-thread {
+  margin-left: 20px;
+}
+
+.review-block {
+  padding: 4px 14px 4px 20px;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.review-block:hover {
+  background: var(--row);
+}
+
+.review-block.review-block-add {
+  border-left-color: var(--green);
+  background: var(--add-bg);
+}
+
+.review-block.review-commented {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  cursor: default;
 }
 
 .review-gap {

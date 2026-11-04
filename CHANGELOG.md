@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Diff review wraps long lines instead of scrolling sideways.
+- Diff review has **Show rendered** for changed Markdown files. Click a rendered block to comment on it.
+
 ## 0.10.0
 
 - Documentation site at [import-star.github.io/argus](https://import-star.github.io/argus/): features, every

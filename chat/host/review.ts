@@ -51,7 +51,8 @@ export async function fileDiff(session: ChatSession, scope: ChangeScope, file: s
   const [folder, rel] = "root" in found ? [found.root, found.rel] : [worktree ?? session.meta.cwd, found.path];
   const source = pr ? prFileLines(session.meta.cwd, pr, found.path) : fileLines(folder, "unstaged", rel);
   const content = found.status === "deleted" ? [] : await source.catch(() => [] as string[]);
-  return { path: file, lines: withGaps(found.hunks, content) };
+  const markdown = /\.mdx?$/i.test(file) && content.length > 0 ? content.join("\n") : undefined;
+  return { path: file, lines: withGaps(found.hunks, content), markdown };
 }
 
 function lineText(cwd: string, file: string, line: number): string | undefined {

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { ChangeScope, DiffLine, FileChange } from "../../../src/chat/protocol";
 import { highlightCode, languageFor } from "../highlight";
-import { renderMarkdown } from "../markdown";
+import { renderMarkdown, renderMarkdownBlocks } from "../markdown";
 import {
   addReply,
   addThread,
@@ -20,6 +20,7 @@ import { sessionFiles } from "../sessionFiles";
 import { getState, post, setUi, updateReview, useSession } from "../store";
 import { prLabel } from "./Header";
 import { Composer } from "./Composer";
+import { onLinkClick } from "./SideQuestion";
 import { Transcript } from "./Transcript";
 import "./review.css";
 
@@ -312,6 +313,53 @@ function DiffRows({ path, lines, html, threads, views, actions, onOpen, onReveal
   );
 }
 
+interface RenderedProps {
+  path: string;
+  markdown: string;
+  added: Set<number>;
+  threads: ReviewThread[];
+  views: Map<string, TurnView>;
+  actions: ThreadActions;
+  onOpen(anchor: Anchor, code: string): void;
+}
+
+function RenderedMarkdown({ path, markdown, added, threads, views, actions, onOpen }: RenderedProps) {
+  const blocks = useMemo(() => renderMarkdownBlocks(markdown), [markdown]);
+  const source = useMemo(() => markdown.split("\n"), [markdown]);
+  const inBlock = (thread: ReviewThread, block: { start: number; end: number }) => thread.side === "new" && thread.line >= block.start && thread.line <= block.end;
+  const orphans = threads.filter((thread) => !blocks.some((block) => inBlock(thread, block)));
+  return (
+    <div class="review-rendered" onClick={onLinkClick}>
+      {orphans.map((thread) => (
+        <Thread key={thread.id} thread={thread} views={views} actions={actions} />
+      ))}
+      {blocks.map((block) => {
+        const here = threads.filter((thread) => inBlock(thread, block));
+        let changed = false;
+        for (let line = block.start; line <= block.end && !changed; line++) changed = added.has(line);
+        return (
+          <div key={block.start} data-line={`${path}:new:${block.start}`}>
+            <div
+              class={`tr-text review-block${changed ? " review-block-add" : ""}${here.length > 0 ? " review-commented" : ""}`}
+              title={here.length > 0 ? undefined : `Comment on lines ${block.start}–${block.end}`}
+              onClick={(event) =>
+                here.length === 0 &&
+                !(event.target as HTMLElement).closest("a, button") &&
+                !window.getSelection()?.toString() &&
+                onOpen({ side: "new", no: block.start }, source[block.start - 1] ?? "")
+              }
+              dangerouslySetInnerHTML={{ __html: block.html }}
+            />
+            {here.map((thread) => (
+              <Thread key={thread.id} thread={thread} views={views} actions={actions} />
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ReviewPane({ sessionId }: { sessionId: string }) {
   const { ui, changes, diffs, meta, messages, review } = useSession(sessionId);
   const dialog = useRef<HTMLElement>(null);
@@ -319,6 +367,7 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
   const [jump, setJump] = useState<Jump>();
   const [focusLine, setFocusLine] = useState<number>();
   const [reveals, setReveals] = useState<Reveals>({});
+  const [rendered, setRendered] = useState(false);
   const scope = ui.reviewScope;
   const status = meta?.status;
   const tabs = ui.prUrl ? [...SCOPES, { scope: "pr" as ChangeScope, label: `PR ${prLabel({ key: "", url: ui.prUrl })}` }] : SCOPES;
@@ -490,12 +539,27 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
                 {current && (
                   <div class="review-diff-head">
                     <span class="mono">{current}</span>
+                    {shown?.markdown !== undefined && (
+                      <button type="button" aria-pressed={rendered} onClick={() => setRendered(!rendered)}>
+                        {rendered ? "Show diff" : "Show rendered"}
+                      </button>
+                    )}
                     <button type="button" onClick={openInEditor}>
                       Open in editor
                     </button>
                   </div>
                 )}
-                {current && shown && (
+                {current && shown?.markdown !== undefined && rendered ? (
+                  <RenderedMarkdown
+                    path={current}
+                    markdown={shown.markdown}
+                    added={new Set(shown.lines.flatMap((line) => (line.kind === "add" && line.newNo !== undefined ? [line.newNo] : [])))}
+                    threads={review.threads.filter((thread) => thread.path === current)}
+                    views={views}
+                    actions={actions}
+                    onOpen={open}
+                  />
+                ) : current && shown && (
                   <DiffRows
                     path={current}
                     lines={rows}
