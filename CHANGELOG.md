@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.11.0
 
 - Plugin API: `sessions.start` takes optional `model`, `effort` and `cwd` for the new chat.
 - Session cards show the last synced PR states on startup, from `~/.claude/argus/prs.json`, instead of waiting for
