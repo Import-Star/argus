@@ -4,6 +4,7 @@ First public release.
 
 ## Unreleased
 
+- Plugin API: `sessions.start` takes optional `model`, `effort` and `cwd` for the new chat.
 - Session cards show the last synced PR states on startup, from `~/.claude/argus/prs.json`, instead of waiting for
   the first `gh` lookup.
 - Diff review wraps long lines instead of scrolling sideways.

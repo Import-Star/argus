@@ -132,7 +132,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   context.subscriptions.push(
     chat,
     chat.onDidChange((host) => {
-      routeChatsTo(host && ((sessionId, prompt, column) => host.open(sessionId, prompt, column)));
+      routeChatsTo(host && ((sessionId, prompt, column, options) => host.open(sessionId, prompt, column, options)));
       routeCloseTo(host && ((sessionId) => host.closeSession(sessionId)));
       sessions.setViewing(host && ((sessionId) => host.isViewing(sessionId)));
     }),
