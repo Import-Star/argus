@@ -6,6 +6,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { MessageQueue, type QueueAction } from "./messageQueue";
 import { withLocalCommandOutput } from "./restore";
+import { withWorkflowTasks } from "./workflowHistory";
 import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { Panel } from "../../src/chat/panels";
 import { refreshPanel } from "./panels";
@@ -278,7 +279,7 @@ export class ChatSession implements vscode.Disposable {
     this.historyLoaded ??= getSessionMessages(this.sessionId, { dir: this.options.cwd })
       .then((messages) => {
         this.restoreLastResponse(messages as unknown as { type: string; parent_tool_use_id?: string | null; timestamp?: string }[]);
-        return withLocalCommandOutput(messages, this.sessionId) as unknown as SDKMessage[];
+        return withWorkflowTasks(withLocalCommandOutput(messages, this.sessionId)) as unknown as SDKMessage[];
       })
       .catch((error) => {
         this.options.log(`history ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);

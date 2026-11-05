@@ -9,6 +9,8 @@ First public release.
   the first `gh` lookup.
 - Diff review wraps long lines instead of scrolling sideways.
 - Diff review has **Show rendered** for changed Markdown files. Click a rendered block to comment on it.
+- Chat: a workflow launched from chat stays in the side pane after the chat reloads, with its agents and phases
+  read from the run folder.
 
 ## 0.10.0
 
