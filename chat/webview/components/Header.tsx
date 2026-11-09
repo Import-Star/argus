@@ -196,9 +196,9 @@ export function Header({ sessionId }: { sessionId: string }) {
         </button>
       )}
       {meta?.chrome && (
-        <span class="mono muted" title="Claude in Chrome is on: Claude can control your browser. /chrome off turns it off.">
-          Chrome
-        </span>
+        <button type="button" class="hdr-pr" title="Claude in Chrome is on: Claude can control your browser. Click to change the browser or turn it off." onClick={() => post({ type: "send", sessionId, text: "/chrome" })}>
+          Browser
+        </button>
       )}
       <div class="hdr-end">
         <SideQuestion sessionId={sessionId} />
