@@ -3,7 +3,7 @@ import type * as vscode from "vscode";
 import type { ArgusChatExtension, SessionCard } from "../types";
 import type { LiveChat } from "../services/sessionColumn";
 import type { ChatPluginSection } from "../services/chatDetails";
-import type { PermissionDecision, PermissionRequest } from "./protocol";
+import type { PermissionDecision, PermissionRequest, PlanUsage } from "./protocol";
 
 export interface ChatDeps {
   getCards(): SessionCard[];
@@ -21,6 +21,9 @@ export interface ChatDeps {
   onDidChangePluginSections(listener: () => void): { dispose(): void };
   // Plugin scripts for the chat webview (ArgusApi.registerChatExtension).
   chatExtensions: ChatExtensionHub;
+  // The usage status bar's reading, shared so chats don't each call the rate-limited endpoint. Null when it's off.
+  planUsage(): PlanUsage | null | undefined;
+  onDidChangePlanUsage: vscode.Event<unknown>;
 }
 
 export interface ChatExtensionHub {
