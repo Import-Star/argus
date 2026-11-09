@@ -16,7 +16,6 @@ interface AgentRun {
 }
 
 const FAILED_CONCLUSIONS = ["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE"];
-const USAGE_REFRESH_MS = 5 * 60_000;
 const OUTPUT_REFRESH_MS = 4000;
 const DAY_MS = 24 * 60 * 60_000;
 const REVIEW_LABELS: Record<string, string> = { APPROVED: "Approved", CHANGES_REQUESTED: "Changes requested", REVIEW_REQUIRED: "Review required" };
@@ -64,30 +63,6 @@ function useNow(active: boolean, intervalMs: number): number {
     return () => clearInterval(timer);
   }, [active, intervalMs]);
   return now;
-}
-
-function usePlanUsage(sessionId: string, busy: boolean, applies: boolean): void {
-  useEffect(() => {
-    if (!applies) {
-      return;
-    }
-    const refresh = () => {
-      if (!document.hidden) {
-        post({ type: "usage", sessionId });
-      }
-    };
-    const timer = setInterval(refresh, USAGE_REFRESH_MS);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", refresh);
-    };
-  }, [sessionId, applies]);
-  useEffect(() => {
-    if (applies && !document.hidden) {
-      post({ type: "usage", sessionId });
-    }
-  }, [sessionId, busy, applies]);
 }
 
 export function formatReset(resetsAt: number, now: number): string {
@@ -293,7 +268,10 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
   const finishedTasks = background.filter((task) => task.state !== "running");
   const hasUsage = limits.length > 0 || card?.usedTokens !== undefined || card?.compactions !== undefined || meta?.contextTokens !== undefined || cacheExpiresAt !== undefined;
 
-  usePlanUsage(sessionId, status === "working" || status === "needs-you", usage !== null);
+  // The host pushes every later reading.
+  useEffect(() => {
+    post({ type: "usage", sessionId });
+  }, [sessionId]);
 
   useEffect(() => {
     if (ui.side === "details" && edited.length > 0) {

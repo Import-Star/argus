@@ -13,7 +13,7 @@ import { panelAction } from "./panels";
 import { commentsPrompt, fileDiff, listChanges } from "./review";
 import { SideQuestion } from "./sideQuestion";
 import { taskOutput } from "./tasks";
-import { planUsage, shellTaskOutput } from "./usage";
+import { shellTaskOutput } from "./usage";
 
 export class ChatPanel implements vscode.Disposable {
   private readonly panel: vscode.WebviewPanel;
@@ -304,7 +304,7 @@ export class ChatPanel implements vscode.Disposable {
           this.post({ type: "taskOutput", sessionId: session.sessionId, taskId: message.taskId, output: (await shellTaskOutput(session, message.taskId)) ?? (await taskOutput(session, message.taskId)) });
           return;
         case "usage": {
-          const usage = await planUsage(session);
+          const usage = session.planUsage();
           if (usage !== undefined) {
             this.post({ type: "usage", sessionId: session.sessionId, usage });
           }

@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Chat shows the usage status bar's plan limits instead of each chat asking its own Claude process, which hit
+  HTTP 429 with several chats open. With `argus.usage.enabled` off, chats no longer show plan limits.
+
 ## 0.11.0
 
 - Plugin API: `sessions.start` takes optional `model`, `effort` and `cwd` for the new chat.

@@ -11,7 +11,7 @@ import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { Panel } from "../../src/chat/panels";
 import { refreshPanel } from "./panels";
 import { countMcpIssues, toMcpServers, type McpStatus } from "../../src/chat/panels/mcp";
-import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
+import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, QueuedMessage } from "../../src/chat/protocol";
 
 export interface ChatSessionOptions {
   sessionId?: string;
@@ -29,6 +29,7 @@ export interface ChatSessionOptions {
   color?: string;
   // Turn Remote Control on whenever the process starts (Claude Code's remoteControlAtStartup).
   remoteControlAtStartup?: boolean;
+  planUsage(): PlanUsage | null | undefined;
   log(line: string): void;
 }
 
@@ -266,6 +267,10 @@ export class ChatSession implements vscode.Disposable {
       this.options.additionalDirectories.push(folder);
       this.relaunch();
     }
+  }
+
+  public planUsage(): PlanUsage | null | undefined {
+    return this.options.planUsage();
   }
 
   public get activeQuery(): Query | undefined {

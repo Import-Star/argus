@@ -8,7 +8,7 @@ import type { NewChatOptions } from "../../src/types";
 import type { LiveChat } from "../../src/services/sessionColumn";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
-import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, PermissionMode, PermissionRequest, RailSession } from "../../src/chat/protocol";
+import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, RailSession } from "../../src/chat/protocol";
 import { findClaude } from "../../src/services/claudeCli";
 import { configuredClaude, promptMissingClaude } from "../../src/services/claudeSetup";
 import { BranchCache } from "./branchCache";
@@ -66,6 +66,7 @@ export class ChatManager implements vscode.Disposable {
       this.log,
       deps.onDidChangeCards(() => this.broadcastCards()),
       deps.onDidChangePluginSections(() => this.broadcastCards()),
+      deps.onDidChangePlanUsage(() => this.broadcastPlanUsage()),
       deps.chatExtensions.onDidChange(() => this.reloadPanels()),
       deps.chatExtensions.onDidPost((id, message) => this.panels.forEach((panel) => panel.post({ type: "extension", id, message }))),
       vscode.window.registerWebviewPanelSerializer("argusChat", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "single", state) }),
@@ -649,7 +650,7 @@ export class ChatManager implements vscode.Disposable {
 
   // A resumed chat keeps its own last model/effort; without one, the CLI restores the model from the transcript.
   // New chats follow Claude Code's own settings; a reopened chat keeps the model/effort last picked in it.
-  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; textOnly: boolean; chrome?: boolean; color?: string; remoteControlAtStartup?: boolean; log(line: string): void } {
+  private defaults(cwd: string, resumeId?: string): { claudePath?: string; additionalDirectories: string[]; model?: string; effort?: EffortLevel; permissionMode: PermissionMode; textOnly: boolean; chrome?: boolean; color?: string; remoteControlAtStartup?: boolean; planUsage(): PlanUsage | null | undefined; log(line: string): void } {
     const config = vscode.workspace.getConfiguration("argus.chat");
     const claude = readClaudeSettings(cwd);
     const remembered = (resumeId && this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY)?.[resumeId]) || {};
@@ -664,6 +665,7 @@ export class ChatManager implements vscode.Disposable {
       chrome: remembered.chrome ?? (chromeDefaultEnabled() || undefined),
       color: remembered.color,
       remoteControlAtStartup: claude.remoteControlAtStartup,
+      planUsage: () => this.deps.planUsage(),
       log: (line) => this.log.appendLine(line)
     };
   }
@@ -674,6 +676,13 @@ export class ChatManager implements vscode.Disposable {
     if (json !== this.lastGroups) {
       this.lastGroups = json;
       this.panels.forEach((panel) => panel.post({ type: "groups", groups }));
+    }
+  }
+
+  private broadcastPlanUsage(): void {
+    const usage = this.deps.planUsage();
+    if (usage !== undefined) {
+      this.panels.forEach((panel) => panel.sessionIds.forEach((sessionId) => panel.post({ type: "usage", sessionId, usage })));
     }
   }
 

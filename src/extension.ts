@@ -53,6 +53,10 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
 
   const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails, chatExtensions });
 
+  // Plan usage reads Claude Code's local sign-in. On by default; argus.usage.enabled turns it off without a reload.
+  let usage: { service: UsageService; bar: UsageStatusBar; listener: vscode.Disposable } | undefined;
+  const usageChanged = new vscode.EventEmitter<void>();
+
   const chat = new ChatLoader(context, {
     getCards: () => sessions.getCards(),
     onDidChangeCards: sessions.onDidChange,
@@ -66,7 +70,9 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     pluginSections: (card) => chatDetails.sectionsFor(card),
     pluginAction: (sessionId, key, itemId, value) => chatDetails.action(sessionId, key, itemId, value),
     onDidChangePluginSections: (listener) => chatDetails.onDidChange(listener),
-    chatExtensions
+    chatExtensions,
+    planUsage: () => (usage ? usage.service.planUsage() : null),
+    onDidChangePlanUsage: usageChanged.event
   });
   registerDiffReview(context, chips, chat);
   const tracking = new TrackingMonitor(context);
@@ -92,17 +98,17 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const register = (command: string, handler: (...args: unknown[]) => unknown) =>
     context.subscriptions.push(vscode.commands.registerCommand(command, handler));
 
-  // Plan usage reads Claude Code's local sign-in. On by default; argus.usage.enabled turns it off without a reload.
-  let usage: { service: UsageService; bar: UsageStatusBar } | undefined;
   const applyUsageSetting = () => {
     const config = vscode.workspace.getConfiguration("argus.usage");
     if (config.get<boolean>("enabled", true) && !usage) {
       const service = new UsageService(Math.max(1, config.get<number>("refreshMinutes", 5)) * 60_000);
-      usage = { service, bar: new UsageStatusBar(service) };
+      usage = { service, bar: new UsageStatusBar(service), listener: service.onDidChange(() => usageChanged.fire()) };
     } else if (!config.get<boolean>("enabled", true) && usage) {
+      usage.listener.dispose();
       usage.bar.dispose();
       usage.service.dispose();
       usage = undefined;
+      usageChanged.fire();
     }
   };
   applyUsageSetting();
@@ -112,7 +118,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
         applyUsageSetting();
       }
     }),
-    { dispose: () => { usage?.bar.dispose(); usage?.service.dispose(); } }
+    usageChanged,
+    { dispose: () => { usage?.listener.dispose(); usage?.bar.dispose(); usage?.service.dispose(); } }
   );
   register("argus.usage.show", async () => {
     if (usage) {

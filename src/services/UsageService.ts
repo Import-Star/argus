@@ -4,6 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { promisify } from "node:util";
 import * as vscode from "vscode";
+import type { PlanUsage } from "../chat/protocol";
 
 export interface UsageWindow {
   key: string;
@@ -37,6 +38,11 @@ const LABELS: Record<string, string> = {
   seven_day_sonnet: "Weekly (Sonnet)",
   seven_day_oauth_apps: "Weekly (OAuth apps)"
 };
+
+const CHAT_WINDOWS = [
+  { key: "five_hour", label: "5-hour" },
+  { key: "seven_day", label: "Weekly" }
+];
 
 interface Credentials {
   accessToken: string;
@@ -87,6 +93,18 @@ export class UsageService implements vscode.Disposable {
 
   public getState(): UsageState {
     return this.state;
+  }
+
+  // Undefined until the first successful read.
+  public planUsage(): PlanUsage | undefined {
+    if (!this.state.fetchedAt) {
+      return undefined;
+    }
+    const windows = CHAT_WINDOWS.flatMap(({ key, label }) => {
+      const window = this.state.windows.find((entry) => entry.key === key);
+      return window ? [{ key, label, percent: Math.min(100, Math.max(0, Math.round(window.utilization))), resetsAt: window.resetsAt?.getTime() }] : [];
+    });
+    return { windows };
   }
 
   public refresh(): Promise<void> {
