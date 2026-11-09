@@ -92,7 +92,7 @@ export class ChatPanel implements vscode.Disposable {
   // Only newly shown chats get their history; resending the rest re-renders every tile.
   public setSessions(ids: string[], groupId?: string): Promise<void> {
     const added = ids.filter((id) => !this.ids.includes(id));
-    this.ids = ids;
+    this.ids = [...this.ids.filter((id) => ids.includes(id)), ...added];
     this.group = groupId;
     this.panel.title = this.title();
     this.watchSessions();
