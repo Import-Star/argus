@@ -2,10 +2,12 @@
 
 First public release.
 
-## Unreleased
+## 0.12.0
 
 - Chat shows the usage status bar's plan limits instead of each chat asking its own Claude process, which hit
   HTTP 429 with several chats open. With `argus.usage.enabled` off, chats no longer show plan limits.
+- Chat header shows Claude in Chrome as a **Browser** badge. Click it to send `/chrome`.
+- Multi-agent grid tiles keep their order when an agent or chat is added.
 
 ## 0.11.0
 
