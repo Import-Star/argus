@@ -376,7 +376,7 @@ function HiddenDivider({ calls, onShow }: { calls: number; onShow: () => void })
   );
 }
 
-function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId: string; cwd?: string; forceOpen?: boolean }) {
+export function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId: string; cwd?: string; forceOpen?: boolean }) {
   switch (item.kind) {
     case "user":
       return (

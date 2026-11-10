@@ -2,6 +2,12 @@
 
 First public release.
 
+## Unreleased
+
+- Chat: an agent in the workflow pane has **Open conversation**, which shows its whole conversation (prompt, replies,
+  tool calls and their output) the way the chat shows its own. It refreshes while the agent runs.
+- Chat: a workflow agent's detail card grows to fit a long result instead of its text running past the card.
+
 ## 0.12.0
 
 - Chat shows the usage status bar's plan limits instead of each chat asking its own Claude process, which hit

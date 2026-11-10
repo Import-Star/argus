@@ -12,7 +12,7 @@ import { runLocalCommand } from "./localCommands";
 import { panelAction } from "./panels";
 import { commentsPrompt, fileDiff, listChanges } from "./review";
 import { SideQuestion } from "./sideQuestion";
-import { taskOutput } from "./tasks";
+import { agentMessages, taskOutput } from "./tasks";
 import { shellTaskOutput } from "./usage";
 
 export class ChatPanel implements vscode.Disposable {
@@ -302,6 +302,9 @@ export class ChatPanel implements vscode.Disposable {
           return;
         case "taskOutput":
           this.post({ type: "taskOutput", sessionId: session.sessionId, taskId: message.taskId, output: (await shellTaskOutput(session, message.taskId)) ?? (await taskOutput(session, message.taskId)) });
+          return;
+        case "agentMessages":
+          this.post({ type: "agentMessages", sessionId: session.sessionId, taskId: message.taskId, messages: await agentMessages(session, message.taskId) });
           return;
         case "usage": {
           const usage = session.planUsage();
