@@ -17,6 +17,8 @@ running there warns you first, since two processes would write to one transcript
   box change them for one chat.
 - Permission requests, questions and plan approvals appear inline in the chat, and on the chat's
   [board card](control-center.md#sessions-tab).
+- A plan waiting for approval offers **Approve, accept edits**, **Approve, ask before edits** or **Keep planning**.
+  In the plan pane, select text to comment; **Keep planning** sends the saved comments back with the plan.
 - A chat's name is sent to Claude Code with `/rename`, so `/resume` and other sessions show the same title.
 
 ## Working in a chat

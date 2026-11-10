@@ -14,6 +14,10 @@ export function approvePlan(sessionId: string, id: string, mode: PermissionMode)
   decide(sessionId, id, { behavior: "allow" });
 }
 
+export function keepPlanning(sessionId: string, id: string, message = "The user wants to keep planning. Wait for their feedback before calling ExitPlanMode again."): void {
+  decide(sessionId, id, { behavior: "deny", message });
+}
+
 type IconName = "terminal" | "file" | "plug" | "plan" | "question";
 
 const ICONS: Record<IconName, string> = {
@@ -354,6 +358,9 @@ function PlanCard({ sessionId, request, compact }: { sessionId: string; request:
               </button>
             </>
           ) : null}
+          <button type="button" onClick={() => keepPlanning(sessionId, request.id)}>
+            Keep planning
+          </button>
         </>
       }
     />

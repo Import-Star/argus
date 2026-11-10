@@ -7,6 +7,8 @@ First public release.
 - Chat: an agent in the workflow pane has **Open conversation**, which shows its whole conversation (prompt, replies,
   tool calls and their output) the way the chat shows its own. It refreshes while the agent runs.
 - Chat: a workflow agent's detail card grows to fit a long result instead of its text running past the card.
+- Plan review has a **Keep planning** button on the chat's plan card and in the plan pane. It sends the plan
+  back with any saved comments, or with none, instead of only offering approve.
 
 ## 0.12.0
 
