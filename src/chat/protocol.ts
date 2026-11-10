@@ -172,6 +172,7 @@ export type HostMessage =
   | { type: "changes"; sessionId: string; scope: ChangeScope; prUrl?: string; worktree?: string; base?: string; files: FileChange[]; error?: string }
   | { type: "fileDiff"; sessionId: string; scope: ChangeScope; prUrl?: string; worktree?: string; diff: FileDiff }
   | { type: "taskOutput"; sessionId: string; taskId: string; output: string }
+  | { type: "agentMessages"; sessionId: string; taskId: string; messages: SDKMessage[] }
   | { type: "queue"; sessionId: string; items: QueuedMessage[] }
   | { type: "usage"; sessionId: string; usage: PlanUsage | null }
   | { type: "openReview"; sessionId: string; scope: ChangeScope; worktree?: string; prUrl?: string }
@@ -208,6 +209,7 @@ export type WebviewMessage =
   | { type: "fileDiff"; sessionId: string; scope: ChangeScope; path: string; files?: string[]; prUrl?: string; worktree?: string }
   | { type: "sendComments"; sessionId: string; comments: DiffComment[] }
   | { type: "taskOutput"; sessionId: string; taskId: string }
+  | { type: "agentMessages"; sessionId: string; taskId: string }
   | { type: "usage"; sessionId: string }
   | { type: "stopTask"; sessionId: string; taskId: string }
   | { type: "queue"; sessionId: string; id: string; action: "edit" | "remove" | "up" | "down" | "sendNow"; text?: string }

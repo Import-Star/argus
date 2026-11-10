@@ -46,6 +46,12 @@ The details pane beside a chat shows:
 - Plan usage and context, background shells, monitors and agents (with their output and a stop button).
 - Sections added by [plugins](../plugins/writing.md#chat-details).
 
+## Workflow pane
+
+A workflow, or the chat's background agents, opens in a side pane with each phase and its agents. Click an agent
+for its task, result and latest output. **Open conversation** shows the agent's whole conversation (prompt, replies,
+tool calls and their output) the way the chat shows its own, and refreshes while the agent runs.
+
 ## Background chats
 
 A chat whose tab you close keeps running until it has been idle for `argus.chat.backgroundIdleMinutes` (default

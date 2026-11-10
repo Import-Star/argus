@@ -11,12 +11,12 @@
     }
   };
 
-  const canned = { changes: [], fileDiff: [], taskOutput: [] };
+  const canned = { changes: [], fileDiff: [], taskOutput: [], agentMessages: [] };
   const deliver = (data) => window.dispatchEvent(new MessageEvent("message", { data: JSON.parse(JSON.stringify(data)) }));
   const same = (a, b) => Object.entries(b).every(([key, value]) => a[key] === value);
 
   function answer(request) {
-    const key = { changes: ["sessionId", "scope"], fileDiff: ["sessionId", "scope", "path"], taskOutput: ["sessionId", "taskId"] }[request.type];
+    const key = { changes: ["sessionId", "scope"], fileDiff: ["sessionId", "scope", "path"], taskOutput: ["sessionId", "taskId"], agentMessages: ["sessionId", "taskId"] }[request.type];
     if (!key) return;
     const wanted = Object.fromEntries(key.map((name) => [name, request[name]]));
     const found = canned[request.type].find((candidate) => same(request.type === "fileDiff" ? { ...candidate, path: candidate.diff.path } : candidate, wanted));

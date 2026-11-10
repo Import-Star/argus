@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "preact/hooks";
 import { post, setUi, useSession } from "../store";
 import { agentCounts, agentDuration, defaultWorkflow, findWorkflow, formatDuration, formatTokens, outputKey, taskGraph, type AgentInfo, type AgentStatus, type WorkflowColumn, type WorkflowInfo } from "../workflow";
+import { buildItems } from "../transcript";
+import { Row } from "./Transcript";
 import { useElapsed, useTick } from "./WorkflowCard";
 import "./workflow.css";
 
@@ -66,20 +68,60 @@ function Column({ column, index, selectedId, now, onSelect }: { column: Workflow
   );
 }
 
-function AgentDetail({ sessionId, agent, output }: { sessionId: string; agent: AgentInfo; output?: string }) {
-  const active = agent.status === "running" || agent.status === "waiting";
-  const key = agent.inWorkflow && !agent.agentId ? undefined : outputKey(agent);
+function isActive(agent: AgentInfo): boolean {
+  return agent.status === "running" || agent.status === "waiting";
+}
+
+function agentKey(agent: AgentInfo): string | undefined {
+  return agent.inWorkflow && !agent.agentId ? undefined : outputKey(agent);
+}
+
+function usePoll(sessionId: string, type: "taskOutput" | "agentMessages", agent: AgentInfo, key: string | undefined) {
+  const active = isActive(agent);
   useEffect(() => {
     if (!key) {
       return;
     }
-    post({ type: "taskOutput", sessionId, taskId: key });
+    post({ type, sessionId, taskId: key });
     if (!active) {
       return;
     }
-    const timer = setInterval(() => post({ type: "taskOutput", sessionId, taskId: key }), 4000);
+    const timer = setInterval(() => post({ type, sessionId, taskId: key }), 4000);
     return () => clearInterval(timer);
-  }, [sessionId, key, active, agent.status]);
+  }, [sessionId, type, key, active, agent.status]);
+}
+
+function AgentConversation({ sessionId, agent, taskKey, cwd }: { sessionId: string; agent: AgentInfo; taskKey: string; cwd?: string }) {
+  usePoll(sessionId, "agentMessages", agent, taskKey);
+  const messages = useSession(sessionId).agentMessages[taskKey];
+  const items = useMemo(() => (messages ? buildItems(messages) : []), [messages]);
+  return (
+    <section class="wf-conversation" aria-label="Agent conversation">
+      <div class="wf-detail-head">
+        <span class="wf-detail-title mono">{agent.description || agent.taskId}</span>
+        <button type="button" class="ghost" aria-label="Back to workflow" title="Back to workflow" onClick={() => setUi(sessionId, { agentConversation: undefined })}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+      <div class="tr-inner">
+        {!messages && <div class="muted">Loading conversation...</div>}
+        {messages && items.length === 0 && <div class="muted">No messages yet.</div>}
+        {items.map((item) => (
+          <div key={item.id} class="tr-item">
+            <Row item={item} sessionId={sessionId} cwd={cwd} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AgentDetail({ sessionId, agent, output }: { sessionId: string; agent: AgentInfo; output?: string }) {
+  const active = isActive(agent);
+  const key = agentKey(agent);
+  usePoll(sessionId, "taskOutput", agent, key);
   const facts = [agent.subagentType, agent.model, agent.attempt && agent.attempt > 1 ? `attempt ${agent.attempt}` : undefined, `${agent.toolUses} tool calls`, `${formatTokens(agent.tokens)} tokens`].filter(Boolean).join(" · ");
   const task = agent.promptPreview ?? agent.description;
   return (
@@ -87,6 +129,11 @@ function AgentDetail({ sessionId, agent, output }: { sessionId: string; agent: A
       <div class="wf-detail-head">
         <span class="wf-detail-title mono">{agent.description || agent.taskId}</span>
         <span class="muted">{facts}</span>
+        {key && (
+          <button type="button" onClick={() => setUi(sessionId, { agentConversation: agent.taskId })}>
+            Open conversation
+          </button>
+        )}
         {active && !agent.inWorkflow && (
           <button type="button" onClick={() => post({ type: "stopTask", sessionId, taskId: agent.taskId })}>
             Stop agent
@@ -133,7 +180,7 @@ function WorkflowHeader({ sessionId, workflow }: { sessionId: string; workflow: 
 }
 
 export function WorkflowPane({ sessionId }: { sessionId: string }) {
-  const { messages, ui, taskOutputs } = useSession(sessionId);
+  const { meta, messages, ui, taskOutputs } = useSession(sessionId);
   const graph = useMemo(() => taskGraph(messages), [messages]);
   const picked = findWorkflow(graph, ui.workflowTaskId);
   const standaloneFirst = ui.workflowTaskId !== undefined && !picked && graph.standalone.some((agent) => agent.taskId === ui.workflowTaskId);
@@ -145,6 +192,14 @@ export function WorkflowPane({ sessionId }: { sessionId: string }) {
   const counts = agentCounts(agents);
   const now = useTick(counts.running > 0);
 
+  const conversationKey = selected && ui.agentConversation === selected.taskId ? agentKey(selected) : undefined;
+  if (selected && conversationKey) {
+    return (
+      <div class="wf-pane">
+        <AgentConversation sessionId={sessionId} agent={selected} taskKey={conversationKey} cwd={meta?.cwd} />
+      </div>
+    );
+  }
   if (!workflow && agents.length === 0) {
     return (
       <div class="wf-pane">

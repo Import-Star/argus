@@ -164,6 +164,8 @@ board; opening one while it is running there warns you first, since two processe
   a diagram.
 - The details pane shows plan usage, background shells, monitors and agents (with their output and a stop
   button), and the worktrees linked to the session.
+- A workflow or background agent opens in a side pane with its phases and agents. Click an agent for its result and
+  output; **Open conversation** shows its whole conversation the way the chat shows its own.
 - A chat's name is sent to Claude Code with `/rename`, so `/resume` and other sessions show the same title.
 - A chat whose tab you close keeps running until it has been idle for `argus.chat.backgroundIdleMinutes`, so other
   agents can message it and its timers keep firing. A reply that finishes after its tab closed shows in

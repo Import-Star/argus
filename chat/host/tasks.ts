@@ -1,4 +1,4 @@
-import { getSubagentMessages, listSubagents } from "@anthropic-ai/claude-agent-sdk";
+import { getSubagentMessages, listSubagents, type SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { ChatSession } from "./ChatSession";
 
 const MAX_CHARS = 4000;
@@ -27,13 +27,21 @@ async function findAgentId(sessionId: string, cwd: string, taskId: string): Prom
   return ids.find((id) => id === taskId) ?? ids.find((id) => id.endsWith(taskId) || taskId.endsWith(id));
 }
 
+async function readAgent(session: ChatSession, taskId: string) {
+  const agentId = await findAgentId(session.sessionId, session.meta.cwd, taskId);
+  return agentId ? getSubagentMessages(session.sessionId, agentId, { dir: session.meta.cwd }) : undefined;
+}
+
+export async function agentMessages(session: ChatSession, taskId: string): Promise<SDKMessage[]> {
+  return ((await readAgent(session, taskId)) ?? []) as unknown as SDKMessage[];
+}
+
 export async function taskOutput(session: ChatSession, taskId: string): Promise<string> {
   try {
-    const agentId = await findAgentId(session.sessionId, session.meta.cwd, taskId);
-    if (!agentId) {
+    const messages = await readAgent(session, taskId);
+    if (!messages) {
       return "No transcript for this agent yet.";
     }
-    const messages = await getSubagentMessages(session.sessionId, agentId, { dir: session.meta.cwd });
     const lines = messages.filter((message) => message.type === "assistant").map((message) => assistantText(message.message)).filter(Boolean);
     const text = lines.join("\n\n");
     return text.length > MAX_CHARS ? text.slice(-MAX_CHARS) : text || "No output yet.";

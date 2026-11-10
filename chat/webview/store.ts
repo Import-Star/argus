@@ -24,6 +24,7 @@ export interface SessionUi {
   worktree?: string;
   workflowTaskId?: string;
   agentTaskId?: string;
+  agentConversation?: string;
   textOnly?: boolean;
   draft?: string;
 }
@@ -37,6 +38,7 @@ export interface SessionState {
   changes?: { scope: ChangeScope; prUrl?: string; worktree?: string; base?: string; files: FileChange[]; error?: string };
   diffs: Record<string, FileDiff>;
   taskOutputs: Record<string, string>;
+  agentMessages: Record<string, SDKMessage[]>;
   queue: QueuedMessage[];
   usage?: PlanUsage | null;
   review: ReviewState;
@@ -58,7 +60,7 @@ let state: State = { view: "single", sessionIds: [], multiAgent: false, keepAwak
 const listeners = new Set<() => void>();
 
 function emptySession(): SessionState {
-  return { messages: [], permissions: [], diffs: {}, taskOutputs: {}, queue: [], review: EMPTY_REVIEW, ui: { side: "details", reviewScope: "base" } };
+  return { messages: [], permissions: [], diffs: {}, taskOutputs: {}, agentMessages: {}, queue: [], review: EMPTY_REVIEW, ui: { side: "details", reviewScope: "base" } };
 }
 
 function set(next: State): void {
@@ -158,6 +160,9 @@ export function dispatch(message: HostMessage): void {
       return;
     case "taskOutput":
       updateSession(message.sessionId, (session) => ({ ...session, taskOutputs: { ...session.taskOutputs, [message.taskId]: message.output } }));
+      return;
+    case "agentMessages":
+      updateSession(message.sessionId, (session) => ({ ...session, agentMessages: { ...session.agentMessages, [message.taskId]: message.messages } }));
       return;
   }
 }
