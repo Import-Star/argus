@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Plan review has a **Keep planning** button on the chat's plan card and in the plan pane. It sends the plan
+  back with any saved comments, or with none, instead of only offering approve.
+
 ## 0.12.0
 
 - Chat shows the usage status bar's plan limits instead of each chat asking its own Claude process, which hit
