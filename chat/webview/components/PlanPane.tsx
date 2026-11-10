@@ -1,7 +1,7 @@
 import { useRef, useState } from "preact/hooks";
 import { inlineParts, lastPlan, parsePlan, planComments, type PlanBlock, type PlanComment } from "../plan";
 import { setUi, useSession } from "../store";
-import { approvePlan, decide } from "./PermissionCard";
+import { approvePlan, keepPlanning } from "./PermissionCard";
 import "./plan.css";
 
 interface Selection {
@@ -160,8 +160,8 @@ export function PlanPane({ sessionId }: { sessionId: string }) {
           <button type="button" onClick={() => approvePlan(sessionId, request.id, "default")}>
             Approve, ask before edits
           </button>
-          <button type="button" class="plan-send" disabled={sendable.length === 0} onClick={() => decide(sessionId, request.id, { behavior: "deny", message: planComments(sendable) })}>
-            Send {sendable.length} {sendable.length === 1 ? "comment" : "comments"}, keep planning
+          <button type="button" class="plan-send" onClick={() => keepPlanning(sessionId, request.id, sendable.length ? planComments(sendable) : undefined)}>
+            {sendable.length ? `Send ${sendable.length} ${sendable.length === 1 ? "comment" : "comments"}, keep planning` : "Keep planning"}
           </button>
         </div>
       ) : null}
