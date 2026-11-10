@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.13.0
 
 - Chat: an agent in the workflow pane has **Open conversation**, which shows its whole conversation (prompt, replies,
   tool calls and their output) the way the chat shows its own. It refreshes while the agent runs.
