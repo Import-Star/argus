@@ -2,7 +2,7 @@
 
 First public release.
 
-## Unreleased
+## 0.14.0
 
 - Plugin API: `sessions.open(sessionId, { draft })` opens a session with `draft` in the chat's input box, unsent, so
   the user can edit it before sending.
