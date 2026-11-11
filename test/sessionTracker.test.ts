@@ -92,6 +92,14 @@ describe("session-tracker hook", () => {
     fire({ hook_event_name: "PostToolUse", cwd: path.join(home, "a", "b"), tool_name: "Bash", tool_input: { command: "cd ~/repo && git worktree add -q -b fix/x ../wt origin/main" } });
     assert.deepEqual(saved().worktrees, [fs.realpathSync(wt)]);
   });
+  it("expands a variable set earlier in the same command", () => {
+    const { repo, git } = makeRepo();
+    const wt = path.join(home, "wt");
+    git("worktree", "add", "-q", wt);
+    const command = `WT=${wt} && cd ${repo} && git worktree add -q -b fix/x "$WT" origin/main && cd "\${WT}"`;
+    fire({ hook_event_name: "PostToolUse", cwd: home, tool_name: "Bash", tool_input: { command } });
+    assert.deepEqual(saved().worktrees, [fs.realpathSync(wt)]);
+  });
   it("links a worktree that only exists by a later hook, as when the command ran in the background", () => {
     const { repo, git } = makeRepo();
     const wt = path.join(home, "wt");
