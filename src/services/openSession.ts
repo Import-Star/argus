@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { NewChatOptions, SessionCard } from "../types";
+import { NewChatOptions } from "../types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type ChatRoute = (sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn, options?: NewChatOptions) => Promise<void>;
+type ChatRoute = (sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn, options?: NewChatOptions, draft?: string) => Promise<void>;
 let chatRoute: ChatRoute | undefined;
 
 // Set once Argus chat has loaded: every session opens there.
@@ -22,12 +22,12 @@ export function closeChatSession(sessionId: string): boolean {
   return chatClose?.(sessionId) ?? false;
 }
 
-export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn, options?: NewChatOptions): Promise<void> {
+export async function openClaudeTab(sessionId: string | undefined, prompt: string | undefined, column?: vscode.ViewColumn, options?: NewChatOptions, draft?: string): Promise<void> {
   if (!chatRoute) {
     void vscode.window.showErrorMessage("Argus: chat hasn't started. Reload the window, or check the Argus output for why.");
     return;
   }
-  await chatRoute(sessionId, prompt, column, options);
+  await chatRoute(sessionId, prompt, column, options, draft);
 }
 
 export async function newChat(column?: vscode.ViewColumn): Promise<void> {
@@ -43,14 +43,13 @@ export async function openWorktree(folder: string): Promise<void> {
   await vscode.commands.executeCommand("vscode.openFolder", vscode.Uri.file(folder), { forceNewWindow: true });
 }
 
-export async function openSession(card: SessionCard, column?: vscode.ViewColumn): Promise<void> {
-  const { sessionId } = card.record;
+export async function openSession(sessionId: string, column?: vscode.ViewColumn, draft?: string): Promise<void> {
   if (!UUID.test(sessionId)) {
     void vscode.window.showWarningMessage(`Argus: ${sessionId} is not a Claude Code session id.`);
     return;
   }
   try {
-    await openClaudeTab(sessionId, undefined, column);
+    await openClaudeTab(sessionId, undefined, column, undefined, draft);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showErrorMessage(`Argus: could not open the session: ${message}`);

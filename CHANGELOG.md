@@ -4,6 +4,10 @@ First public release.
 
 ## Unreleased
 
+- Plugin API: `sessions.open(sessionId, { draft })` opens a session with `draft` in the chat's input box, unsent, so
+  the user can edit it before sending.
+- Plugin API: `sessions.review(sessionId, { prUrl | worktree })` opens the session with diff review on that PR or
+  worktree.
 - A worktree added with a path from a variable set earlier in the same command (`WT=<path> && git worktree add "$WT"`)
   now shows on the session card.
 

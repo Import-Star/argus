@@ -139,7 +139,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   context.subscriptions.push(
     chat,
     chat.onDidChange((host) => {
-      routeChatsTo(host && ((sessionId, prompt, column, options) => host.open(sessionId, prompt, column, options)));
+      routeChatsTo(host && ((sessionId, prompt, column, options, draft) => host.open(sessionId, prompt, column, options, draft)));
       routeCloseTo(host && ((sessionId) => host.closeSession(sessionId)));
       sessions.setViewing(host && ((sessionId) => host.isViewing(sessionId)));
     }),
@@ -159,7 +159,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     const card = cardOf(arg);
     if (card) {
       sessions.markRead(card.record.sessionId);
-      await openSession(card);
+      await openSession(card.record.sessionId);
     }
   });
   register("argus.sessions.rename", async (arg) => {
@@ -228,7 +228,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     }
     void vscode.window.showInformationMessage(`Argus: imported ${written.length} chat${written.length === 1 ? "" : "s"}.`);
   });
-  register("argus.sessions.showAttention", () => status.showPicker(openSession));
+  register("argus.sessions.showAttention", () => status.showPicker((card) => openSession(card.record.sessionId)));
   register("argus.sessions.installHooks", () => {
     try {
       const result = installHooks(context.extensionPath);

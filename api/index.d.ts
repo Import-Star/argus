@@ -201,8 +201,10 @@ export interface ArgusApi {
     // Cards for this window's scope (argus.sessions.scope), sorted by column then age.
     getCards(): readonly SessionCard[];
     readonly onDidChange: vscode.Event<readonly SessionCard[]>;
-    // Opens the session in Argus chat, resuming it if needed.
-    open(sessionId: string): Promise<void>;
+    // Opens the session in Argus chat, resuming it if needed. `draft` goes in the chat's input box, not sent.
+    open(sessionId: string, options?: { draft?: string }): Promise<void>;
+    // Opens the session with its review pane on a PR's diff, or a worktree's diff against its base branch.
+    review(sessionId: string, target: { prUrl?: string; worktree?: string }): Promise<void>;
     // Starts a new Argus chat with the prompt. With `link`, the session's record.links[plugin] = id
     // once its first prompt is submitted (the core appends a marker the hook strips).
     // `model`, `effort` and `cwd` override the chat's defaults for this session only.

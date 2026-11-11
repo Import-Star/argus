@@ -36,7 +36,7 @@ export interface ChatExtensionHub {
 
 // What the core sees of the chat bundle (out/chat/host.js).
 export interface ChatHost extends vscode.Disposable {
-  open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn, options?: NewChatOptions): Promise<void>;
+  open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn, options?: NewChatOptions, draft?: string): Promise<void>;
   openGrid(sessionIds?: string[], groupId?: string): void;
   review(sessionId: string, target: { worktree?: string; prUrl?: string }): Promise<void>;
   isChatSession(sessionId: string): boolean;
