@@ -244,7 +244,7 @@ export class ChatManager implements vscode.Disposable {
   }
 
   // Opens a session in its own tab: an existing chat, a board session resumed here, or a new chat when no id is given.
-  public async open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn, options?: NewChatOptions): Promise<void> {
+  public async open(sessionId?: string, prompt?: string, column?: vscode.ViewColumn, options?: NewChatOptions, draft?: string): Promise<void> {
     const session = sessionId ? await this.resume(sessionId) : await this.create(options);
     if (!session) {
       return;
@@ -258,6 +258,11 @@ export class ChatManager implements vscode.Disposable {
     }
     if (prompt) {
       session.send(prompt);
+    }
+    if (draft) {
+      // A new tab drops messages until its webview is ready.
+      await [...this.panels].find((entry) => entry.sessionIds.includes(session.sessionId))?.whenReady;
+      session.fillComposer(draft);
     }
   }
 

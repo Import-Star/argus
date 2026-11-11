@@ -4,7 +4,7 @@ import { ChatDetailsRegistry } from "./services/chatDetails";
 import { ChatExtensionRegistry } from "./services/chatExtensions";
 import { ArchiveCleanupRegistry } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
-import { startChat } from "./services/openSession";
+import { openSession, startChat } from "./services/openSession";
 import { parsePullRequestLinks } from "./services/PrLinkParser";
 import { SessionStore } from "./services/SessionStore";
 import { ControlCenter } from "./providers/ControlCenter";
@@ -64,8 +64,9 @@ export function createApi(services: ArgusServices): ArgusApi {
         return sessions.getCards();
       },
       onDidChange: sessions.onDidChange,
-      async open(sessionId: string): Promise<void> {
-        await vscode.commands.executeCommand("argus.sessions.open", { record: { sessionId } });
+      async open(sessionId: string, options?: { draft?: string }): Promise<void> {
+        sessions.markRead(sessionId);
+        await openSession(sessionId, undefined, options?.draft);
       },
       async start(options: { prompt: string; link?: { plugin: string; id: string }; viewColumn?: vscode.ViewColumn } & NewChatOptions): Promise<void> {
         let prompt = options.prompt;

@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Plugin API: `sessions.open(sessionId, { draft })` opens a session with `draft` in the chat's input box, unsent, so
+  the user can edit it before sending.
+
 ## 0.13.0
 
 - Chat: an agent in the workflow pane has **Open conversation**, which shows its whole conversation (prompt, replies,
