@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- A worktree added with a path from a variable set earlier in the same command (`WT=<path> && git worktree add "$WT"`)
+  now shows on the session card.
+
 ## 0.13.0
 
 - Chat: an agent in the workflow pane has **Open conversation**, which shows its whole conversation (prompt, replies,

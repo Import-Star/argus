@@ -170,16 +170,23 @@ function worktreeAddPath(command: string, cwd: string): string | undefined {
   if (!match) {
     return undefined;
   }
+  const before = command.slice(0, match.index);
   // A `cd` earlier in the same command moves where a relative path starts.
-  for (const cd of command.slice(0, match.index).matchAll(/(?:^|[;&|]\s*)cd\s+(\S+)/g)) {
+  for (const cd of before.matchAll(/(?:^|[;&|]\s*)cd\s+(\S+)/g)) {
     cwd = path.resolve(cwd, cd[1].replace(/^["']|["']$/g, "").replace(/^~(?=$|[\\/])/, os.homedir()));
   }
+  const vars = new Map<string, string>();
+  for (const set of before.matchAll(/(?:^|[;&|]\s*)(?:export\s+)?([A-Za-z_]\w*)=("[^"]*"|'[^']*'|\S+)/g)) {
+    vars.set(set[1], set[2].replace(/^["']|["']$/g, ""));
+  }
+  const word = (value: string): string =>
+    value.replace(/^["']|["']$/g, "").replace(/\$\{?([A-Za-z_]\w*)\}?/g, (ref, name: string) => vars.get(name) ?? ref);
   const words = match[2].trim().split(/\s+/);
   for (let i = 0; i < words.length; i++) {
     if (WORKTREE_ADD_VALUE_FLAGS.has(words[i])) {
       i++;
     } else if (!words[i].startsWith("-")) {
-      return path.resolve(match[1] ? path.resolve(cwd, match[1]) : cwd, words[i].replace(/^["']|["']$/g, ""));
+      return path.resolve(match[1] ? path.resolve(cwd, word(match[1])) : cwd, word(words[i]));
     }
   }
   return undefined;
