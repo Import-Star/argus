@@ -6,6 +6,8 @@ First public release.
 
 - Plugin API: `sessions.open(sessionId, { draft })` opens a session with `draft` in the chat's input box, unsent, so
   the user can edit it before sending.
+- Plugin API: `sessions.review(sessionId, { prUrl | worktree })` opens the session with diff review on that PR or
+  worktree.
 
 ## 0.13.0
 

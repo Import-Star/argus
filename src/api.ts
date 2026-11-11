@@ -68,6 +68,9 @@ export function createApi(services: ArgusServices): ArgusApi {
         sessions.markRead(sessionId);
         await openSession(sessionId, undefined, options?.draft);
       },
+      async review(sessionId: string, target: { prUrl?: string; worktree?: string }): Promise<void> {
+        await vscode.commands.executeCommand("argus.diffReview.open", sessionId, target);
+      },
       async start(options: { prompt: string; link?: { plugin: string; id: string }; viewColumn?: vscode.ViewColumn } & NewChatOptions): Promise<void> {
         let prompt = options.prompt;
         if (options.link) {
