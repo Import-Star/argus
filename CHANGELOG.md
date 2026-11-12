@@ -4,6 +4,17 @@ First public release.
 
 ## Unreleased
 
+### Highlights
+
+- **Pick another agent with `#`.** Type `#` in a chat to pick any session on your board. It goes in as
+  `#"<name>"`, so you can tell one agent to message or check on another.
+- **Sign in to MCP servers from `/mcp`.** A remote server whose saved sign-in was rejected now shows
+  **Authenticate**, and signing in happens in the panel instead of a terminal.
+- **What's New.** After an update Argus opens this page once with the new version's release notes. Turn it off with
+  `argus.whatsNew.showOnUpdate`, or open it any time with **Argus: What's New**.
+
+### Changes
+
 - `/mcp` **Authenticate** signs in from the panel: it opens the server's sign-in page in your browser, and the row
   waits there and updates by itself once the server reconnects. You don't need a terminal. If the browser page doesn't
   load after signing in (a remote window, say), paste its address into the row to finish. A CLI that can't do this

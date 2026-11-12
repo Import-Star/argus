@@ -70,6 +70,10 @@
         "title": "Argus: Welcome"
       },
       {
+        "command": "argus.whatsNew",
+        "title": "Argus: What's New"
+      },
+      {
         "command": "argus.sessions.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
@@ -238,6 +242,11 @@
           "default": 300,
           "minimum": 30,
           "description": "How long a fetched PR state is reused before gh is called again, in seconds."
+        },
+        "argus.whatsNew.showOnUpdate": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Open **What's New** once after Argus updates, with the new version's release notes. **Argus: What's New** opens it any time."
         },
         "argus.usage.enabled": {
           "type": "boolean",

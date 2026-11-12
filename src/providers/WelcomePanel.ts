@@ -3,7 +3,7 @@ import { trackingStatus, TrackingStatus } from "../services/HookInstaller";
 import { PLUGINS_DIR } from "../services/PluginHost";
 import { escapeHtml, getNonce, MARK_SVG } from "./ControlCenter";
 
-const SHOWN_KEY = "argus.welcome.shown";
+export const WELCOME_SHOWN_KEY = "argus.welcome.shown";
 const PLUGIN_GUIDE = "https://github.com/Import-Star/argus/blob/main/DEVELOPING.md#writing-a-plugin";
 
 // Commands the page may run. Anything else posted from the webview is ignored.
@@ -28,10 +28,10 @@ export class WelcomePanel implements vscode.Disposable {
   ) {}
 
   public showOnFirstRun(): void {
-    if (this.context.globalState.get<boolean>(SHOWN_KEY)) {
+    if (this.context.globalState.get<boolean>(WELCOME_SHOWN_KEY)) {
       return;
     }
-    void this.context.globalState.update(SHOWN_KEY, true);
+    void this.context.globalState.update(WELCOME_SHOWN_KEY, true);
     // Someone upgrading from a build without this page already has tracking set up; don't greet them.
     if (trackingStatus(this.context.extensionPath).hooked === 0) {
       this.show();

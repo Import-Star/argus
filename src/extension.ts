@@ -23,6 +23,7 @@ import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
 import { renameSessionPrompt, SessionStore, SESSIONS_DIR } from "./services/SessionStore";
 import { UsageStatusBar } from "./providers/UsageStatusBar";
 import { WelcomePanel } from "./providers/WelcomePanel";
+import { WhatsNewPanel } from "./providers/WhatsNewPanel";
 import { UsageService } from "./services/UsageService";
 import { ArgusApi, SessionCard, SessionRecord } from "./types";
 import * as os from "os";
@@ -253,6 +254,10 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   const welcome = new WelcomePanel(context, () => plugins.names());
   context.subscriptions.push(welcome);
   register("argus.welcome", () => welcome.show());
+  const whatsNew = new WhatsNewPanel(context);
+  context.subscriptions.push(whatsNew);
+  register("argus.whatsNew", () => whatsNew.show());
+  whatsNew.showOnUpdate();
   welcome.showOnFirstRun();
 
   register("argus.plugins.reload", () => plugins.reload());
