@@ -30,6 +30,8 @@ running there warns you first, since two processes would write to one transcript
 - Each reply shows its turn's cost, and code blocks and replies have copy buttons.
 - Type `/` for the session's slash commands (see [Slash commands](slash-commands.md)), and paste or drop files to
   attach them.
+- Type `#` to pick another running session by name. It's added as `#"<name>"`, the name Claude's `SendMessage` and
+  `ListAgents` tools use for that session, so you can tell one agent to message or check on another.
 - **Text only** hides tool calls and shows just the conversation. `argus.chat.textOnlyDefault` opens every chat
   that way; each chat remembers its own toggle.
 - ` ```mermaid ` blocks in replies are drawn as diagrams in your theme's colours, with **Show source** to see the

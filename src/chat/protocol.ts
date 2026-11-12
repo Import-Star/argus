@@ -82,6 +82,8 @@ export interface PlanUsage {
 export interface RailSession {
   sessionId: string;
   title: string;
+  // The running session's name, which other agents address it by; unset when it isn't running.
+  name?: string;
   column: string;
   activity?: string;
   since: number;

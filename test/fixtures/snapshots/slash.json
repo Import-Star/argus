@@ -42,7 +42,8 @@
           "column": "working",
           "activity": "Editing src/math.ts",
           "since": "@now-134000",
-          "repo": "orders"
+          "repo": "orders",
+          "name": "Add subtract to math.ts"
         },
         {
           "sessionId": "11111111-0000-4000-8000-000000000002",
@@ -50,7 +51,8 @@
           "column": "needs-you",
           "activity": "Waiting on permission: Bash",
           "since": "@now-540000",
-          "repo": "acme"
+          "repo": "acme",
+          "name": "Fix flaky MFA test"
         },
         {
           "sessionId": "11111111-0000-4000-8000-000000000003",
@@ -58,7 +60,8 @@
           "column": "working",
           "activity": "Running tests",
           "since": "@now-840000",
-          "repo": "platform"
+          "repo": "platform",
+          "name": "Charts ECS dev rollout"
         },
         {
           "sessionId": "r4",
@@ -74,7 +77,8 @@
           "column": "idle",
           "activity": "",
           "since": "@now-7200000",
-          "repo": "platform"
+          "repo": "platform",
+          "name": "Update Redis alerts runbook"
         },
         {
           "sessionId": "r6",
