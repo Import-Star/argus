@@ -218,12 +218,19 @@ async function mcpSteps(page) {
   await row(page, "acme-search").getByRole("button", { name: "Disable" }).click();
   await row(page, "jane-notes").getByRole("button", { name: "Enable" }).click();
   await row(page, "acme-search").locator("summary").click();
+  const signIn = row(page, "example-metrics");
+  await signIn.getByRole("button", { name: "Open sign-in page again" }).click();
+  await signIn.locator(".mcp-callback summary").click();
+  await signIn.locator(".mcp-callback input").fill("http://localhost:4567/callback?code=abc&state=xyz");
+  await signIn.getByRole("button", { name: "Submit" }).click();
   await page.getByRole("button", { name: "Refresh" }).click();
   await expectActions(page, [
     { kind: "mcp", action: "reconnect", payload: "acme-docs" },
     { kind: "mcp", action: "authenticate", payload: "example-issues" },
     { kind: "mcp", action: "disable", payload: "acme-search" },
     { kind: "mcp", action: "enable", payload: "jane-notes" },
+    { kind: "mcp", action: "openSignIn" },
+    { kind: "mcp", action: "submitCallback", payload: "http://localhost:4567/callback?code=abc&state=xyz" },
     { kind: "mcp", action: "refresh" }
   ]);
 }
@@ -336,7 +343,7 @@ const SCREENS = [
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
   { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
   { name: "aside", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: asideSteps, expect: { panel: ".aside-panel", questions: ".aside-question", answer: ".aside-answer pre", streaming: ".aside-answer[aria-busy=\"true\"]", form: ".aside-form button" } },
-  { name: "panel-mcp", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp"), steps: mcpSteps, expect: { panel: ".cmdp", failed: ".mcp-dot-failed", needsAuth: ".mcp-dot-needs-auth", error: ".mcp-error", tools: ".mcp-tools li", destructive: ".mcp-badge-destructive", disabled: ".mcp-dot-disabled" } },
+  { name: "panel-mcp", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp"), steps: mcpSteps, expect: { panel: ".cmdp", failed: ".mcp-dot-failed", needsAuth: ".mcp-dot-needs-auth", error: ".mcp-error", tools: ".mcp-tools li", destructive: ".mcp-badge-destructive", disabled: ".mcp-dot-disabled", signIn: ".mcp-signin" } },
   { name: "panel-mcp-narrow", ...CHAT_PAGE, width: 900, fixture: "panels", messages: panelBase("mcp"), expect: { panel: ".cmdp", failed: ".mcp-dot-failed", error: ".mcp-error" } },
   { name: "panel-mcp-light", ...CHAT_PAGE, theme: "light", fixture: "panels", messages: panelBase("mcp"), expect: { panel: ".cmdp", failed: ".mcp-dot-failed" } },
   { name: "panel-mcp-empty", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp-empty"), expect: { panel: ".cmdp", empty: ".cmdp-empty" } },

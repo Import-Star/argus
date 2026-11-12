@@ -85,6 +85,15 @@
             "scope": "project",
             "version": "1.4.2",
             "error": "spawn npx ENOENT: could not start `npx -y @acme/docs-mcp --root /Users/jane/projects/acme-platform-monorepo/services/documentation-search` (exit code 127)",
+            "tools": [],
+            "canAuthenticate": false
+          },
+          {
+            "name": "example-metrics",
+            "status": "failed",
+            "scope": "managed",
+            "error": "The token hook target responded with an error. Make sure that the request you are making is valid.",
+            "canAuthenticate": true,
             "tools": []
           },
           {
@@ -92,7 +101,8 @@
             "status": "needs-auth",
             "scope": "user",
             "error": "Authentication required. Run /mcp to sign in.",
-            "tools": []
+            "tools": [],
+            "canAuthenticate": true
           },
           {
             "name": "acme-search",
@@ -114,21 +124,28 @@
                 "name": "mcp__acme_search__rebuild_index_for_all_collections_and_namespaces_with_long_name",
                 "description": "Rebuilds every index."
               }
-            ]
+            ],
+            "canAuthenticate": false
           },
           {
             "name": "example-files",
             "status": "pending",
             "scope": "user",
-            "tools": []
+            "tools": [],
+            "canAuthenticate": false
           },
           {
             "name": "jane-notes",
             "status": "disabled",
             "scope": "user",
-            "tools": []
+            "tools": [],
+            "canAuthenticate": false
           }
-        ]
+        ],
+        "signIn": {
+          "server": "example-metrics",
+          "callbackExpected": true
+        }
       }
     },
     "mcp-empty": {

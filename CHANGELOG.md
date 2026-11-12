@@ -2,6 +2,17 @@
 
 First public release.
 
+## Unreleased
+
+- `/mcp` **Authenticate** signs in from the panel: it opens the server's sign-in page in your browser, and the row
+  waits there and updates by itself once the server reconnects. You don't need a terminal. If the browser page doesn't
+  load after signing in (a remote window, say), paste its address into the row to finish. A CLI that can't do this
+  still gets `claude /mcp` in a terminal.
+- `/mcp` shows **Authenticate** on a remote server (http, sse or claude.ai connector) that failed to connect, not
+  only on one that needs authentication. When the provider rejects the stored OAuth token (for example "The token
+  hook target responded with an error"), the server reports failed and Reconnect only retries that token.
+- A Reconnect error that matches the server's own error now shows once.
+
 ## 0.14.0
 
 - Plugin API: `sessions.open(sessionId, { draft })` opens a session with `draft` in the chat's input box, unsent, so

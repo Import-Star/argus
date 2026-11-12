@@ -149,7 +149,8 @@ board; opening one while it is running there warns you first, since two processe
     clicking the Context meter in the details panel), plan limit bars with session cost and what is contributing, and the loaded
     skills ranked by context cost.
   - `/mcp` opens a side panel of MCP servers: status, errors and tools, with Enable/Disable, Reconnect and
-    Authenticate (in a terminal). The header shows **MCP: N issues** when a server failed or needs authentication.
+    Authenticate, which opens the server's sign-in page in your browser and waits in the panel until the server
+    reconnects (shown for a server that needs authentication or a remote one that failed, e.g. on a rejected token). The header shows **MCP: N issues** when a server failed or needs authentication.
   - `/model`, `/effort`, `/output-style`, `/advisor`, `/autocompact` and `/color` open a picker, and `/config` a
     searchable settings panel; typed with an argument they go to Claude Code as usual. `/color` tints the chat
     header. Plain-text command output is shown in a monospace block.
