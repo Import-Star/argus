@@ -39,6 +39,11 @@ Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins` that
   (`src/providers/WhatsNewPanel.ts`) shows each highlight as a card: one bullet that starts with a short bold title,
   then one or two sentences on what the user can now do, e.g. ``- **Pick another agent with `#`.** Type `#` in a
   chat to ...``. Leave Highlights out of a release with only fixes.
+- Give each highlight a picture when the feature has UI: add a `whatsNew: { file, clip }` crop to its screen in
+  `scripts/snapshots.mjs` (file named `<version>-<feature>.png`), run `npm run snapshots:whats-new` to write it to
+  `media/whats-new/`, look at the PNG, then add an indented `![what it shows](media/whats-new/<file>)` line under
+  the highlight after a blank line. The publish workflow points these paths at the release tag for the GitHub
+  release.
 - Publish only when asked: after the release PR merges, run **Publish to Marketplace** (`.github/workflows/publish.yml`)
   from `main` and approve the `marketplace` environment. It stops before doing anything unless `package.json` has a
   version higher than the last `v*` tag, `package-lock.json` matches and `CHANGELOG.md` has its `## X.Y.Z` heading.

@@ -182,7 +182,10 @@ body.welcome { max-width: 760px; margin: 0 auto; padding: 24px 24px 40px; line-h
 .welcome-meta { color: var(--muted); font-size: 12px; }
 .welcome-warn { color: var(--amber); }
 .welcome-foot { margin-top: 20px; text-align: center; }
-.whatsnew-highlights .welcome-step > b:first-child { display: block; font-size: 15px; margin-bottom: 4px; }
+.whatsnew-highlights .welcome-step > div > b:first-child { display: block; font-size: 15px; margin-bottom: 4px; }
+.whatsnew-highlights .has-image { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 20px; align-items: center; }
+.whatsnew-highlights img { max-width: 100%; height: auto; justify-self: center; border: 1px solid var(--border); border-radius: 6px; }
+@media (max-width: 640px) { .whatsnew-highlights .has-image { grid-template-columns: minmax(0, 1fr); } }
 .whatsnew .welcome-step ul { margin: 0; padding-left: 18px; }
 .whatsnew .welcome-step li + li { margin-top: 6px; }
 .whatsnew code { font-family: var(--vscode-editor-font-family, monospace); font-size: 12px; }

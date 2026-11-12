@@ -24,12 +24,12 @@
             },
             {
               "sessionId": "55555555-0000-4000-8000-000000000002",
-              "title": "Fix flaky MFA test",
+              "title": "Fix flaky login test",
               "status": "needs-you"
             },
             {
               "sessionId": "55555555-0000-4000-8000-000000000003",
-              "title": "Charts ECS dev rollout",
+              "title": "Add dark mode toggle",
               "status": "idle"
             }
           ]
@@ -49,7 +49,7 @@
         },
         {
           "sessionId": "55555555-0000-4000-8000-000000000002",
-          "title": "Fix flaky MFA test",
+          "title": "Fix flaky login test",
           "column": "needs-you",
           "activity": "Waiting on permission: Bash",
           "since": "@now-540000",
@@ -57,7 +57,7 @@
         },
         {
           "sessionId": "55555555-0000-4000-8000-000000000003",
-          "title": "Charts ECS dev rollout",
+          "title": "Add dark mode toggle",
           "column": "working",
           "activity": "Running tests",
           "since": "@now-840000",
@@ -65,7 +65,7 @@
         },
         {
           "sessionId": "r4",
-          "title": "Review PR 11215",
+          "title": "Review PR 42",
           "column": "needs-you",
           "activity": "Question for you",
           "since": "@now-1860000",
@@ -73,7 +73,7 @@
         },
         {
           "sessionId": "r5",
-          "title": "Update Redis alerts runbook",
+          "title": "Write onboarding guide",
           "column": "idle",
           "activity": "",
           "since": "@now-7200000",
@@ -81,7 +81,7 @@
         },
         {
           "sessionId": "r6",
-          "title": "Orders leader election notes",
+          "title": "Draft rate limit notes",
           "column": "idle",
           "activity": "",
           "since": "@now-36000000",
@@ -615,7 +615,7 @@
         ],
         "contextTokens": 312000,
         "contextMax": 1000000,
-        "title": "Fix flaky MFA test"
+        "title": "Fix flaky login test"
       }
     },
     {
@@ -842,7 +842,7 @@
         ],
         "contextTokens": 312000,
         "contextMax": 1000000,
-        "title": "Update Redis alerts runbook"
+        "title": "Write onboarding guide"
       }
     },
     {

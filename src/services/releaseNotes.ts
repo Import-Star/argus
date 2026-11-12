@@ -1,29 +1,44 @@
+export interface ReleaseItem {
+  text: string;
+  image?: { alt: string; path: string };
+}
+
 export interface Release {
   version: string;
-  highlights: string[];
-  changes: string[];
+  highlights: ReleaseItem[];
+  changes: ReleaseItem[];
 }
 
 // Reads CHANGELOG.md into releases, newest first. Items under a release's "### Highlights" heading are highlights;
-// every other item is a change. An item's indented lines are joined onto it.
+// every other item is a change. An item's indented lines are joined onto it, except a highlight's indented
+// `![alt](media/whats-new/...)` line, which is its picture.
 export function parseChangelog(markdown: string): Release[] {
   const releases: Release[] = [];
   let release: Release | undefined;
-  let list: string[] | undefined;
+  let highlights = false;
+  let item: ReleaseItem | undefined;
   for (const line of markdown.split(/\r?\n/)) {
-    const version = /^## (\d+\.\d+\.\d+)\s*$/.exec(line)?.[1];
-    if (version || line.startsWith("## ")) {
+    if (line.startsWith("## ")) {
+      const version = /^## (\d+\.\d+\.\d+)\s*$/.exec(line)?.[1];
       release = version ? { version, highlights: [], changes: [] } : undefined;
       if (release) {
         releases.push(release);
       }
-      list = release?.changes;
+      highlights = false;
+      item = undefined;
     } else if (release && line.startsWith("### ")) {
-      list = /^### highlights\s*$/i.test(line) ? release.highlights : release.changes;
-    } else if (list && line.startsWith("- ")) {
-      list.push(line.slice(2).trim());
-    } else if (list?.length && /^\s+\S/.test(line)) {
-      list[list.length - 1] += ` ${line.trim()}`;
+      highlights = /^### highlights\s*$/i.test(line);
+      item = undefined;
+    } else if (release && line.startsWith("- ")) {
+      item = { text: line.slice(2).trim() };
+      (highlights ? release.highlights : release.changes).push(item);
+    } else if (release && item && /^\s+\S/.test(line)) {
+      const image = highlights ? /^\s+!\[([^\]]*)\]\((media\/whats-new\/[\w.-]+)\)\s*$/.exec(line) : null;
+      if (image) {
+        item.image = { alt: image[1], path: image[2] };
+      } else {
+        item.text += ` ${line.trim()}`;
+      }
     }
   }
   return releases;

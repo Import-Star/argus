@@ -101,7 +101,7 @@
               "stateSince": "@now-540000",
               "state": "permission",
               "prs": [],
-              "title": "Fix flaky MFA test",
+              "title": "Fix flaky login test",
               "pending": "Bash yarn workspace @acme/auth test mfa --runInBand"
             },
             "column": "needs-you",
@@ -138,7 +138,7 @@
               "stateSince": "@now-1860000",
               "state": "question",
               "prs": [],
-              "title": "Review PR 11215",
+              "title": "Review PR 42",
               "pending": "Which migration strategy should I use?"
             },
             "column": "needs-you",
@@ -184,7 +184,7 @@
               "stateSince": "@now-7200000",
               "state": "done",
               "prs": [],
-              "title": "Update Redis alerts runbook",
+              "title": "Write onboarding guide",
               "lastMessage": "The runbook now lists the eviction alert, its threshold and the first three checks."
             },
             "column": "needs-you",
@@ -206,7 +206,7 @@
               "stateSince": "@now-840000",
               "state": "working",
               "prs": [],
-              "title": "Charts ECS dev rollout",
+              "title": "Add dark mode toggle",
               "lastTool": "Bash: terraform plan",
               "subagents": {
                 "a1": "Explore",
