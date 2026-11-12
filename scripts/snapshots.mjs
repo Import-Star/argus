@@ -127,7 +127,7 @@ async function slashSteps(page) {
 }
 
 async function agentSteps(page) {
-  await page.getByLabel("Message Claude").first().pressSequentially("ask #ch");
+  await page.getByLabel("Message Claude").first().pressSequentially("ask #");
   await page.locator('.cmp-suggest[aria-label="Agents"]').waitFor();
 }
 

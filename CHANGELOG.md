@@ -12,8 +12,8 @@ First public release.
   only on one that needs authentication. When the provider rejects the stored OAuth token (for example "The token
   hook target responded with an error"), the server reports failed and Reconnect only retries that token.
 - A Reconnect error that matches the server's own error now shows once.
-- Chat: type `#` to pick another running session by name. It's added as `#"<name>"`, the name Claude uses to message
-  that session.
+- Chat: type `#` to pick another session on the board. It's added as `#"<name>"`: the name Claude uses to message it
+  when it's running, or its title when it isn't.
 
 ## 0.14.0
 

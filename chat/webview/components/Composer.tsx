@@ -88,7 +88,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   // A model missing from the list (an explicit id) still gets the control; the CLI downgrades what it can't use.
   const efforts = model ? model.efforts : meta?.models.length ? ALL_EFFORTS : [];
   const suggestions = mention?.trigger === "@" && fileSuggestions?.query === mention.query ? fileSuggestions.files : [];
-  const agents = mention?.trigger === "#" ? filterByName(rail.flatMap((entry) => (entry.name && entry.sessionId !== sessionId ? [{ ...entry, name: entry.name }] : [])), mention.query) : [];
+  const agents = mention?.trigger === "#" ? filterByName(rail.filter((entry) => entry.sessionId !== sessionId).map((entry) => ({ ...entry, name: entry.name ?? entry.title })), mention.query) : [];
   const slashQuery = !slashOff ? SLASH.exec(text)?.[1] : undefined;
   const commands = slashQuery === undefined ? [] : filterByName(meta?.commands ?? [], slashQuery);
   const options = commands.length ? commands.map((command) => command.name) : agents.length ? agents.map((agent) => agent.name) : suggestions;
