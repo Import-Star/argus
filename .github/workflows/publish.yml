@@ -105,6 +105,8 @@ jobs:
         run: |
           # This version's CHANGELOG section, without its heading, is the release notes.
           awk -v h="## $VERSION" '$0 == h { on = 1; next } on && /^## / { exit } on' CHANGELOG.md > notes.md
+          # What's New images are paths in the repo; point them at this release's tag so the release page shows them.
+          sed -i "s#](media/#](https://raw.githubusercontent.com/$REPO/v$VERSION/media/#g" notes.md
           # An annotated tag, like the ones made by hand before.
           tag_sha="$(gh api "repos/$REPO/git/tags" -f tag="v$VERSION" -f message="Argus $VERSION" -f object="$SHA" -f type=commit --jq .sha)"
           gh api "repos/$REPO/git/refs" -f ref="refs/tags/v$VERSION" -f sha="$tag_sha" --silent
