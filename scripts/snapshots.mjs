@@ -6,6 +6,9 @@ import { buildSettingGroups } from "../src/services/settingsSchema.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "out", "snapshots");
+// --whats-new runs only the screens with a whatsNew crop and saves it to media/whats-new for the release notes.
+const WHATS_NEW = process.argv.includes("--whats-new");
+const whatsNewDir = path.join(root, "media", "whats-new");
 const NOW = Date.UTC(2026, 9, 21, 10, 0, 0);
 const TABS = [
   { id: "sessions", title: "Sessions" },
@@ -347,10 +350,11 @@ const SCREENS = [
   { name: "queue", ...CHAT_PAGE, messages: () => [...fixture("working").messages, ...fixture("queue").messages], steps: queueSteps, expect: { queue: ".q", rows: ".q-row", sent: ".q-sent .q-warn", editor: ".q-edit", sendNow: ".q-now" } },
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
   { name: "agents", ...CHAT_PAGE, fixture: "slash", steps: agentSteps, expect: { popup: '.cmp-suggest[aria-label="Agents"]', agents: ".cmp-option" } },
+  { name: "agents-narrow", ...CHAT_PAGE, width: 900, fixture: "slash", steps: agentSteps, whatsNew: { file: "0.15.0-agents.png", clip: (page) => [page.locator(".cmp-suggest"), page.locator(".cmp-box")] }, expect: { popup: '.cmp-suggest[aria-label="Agents"]' } },
   { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
   { name: "aside", ...CHAT_PAGE, messages: () => fixture("chat").messages, steps: asideSteps, expect: { panel: ".aside-panel", questions: ".aside-question", answer: ".aside-answer pre", streaming: ".aside-answer[aria-busy=\"true\"]", form: ".aside-form button" } },
   { name: "panel-mcp", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp"), steps: mcpSteps, expect: { panel: ".cmdp", failed: ".mcp-dot-failed", needsAuth: ".mcp-dot-needs-auth", error: ".mcp-error", tools: ".mcp-tools li", destructive: ".mcp-badge-destructive", disabled: ".mcp-dot-disabled", signIn: ".mcp-signin" } },
-  { name: "panel-mcp-narrow", ...CHAT_PAGE, width: 900, fixture: "panels", messages: panelBase("mcp"), expect: { panel: ".cmdp", failed: ".mcp-dot-failed", error: ".mcp-error" } },
+  { name: "panel-mcp-narrow", ...CHAT_PAGE, width: 900, fixture: "panels", messages: panelBase("mcp"), whatsNew: { file: "0.15.0-mcp-authenticate.png", clip: (page) => [row(page, "example-metrics")] }, expect: { panel: ".cmdp", failed: ".mcp-dot-failed", error: ".mcp-error" } },
   { name: "panel-mcp-light", ...CHAT_PAGE, theme: "light", fixture: "panels", messages: panelBase("mcp"), expect: { panel: ".cmdp", failed: ".mcp-dot-failed" } },
   { name: "panel-mcp-empty", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp-empty"), expect: { panel: ".cmdp", empty: ".cmdp-empty" } },
   { name: "panel-closed", ...CHAT_PAGE, fixture: "panels", messages: panelBase("mcp-empty"), steps: closeSteps, expect: { details: ".det-section" } },
@@ -375,7 +379,7 @@ const SCREENS = [
 ];
 
 async function shoot(browser, screen, errors) {
-  const context = await browser.newContext({ viewport: { width: screen.width ?? 1440, height: screen.height ?? 900 }, deviceScaleFactor: 1 });
+  const context = await browser.newContext({ viewport: { width: screen.width ?? 1440, height: screen.height ?? 900 }, deviceScaleFactor: WHATS_NEW ? 2 : 1 });
   const page = await context.newPage();
   const fail = (text) => errors.push(`${screen.name}: ${text}`);
   page.on("console", (message) => message.type() === "error" && fail(`console error: ${message.text()}`));
@@ -408,6 +412,15 @@ async function shoot(browser, screen, errors) {
   const file = path.join(outDir, `${screen.name}.png`);
   await page.screenshot({ path: file, animations: "disabled", caret: "hide" });
   console.log(`${screen.name.padEnd(10)} ${Object.entries(counts).map(([label, count]) => `${label}=${count}`).join(" ")} -> ${path.relative(root, file)}`);
+  if (WHATS_NEW) {
+    const boxes = await Promise.all(screen.whatsNew.clip(page).map((locator) => locator.first().boundingBox()));
+    const x = Math.min(...boxes.map((box) => box.x));
+    const y = Math.min(...boxes.map((box) => box.y));
+    const clip = { x, y, width: Math.max(...boxes.map((box) => box.x + box.width)) - x, height: Math.max(...boxes.map((box) => box.y + box.height)) - y };
+    const crop = path.join(whatsNewDir, screen.whatsNew.file);
+    await page.screenshot({ path: crop, clip, animations: "disabled", caret: "hide" });
+    console.log(`  what's new -> ${path.relative(root, crop)}`);
+  }
   await context.close();
 }
 
@@ -416,10 +429,11 @@ if (!existsSync(path.join(root, "out", "chat", "webview.js"))) {
   process.exit(1);
 }
 mkdirSync(outDir, { recursive: true });
+mkdirSync(whatsNewDir, { recursive: true });
 const browser = await chromium.launch();
 const errors = [];
 try {
-  for (const screen of SCREENS) {
+  for (const screen of SCREENS.filter((entry) => !WHATS_NEW || entry.whatsNew)) {
     await shoot(browser, screen, errors).catch((error) => errors.push(`${screen.name}: ${error.message.split("\n")[0]}`));
   }
 } finally {

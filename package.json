@@ -421,6 +421,7 @@
     "test": "tsc -p tsconfig.test.json && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/*.test.ts",
     "watch:chat": "node scripts/build-chat.mjs --watch",
     "snapshots": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs",
+    "snapshots:whats-new": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs --whats-new",
     "docs:reference": "node scripts/docs-reference.mjs"
   },
   "devDependencies": {

@@ -8,8 +8,12 @@ First public release.
 
 - **Pick another agent with `#`.** Type `#` in a chat to pick any session on your board. It goes in as
   `#"<name>"`, so you can tell one agent to message or check on another.
+
+  ![The # menu listing other sessions above the chat input](media/whats-new/0.15.0-agents.png)
 - **Sign in to MCP servers from `/mcp`.** A remote server whose saved sign-in was rejected now shows
   **Authenticate**, and signing in happens in the panel instead of a terminal.
+
+  ![A failed MCP server in the /mcp panel with Authenticate and the sign-in steps](media/whats-new/0.15.0-mcp-authenticate.png)
 - **What's New.** After an update Argus opens this page once with the new version's release notes. Turn it off with
   `argus.whatsNew.showOnUpdate`, or open it any time with **Argus: What's New**.
 

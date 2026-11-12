@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { inlineMarkdown, parseChangelog, Release, versionToAnnounce } from "../services/releaseNotes";
+import { inlineMarkdown, parseChangelog, Release, ReleaseItem, versionToAnnounce } from "../services/releaseNotes";
 import { escapeHtml, getNonce, MARK_SVG } from "./ControlCenter";
 import { WELCOME_SHOWN_KEY } from "./WelcomePanel";
 
@@ -68,10 +68,19 @@ export class WhatsNewPanel implements vscode.Disposable {
     const releases = this.releases();
     const index = Math.max(0, releases.findIndex((release) => release.version === version));
     const current = releases[index];
-    const items = (list: string[]) => `<ul>${list.map((item) => `<li>${inlineMarkdown(item)}</li>`).join("")}</ul>`;
+    const items = (list: ReleaseItem[]) => `<ul>${list.map((item) => `<li>${inlineMarkdown(item.text)}</li>`).join("")}</ul>`;
+    const picture = (item: ReleaseItem) => {
+      if (!item.image) {
+        return "";
+      }
+      const file = vscode.Uri.joinPath(this.context.extensionUri, item.image.path);
+      // Snapshots are saved at 2x; show them at their CSS size. A PNG's width is bytes 16-19.
+      const width = fs.readFileSync(file.fsPath).readUInt32BE(16) / 2;
+      return `<img src="${webview.asWebviewUri(file)}" width="${width}" alt="${escapeHtml(item.image.alt)}" />`;
+    };
 
     const highlights = current?.highlights.length
-      ? `<section class="whatsnew-highlights">${current.highlights.map((item) => `<div class="welcome-step">${inlineMarkdown(item)}</div>`).join("")}</section>`
+      ? `<section class="whatsnew-highlights">${current.highlights.map((item) => `<div class="welcome-step${item.image ? " has-image" : ""}"><div>${inlineMarkdown(item.text)}</div>${picture(item)}</div>`).join("")}</section>`
       : "";
     const changes = current?.changes.length ? `<section class="welcome-step"><h2>${current.highlights.length ? "Other changes" : "Changes"}</h2>${items(current.changes)}</section>` : "";
     const earlier = releases
@@ -84,7 +93,7 @@ export class WhatsNewPanel implements vscode.Disposable {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';" />
     <link rel="stylesheet" href="${styleUri}" />
     <title>What's New in Argus</title>
   </head>

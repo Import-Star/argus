@@ -16,6 +16,10 @@ describe("parseChangelog", () => {
 
 - **Big thing.** It does a lot.
 
+  ![The big thing](media/whats-new/1.2.0-big.png)
+- **Small thing.** Wraps
+  onto a second line.
+
 ### Changes
 
 - A fix that wraps
@@ -26,8 +30,15 @@ describe("parseChangelog", () => {
 - Old change.
 `);
     assert.deepEqual(releases, [
-      { version: "1.2.0", highlights: ["**Big thing.** It does a lot."], changes: ["A fix that wraps onto a second line."] },
-      { version: "1.1.0", highlights: [], changes: ["Old change."] }
+      {
+        version: "1.2.0",
+        highlights: [
+          { text: "**Big thing.** It does a lot.", image: { alt: "The big thing", path: "media/whats-new/1.2.0-big.png" } },
+          { text: "**Small thing.** Wraps onto a second line." }
+        ],
+        changes: [{ text: "A fix that wraps onto a second line." }]
+      },
+      { version: "1.1.0", highlights: [], changes: [{ text: "Old change." }] }
     ]);
   });
 });
