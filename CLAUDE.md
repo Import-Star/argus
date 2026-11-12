@@ -34,6 +34,11 @@ Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins` that
 
 - A release is a `chore: release X.Y.Z` PR that bumps `version` in `package.json` and `package-lock.json` and turns
   `## Unreleased` in `CHANGELOG.md` into `## X.Y.Z`. Don't tag it by hand: the publish workflow makes the tag.
+- When cutting a release, check whether it has new features a user would want to hear about. If it does, put a
+  `### Highlights` list at the top of its section and `### Changes` above the rest. After an update, **What's New**
+  (`src/providers/WhatsNewPanel.ts`) shows each highlight as a card: one bullet that starts with a short bold title,
+  then one or two sentences on what the user can now do, e.g. ``- **Pick another agent with `#`.** Type `#` in a
+  chat to ...``. Leave Highlights out of a release with only fixes.
 - Publish only when asked: after the release PR merges, run **Publish to Marketplace** (`.github/workflows/publish.yml`)
   from `main` and approve the `marketplace` environment. It stops before doing anything unless `package.json` has a
   version higher than the last `v*` tag, `package-lock.json` matches and `CHANGELOG.md` has its `## X.Y.Z` heading.

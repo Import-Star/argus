@@ -15,6 +15,7 @@ nav_order: 6
 | **Argus: Keep Machine Awake…** | `argus.keepAwake.choose` |
 | **Argus: Settings** | `argus.openSettings` |
 | **Argus: Welcome** | `argus.welcome` |
+| **Argus: What's New** | `argus.whatsNew` |
 | **Argus: Sessions Needing You** | `argus.sessions.showAttention` |
 | **Argus: Set Up Session Tracking** | `argus.sessions.installHooks` |
 | **Argus: Import Existing Claude Chats** | `argus.sessions.importChats` |

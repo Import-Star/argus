@@ -16,7 +16,8 @@ const GROUPS = [
   ["argus.diffReview.", "Diff review"],
   ["argus.usage.", "Plan usage"],
   ["argus.keepAwake.", "Keep awake"],
-  ["argus.plugins.", "Plugins"]
+  ["argus.plugins.", "Plugins"],
+  ["argus.whatsNew.", "What's New"]
 ];
 
 const properties = Object.assign({}, ...[pkg.contributes.configuration].flat().map((group) => group.properties));

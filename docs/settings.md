@@ -69,3 +69,9 @@ Every Argus setting, as it appears in VS Code's Settings and on the Control Cent
 | --- | --- | --- |
 | `argus.plugins.paths` | `[]` | Extra plugin folders to load, on top of every folder in `~/.claude/argus/plugins`. Each entry is one plugin folder containing an `argus-plugin.json`. Use it to run a plugin straight from a git checkout. `~` is expanded. |
 | `argus.plugins.config` | `{}` | Settings for locally installed Argus plugins, keyed by plugin id: `"argus.plugins.config": { "my-plugin": { "someSetting": "value" } }`. A plugin's README should list its keys. User and workspace scopes are merged key by key. |
+
+## What's New
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `argus.whatsNew.showOnUpdate` | `true` | Open **What's New** once after Argus updates, with the new version's release notes. **Argus: What's New** opens it any time. |

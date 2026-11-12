@@ -46,6 +46,7 @@ glance, know which ones are waiting on you, and work with them in Argus's own ch
 2. On first install Argus opens its Welcome page, which shows whether session tracking is set up and how to add
    plugins. Click **Set Up Session Tracking** there, or run **Argus: Set Up Session Tracking** from the command
    palette (or click the link in the empty Sessions view). This installs the Claude Code hooks Argus needs; no sessions appear without it.
+   After later updates Argus opens **What's New** once, with that version's release notes.
 3. Start or resume a Claude Code session. It appears in the Argus sidebar after its first prompt. Sessions that
    were already open show up once they next fire a hook. To add earlier chats now, run **Argus: Import Existing
    Claude Chats**: it reads Claude Code's transcripts from the last `argus.sessions.retentionDays` days and adds
@@ -280,6 +281,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.prs.cacheSeconds` | `300` | How long a fetched PR state is reused before `gh` is called again. |
 | `argus.diffReview.baseRef` | `""` | Base to diff against. Empty uses `origin/HEAD`, then `origin/main`, `origin/master`, `main`, `master`. |
 | `argus.diffReview.contextLines` | `3` | Unchanged lines shown around each change. |
+| `argus.whatsNew.showOnUpdate` | `true` | Open **What's New** once after Argus updates. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
 | `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`. |
@@ -296,6 +298,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 - **Argus: Open Control Center** (`argus.openControlCenter`)
 - **Argus: Settings** (`argus.openSettings`)
 - **Argus: Welcome** (`argus.welcome`)
+- **Argus: What's New** (`argus.whatsNew`)
 - **Argus: Sessions Needing You** (`argus.sessions.showAttention`)
 - **Argus: Set Up Session Tracking** (`argus.sessions.installHooks`)
 - **Argus: Import Existing Claude Chats** (`argus.sessions.importChats`)
