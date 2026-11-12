@@ -2,12 +2,14 @@
 
 First public release.
 
-## Unreleased
+## 0.15.0
 
 ### Highlights
 
 - **Run shell commands with `!`.** Start a message with `!` to run a command in the chat's folder and show its
   output live. Claude gets the command and output and replies, so after `! npm test` Claude explains any failures.
+
+  ![A finished ! npm run lint card with its output, waiting to go to Claude](media/whats-new/0.15.0-shell.png)
 - **Pick another agent with `#`.** Type `#` in a chat to pick any session on your board. It goes in as
   `#"<name>"`, so you can tell one agent to message or check on another.
 

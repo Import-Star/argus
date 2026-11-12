@@ -355,6 +355,7 @@ const SCREENS = [
   { name: "working", ...CHAT_PAGE, expect: { working: ".tr-working", glyph: ".tr-working-glyph", meta: ".tr-working-meta" } },
   { name: "queue", ...CHAT_PAGE, messages: () => [...fixture("working").messages, ...fixture("queue").messages], steps: queueSteps, expect: { queue: ".q", rows: ".q-row", sent: ".q-sent .q-warn", editor: ".q-edit", sendNow: ".q-now" } },
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
+  { name: "shell-narrow", ...CHAT_PAGE, width: 900, fixture: "shell", messages: () => [...fixture("history").messages, ...fixture("shell").messages], whatsNew: { file: "0.15.0-shell.png", clip: (page) => [page.locator(".tr-card", { has: page.locator(".tr-bash-cmd", { hasText: "npm run lint" }) })] }, expect: { cards: ".tr-bash-cmd" } },
   { name: "shell", ...CHAT_PAGE, messages: () => [...fixture("history").messages, ...fixture("shell").messages], steps: shellSteps, expect: { mode: ".cmp-box[data-shell]", paths: ".cmp-option.mono", cards: ".tr-bash-cmd", running: ".tr-card .spinner" } },
   { name: "agents", ...CHAT_PAGE, fixture: "slash", steps: agentSteps, expect: { popup: '.cmp-suggest[aria-label="Agents"]', agents: ".cmp-option" } },
   { name: "agents-narrow", ...CHAT_PAGE, width: 900, fixture: "slash", steps: agentSteps, whatsNew: { file: "0.15.0-agents.png", clip: (page) => [page.locator(".cmp-suggest"), page.locator(".cmp-box")] }, expect: { popup: '.cmp-suggest[aria-label="Agents"]' } },
