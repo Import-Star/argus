@@ -2,6 +2,13 @@
 
 First public release.
 
+## Unreleased
+
+- `/mcp` shows **Authenticate** on a remote (http/sse) server that failed to connect, not only on one that needs
+  authentication. When the provider rejects the stored OAuth token (for example "The token hook target responded
+  with an error"), the server reports failed and Reconnect only retries that token; Authenticate signs in again.
+  A Reconnect error that matches the server's own error now shows once.
+
 ## 0.14.0
 
 - Plugin API: `sessions.open(sessionId, { draft })` opens a session with `draft` in the chat's input box, unsent, so

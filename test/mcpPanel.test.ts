@@ -16,6 +16,21 @@ describe("toMcpServers", () => {
     assert.equal(servers[2].version, "1.2");
   });
 
+  it("offers Authenticate for needs-auth and for failed remote servers, whose stored token may be the problem", () => {
+    const servers = toMcpServers([
+      { name: "http", status: "failed", error: "The token hook target responded with an error.", config: { type: "http", url: "https://mcp.example.com" } },
+      { name: "sse", status: "failed", config: { type: "sse", url: "https://mcp.example.com" } },
+      { name: "stdio", status: "failed", config: { type: "stdio", command: "node" } },
+      { name: "claudeai", status: "failed", config: { type: "claudeai-proxy", url: "https://mcp.example.com", id: "x" } },
+      { name: "auth", status: "needs-auth" },
+      { name: "ok", status: "connected", config: { type: "http", url: "https://mcp.example.com" } }
+    ]);
+    assert.deepEqual(
+      Object.fromEntries(servers.map((server) => [server.name, server.canAuthenticate])),
+      { auth: true, claudeai: false, http: true, ok: false, sse: true, stdio: false }
+    );
+  });
+
   it("counts failed and needs-auth as issues", () => {
     assert.equal(countMcpIssues([{ status: "failed" }, { status: "needs-auth" }, { status: "pending" }, { status: "disabled" }, { status: "connected" }]), 2);
   });

@@ -15,6 +15,10 @@ export interface McpServer {
   scope?: string;
   version?: string;
   error?: string;
+  // Offers Authenticate: the server needs it, or it's a remote (http/sse) server that failed. A remote server whose
+  // stored OAuth token the provider rejects (a refresh that comes back access_denied, say) reports "failed", not
+  // "needs-auth", and Reconnect only retries that token, so signing in again is the way out.
+  canAuthenticate: boolean;
   tools: McpTool[];
 }
 
@@ -32,6 +36,10 @@ export const isMcpIssue = (status: McpStatus): boolean => status === "failed" ||
 
 export const countMcpIssues = (servers: readonly { status: McpStatus }[]): number => servers.filter((server) => isMcpIssue(server.status)).length;
 
+// Servers Claude Code dials over http/sse itself, which can sign in with OAuth through /mcp. claude.ai connectors
+// (claudeai-proxy) sign in on claude.ai instead, and stdio and sdk servers have no OAuth.
+const isRemote = (config: McpServerStatus["config"]): boolean => config?.type === "http" || config?.type === "sse";
+
 // Problems first, then by name.
 export function toMcpServers(statuses: readonly McpServerStatus[]): McpServer[] {
   return statuses
@@ -41,6 +49,7 @@ export function toMcpServers(statuses: readonly McpServerStatus[]): McpServer[] 
       scope: status.scope ?? status.source,
       version: status.serverInfo?.version,
       error: status.error,
+      canAuthenticate: status.status === "needs-auth" || (status.status === "failed" && isRemote(status.config)),
       tools: (status.tools ?? []).map((tool) => ({ name: tool.name, description: tool.description, readOnly: tool.annotations?.readOnly, destructive: tool.annotations?.destructive }))
     }))
     .sort((a, b) => ORDER[a.status] - ORDER[b.status] || a.name.localeCompare(b.name));

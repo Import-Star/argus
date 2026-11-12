@@ -17,7 +17,8 @@ export const mcpPanel: PanelHandler<McpPanelData> = {
   action: async (session, action, payload) => {
     const name = String(payload);
     if (action === "authenticate") {
-      return authenticate(session);
+      const statuses = await session.activeQuery?.mcpServerStatus().catch(() => undefined);
+      return authenticate(session, statuses?.find((status) => status.name === name)?.status === "failed");
     }
     const q = session.activeQuery;
     try {
@@ -33,8 +34,10 @@ export const mcpPanel: PanelHandler<McpPanelData> = {
   }
 };
 
-function authenticate(session: ChatSession): void {
+function authenticate(session: ChatSession, failed: boolean): void {
   const shell = vscode.window.createTerminal({ name: "Claude /mcp", cwd: session.meta.cwd, shellPath: session.claudePath ?? "claude", shellArgs: ["/mcp"] });
   shell.show();
-  void vscode.window.showInformationMessage("Argus: pick the server in /mcp and authenticate, then press Refresh in the MCP panel.");
+  // A failed server stays failed until it reconnects with the new token.
+  const next = failed ? "press Reconnect" : "press Refresh";
+  void vscode.window.showInformationMessage(`Argus: pick the server in /mcp and authenticate, then ${next} in the MCP panel.`);
 }

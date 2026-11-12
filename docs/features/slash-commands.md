@@ -24,7 +24,10 @@ Claude Code as usual, except the ones Claude Code only has in its terminal scree
   clicking the Context meter in the details panel), plan limit bars with session cost and what is contributing, and the loaded
   skills ranked by context cost.
 - `/mcp` opens a side panel of MCP servers: status, errors and tools, with Enable/Disable, Reconnect and
-  Authenticate (in a terminal). The header shows **MCP: N issues** when a server failed or needs authentication.
+  Authenticate (in a terminal). Authenticate shows on a server that needs authentication and on a remote (http/sse)
+  server that failed: when the provider rejects the stored OAuth token the server reports failed, and Reconnect only
+  retries that token, so sign in again through Authenticate, then press Reconnect. The header shows **MCP: N
+  issues** when a server failed or needs authentication.
 - `/model`, `/effort`, `/output-style`, `/advisor`, `/autocompact` and `/color` open a picker, and `/config` a
   searchable settings panel; typed with an argument they go to Claude Code as usual. `/color` tints the chat
   header. Plain-text command output is shown in a monospace block.

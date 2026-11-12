@@ -32,8 +32,8 @@ function Server({ sessionId, server, result }: { sessionId: string; server: McpS
         {busy && <span class="mcp-busy">{busy}</span>}
         {!busy && outcome && !outcome.error && <span class="mcp-done">{ACTIONS[outcome.action].done}</span>}
         <span class="mcp-actions">
-          {server.status === "needs-auth" && (
-            <button type="button" class="cmdp-btn" title="Opens claude /mcp in a terminal" onClick={() => panelAction(sessionId, "mcp", "authenticate", server.name)}>
+          {server.canAuthenticate && (
+            <button type="button" class="cmdp-btn" title="Opens claude /mcp in a terminal to sign in again" onClick={() => panelAction(sessionId, "mcp", "authenticate", server.name)}>
               Authenticate
             </button>
           )}
@@ -48,7 +48,7 @@ function Server({ sessionId, server, result }: { sessionId: string; server: McpS
         </span>
       </div>
       {outcome?.error && !busy && <p class="mcp-error">{`${ACTIONS[outcome.action].verb} failed: ${outcome.error}`}</p>}
-      {server.error && <p class="mcp-error">{server.error}</p>}
+      {server.error && server.error !== outcome?.error && <p class="mcp-error">{server.error}</p>}
       {server.tools.length > 0 && (
         <details class="mcp-tools">
           <summary>
