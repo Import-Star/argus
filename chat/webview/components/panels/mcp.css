@@ -101,3 +101,43 @@
 .mcp-done {
   color: var(--green);
 }
+
+.mcp-signin {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.mcp-signin p {
+  margin: 0;
+}
+
+.mcp-callback {
+  flex-basis: 100%;
+}
+
+.mcp-callback summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.mcp-callback p {
+  margin: 4px 0;
+  color: var(--muted);
+}
+
+.mcp-callback-row {
+  display: flex;
+  gap: 4px;
+}
+
+.mcp-callback-row input {
+  flex: 1;
+  min-width: 0;
+}

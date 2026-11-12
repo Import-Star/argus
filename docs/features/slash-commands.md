@@ -24,10 +24,16 @@ Claude Code as usual, except the ones Claude Code only has in its terminal scree
   clicking the Context meter in the details panel), plan limit bars with session cost and what is contributing, and the loaded
   skills ranked by context cost.
 - `/mcp` opens a side panel of MCP servers: status, errors and tools, with Enable/Disable, Reconnect and
-  Authenticate (in a terminal). Authenticate shows on a server that needs authentication and on a remote (http/sse)
-  server that failed: when the provider rejects the stored OAuth token the server reports failed, and Reconnect only
-  retries that token, so sign in again through Authenticate, then press Reconnect. The header shows **MCP: N
-  issues** when a server failed or needs authentication.
+  Authenticate. The header shows **MCP: N issues** when a server failed or needs authentication.
+  - Authenticate shows on a server that needs authentication and on a remote server (http, sse or a claude.ai
+    connector) that failed. When the provider rejects the stored OAuth token, the server reports failed rather than
+    needs authentication, and Reconnect only retries that token, so sign in again.
+  - Authenticate opens the server's sign-in page in your browser. The row waits for you and updates by itself once
+    the server reconnects; **Open sign-in page again** reopens the page and **Stop waiting** clears the row. A claude.ai
+    connector signs in on claude.ai, so press Reconnect afterwards.
+  - If the browser page doesn't load after signing in (Claude Code's localhost callback can't be reached, e.g. in a
+    remote window), paste that page's address into the row to finish signing in.
+  - A Claude Code CLI too old for this opens `claude /mcp` in a terminal instead.
 - `/model`, `/effort`, `/output-style`, `/advisor`, `/autocompact` and `/color` open a picker, and `/config` a
   searchable settings panel; typed with an argument they go to Claude Code as usual. `/color` tints the chat
   header. Plain-text command output is shown in a monospace block.

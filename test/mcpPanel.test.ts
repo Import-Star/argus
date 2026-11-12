@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { countMcpIssues, toMcpServers } from "../src/chat/panels/mcp.ts";
+import { callbackUrlProblem, countMcpIssues, toMcpServers } from "../src/chat/panels/mcp.ts";
 
 describe("toMcpServers", () => {
   it("lists problems first, then by name, and maps tool annotations", () => {
@@ -27,11 +27,20 @@ describe("toMcpServers", () => {
     ]);
     assert.deepEqual(
       Object.fromEntries(servers.map((server) => [server.name, server.canAuthenticate])),
-      { auth: true, claudeai: false, http: true, ok: false, sse: true, stdio: false }
+      { auth: true, claudeai: true, http: true, ok: false, sse: true, stdio: false }
     );
   });
 
   it("counts failed and needs-auth as issues", () => {
     assert.equal(countMcpIssues([{ status: "failed" }, { status: "needs-auth" }, { status: "pending" }, { status: "disabled" }, { status: "connected" }]), 2);
+  });
+});
+
+describe("callbackUrlProblem", () => {
+  it("accepts a redirect carrying a code or an error, and rejects anything else", () => {
+    assert.equal(callbackUrlProblem(" http://localhost:4567/callback?code=abc&state=xyz "), undefined);
+    assert.equal(callbackUrlProblem("http://localhost:4567/callback?error=access_denied"), undefined);
+    assert.ok(callbackUrlProblem("http://localhost:4567/callback?state=xyz"));
+    assert.ok(callbackUrlProblem("not a url"));
   });
 });
