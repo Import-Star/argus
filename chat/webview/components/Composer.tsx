@@ -19,6 +19,8 @@ const MODES: { value: PermissionMode; label: string }[] = [
 
 const SLASH = /^\/(\S*)$/;
 const MENTION = /(^|\s)([@#])([^\s@#]*)$/;
+// The path token being typed in a `!` command: any word with a slash in it.
+const PATH = /(?:^!\s*|\s)(\S*\/\S*)$/;
 const selectRail = (state: State) => state.rail;
 
 interface Mention {
@@ -69,7 +71,7 @@ function Pick({ label, value, onChange, class: extra, children, text }: { label:
 }
 
 export function Composer({ sessionId, compact }: { sessionId: string; compact?: boolean }) {
-  const { meta, fileSuggestions } = useSession(sessionId);
+  const { meta, fileSuggestions, shells, shellHistory } = useSession(sessionId);
   const rail = useStore(selectRail);
   const [text, setText] = useState("");
   const [images, setImages] = useState<Attachment[]>([]);
@@ -84,10 +86,12 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   const suggestTimer = useRef<number | undefined>(undefined);
 
   const working = meta?.status === "working";
+  const shellMode = text.startsWith("!");
+  const foreground = shells.find((run) => run.status === "running");
   const model = meta?.models.find((option) => option.value === meta.model) ?? (meta?.model ? undefined : meta?.models[0]);
   // A model missing from the list (an explicit id) still gets the control; the CLI downgrades what it can't use.
   const efforts = model ? model.efforts : meta?.models.length ? ALL_EFFORTS : [];
-  const suggestions = mention?.trigger === "@" && fileSuggestions?.query === mention.query ? fileSuggestions.files : [];
+  const suggestions = (mention?.trigger === "@" || mention?.trigger === "/") && fileSuggestions?.query === mention.query ? fileSuggestions.files : [];
   const agents = mention?.trigger === "#" ? filterByName(rail.filter((entry) => entry.sessionId !== sessionId).map((entry) => ({ ...entry, name: entry.name ?? entry.title })), mention.query) : [];
   const slashQuery = !slashOff ? SLASH.exec(text)?.[1] : undefined;
   const commands = slashQuery === undefined ? [] : filterByName(meta?.commands ?? [], slashQuery);
@@ -121,6 +125,9 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
       if (focused && (event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "e" && efforts.length) {
         event.preventDefault();
         setEffort(efforts[(efforts.indexOf(meta?.effort as EffortLevel) + 1) % efforts.length]);
+      } else if (focused && foreground && event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "b") {
+        event.preventDefault();
+        post({ type: "shell", sessionId, id: foreground.id, action: "background" });
       }
     };
     window.addEventListener("keydown", onKey);
@@ -135,6 +142,19 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
     if (!canSend) {
       return;
     }
+    if (foreground) {
+      setNote(`Wait for ${foreground.command} to finish, or press Ctrl+B to run it in the background`);
+      return;
+    }
+    // Attachments stay for the next message: a shell command can't use them.
+    if (shellMode) {
+      if (text.trim() !== "!") {
+        post({ type: "send", sessionId, text: text.trim() });
+      }
+      setText("");
+      setMention(undefined);
+      return;
+    }
     const body = [text.trim(), ...docs.map((doc) => fenceFile(doc.name, doc.text))].filter(Boolean).join("\n\n");
     post({ type: "send", sessionId, text: body, images: images.length ? images : undefined });
     setText("");
@@ -146,6 +166,16 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   }
 
   function updateMention(value: string, caret: number) {
+    if (value.startsWith("!")) {
+      const token = PATH.exec(value.slice(0, caret))?.[1];
+      setMention(token ? { trigger: "/", query: token, start: caret - token.length, end: caret } : undefined);
+      setActive(0);
+      window.clearTimeout(suggestTimer.current);
+      if (token) {
+        suggestTimer.current = window.setTimeout(() => post({ type: "pathSuggestions", sessionId, query: token }), 120);
+      }
+      return;
+    }
     const match = MENTION.exec(value.slice(0, caret));
     if (!match) {
       setMention(undefined);
@@ -226,6 +256,10 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   }
 
   function pick(path: string) {
+    if (mention?.trigger === "/") {
+      insertMention(path.endsWith("/") ? path : `${path} `);
+      return;
+    }
     insertMention(`@${path} `);
     setFiles((current) => [...new Set([...current, path])]);
   }
@@ -269,11 +303,24 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
         return;
       }
     }
+    if (shellMode && event.key === "Tab" && !event.shiftKey) {
+      event.preventDefault();
+      const typed = text.slice(1).trimStart();
+      const match = shellHistory.find((command) => command.startsWith(typed) && command !== typed);
+      if (match) {
+        setText(`!${match}`);
+      }
+      return;
+    }
     if (event.key === "Escape") {
       if (commands.length) {
         setSlashOff(true);
       } else if (mention) {
         setMention(undefined);
+      } else if (foreground) {
+        post({ type: "shell", sessionId, id: foreground.id, action: "stop" });
+      } else if (text === "!") {
+        setText("");
       } else if (working) {
         post({ type: "interrupt", sessionId });
       }
@@ -296,7 +343,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   return (
     <div class="chat-composer" ref={root} data-compact={compact ? "true" : undefined}>
       <Queue sessionId={sessionId} />
-      <div class="cmp-box">
+      <div class="cmp-box" data-shell={shellMode ? "true" : undefined}>
         {commands.length > 0 && (
           <div class="cmp-suggest" role="listbox" aria-label="Commands">
             {commands.map((command, index) => (
@@ -402,7 +449,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
           class="cmp-input"
           rows={compact ? 1 : 2}
           value={text}
-          placeholder={hint ? hint : working ? "Queue a follow-up, @ to add files, # to name an agent" : "Message Claude, @ to add files, # to name an agent"}
+          placeholder={hint ? hint : foreground ? `Running ${foreground.command}: Esc to stop, Ctrl+B to run in the background` : working ? "Queue a follow-up, @ to add files, # to name an agent" : "Message Claude, @ to add files, # to name an agent, ! to run a shell command"}
           aria-expanded={options.length ? true : undefined}
           aria-activedescendant={options.length ? `cmp-${sessionId}-opt-${active}` : undefined}
           onInput={(event) => {

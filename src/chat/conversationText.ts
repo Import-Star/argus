@@ -1,6 +1,58 @@
 const USER_NOISE = /^<(local-command-caveat|local-command-stdout|task-notification|system-reminder|command-message)\b/;
 
+// The CLI's own tags for a `!` command, so Claude and resumed CLI sessions read Argus's runs the same way.
+const BLOCK = /<bash-input>([\s\S]*?)<\/bash-input>|<bash-stdout>([\s\S]*?)<\/bash-stdout>|<bash-stderr>([\s\S]*?)<\/bash-stderr>/g;
+
+export const MAX_SHELL_OUTPUT = 30000;
+
+export interface ShellBlock {
+  // Unset when the output arrived in its own message, as the CLI writes it after the command's message.
+  command?: string;
+  stdout: string;
+  stderr: string;
+}
+
+// The command in a `!` prompt; undefined for any other prompt or a bare `!`.
+export function shellCommand(text: string): string | undefined {
+  return /^!\s*([\s\S]*\S)/.exec(text.trim())?.[1];
+}
+
+export function splitShell(text: string): { blocks: ShellBlock[]; rest: string } {
+  const blocks: ShellBlock[] = [];
+  const rest = text.replace(BLOCK, (_match, command?: string, stdout?: string, stderr?: string) => {
+    if (command !== undefined) {
+      blocks.push({ command: command.trim(), stdout: "", stderr: "" });
+      return "";
+    }
+    if (blocks.length === 0) {
+      blocks.push({ stdout: "", stderr: "" });
+    }
+    const last = blocks[blocks.length - 1];
+    if (stdout !== undefined) {
+      last.stdout = stdout;
+    } else {
+      last.stderr = stderr ?? "";
+    }
+    return "";
+  });
+  return { blocks, rest: rest.trim() };
+}
+
+// Keeps the end, where a failing command usually says why.
+function tail(text: string): string {
+  const cut = text.length - MAX_SHELL_OUTPUT;
+  return cut > 0 ? `[output truncated: ${cut} more characters not shown]\n${text.slice(cut)}` : text;
+}
+
+export function shellMessage(command: string, stdout: string, stderr: string): string {
+  return `<bash-input>${command}</bash-input>\n<bash-stdout>${tail(stdout)}</bash-stdout><bash-stderr>${tail(stderr)}</bash-stderr>`;
+}
+
 export function cleanUserText(raw: string): string {
+  const { blocks, rest } = splitShell(raw);
+  if (blocks.length) {
+    return [...blocks.filter((block) => block.command !== undefined).map((block) => `! ${block.command}`), cleanUserText(rest)].filter(Boolean).join("\n");
+  }
   const text = raw.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, "").trim();
   const command = /<command-name>([\s\S]*?)<\/command-name>(?:[\s\S]*?<command-args>([\s\S]*?)<\/command-args>)?/.exec(text);
   // Argus sends /rename itself to keep the session name in step with the title.

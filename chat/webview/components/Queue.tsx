@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
+import { cleanUserText } from "../../../src/chat/conversationText";
 import type { QueuedMessage } from "../../../src/chat/protocol";
 import { post, useSession } from "../store";
 import "./queue.css";
@@ -70,7 +71,7 @@ function Row({ item, index, count, sessionId }: { item: QueuedMessage; index: nu
         ) : (
           <>
             <div class="q-text" title={item.text}>
-              {item.text}
+              {cleanUserText(item.text)}
             </div>
             {item.images > 0 && <div class="q-note">{item.images === 1 ? "1 image" : `${item.images} images`}</div>}
             {item.sent && <div class="q-note q-warn">Already handed to Claude: it can't be edited, moved or removed.</div>}

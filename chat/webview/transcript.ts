@@ -1,7 +1,7 @@
 import { REVIEW_PROMPT_START, type SDKMessage } from "../../src/chat/protocol";
 import { findingsFromText } from "./findings";
 import { isPlainOutput } from "../../src/chat/commandOutput";
-import { cleanUserText } from "../../src/chat/conversationText";
+import { cleanUserText, splitShell } from "../../src/chat/conversationText";
 import { RECOMMENDED, questionsOf } from "./plan";
 
 export interface DiffLine {
@@ -39,7 +39,8 @@ export type Item =
   | { kind: "thinking"; id: string; text: string; streaming?: boolean }
   | { kind: "lookups"; id: string; calls: Lookup[]; summary: string; pending: boolean }
   | { kind: "edit"; id: string; tool: string; path: string; added: number; removed: number; lines: DiffLine[]; hidden: number; pending: boolean; error?: string }
-  | { kind: "bash"; id: string; command: string; description?: string; output?: string; pending: boolean; error?: boolean }
+  // shell: a `!` command the user ran, not Claude's Bash tool.
+  | { kind: "bash"; id: string; command: string; description?: string; output?: string; pending: boolean; error?: boolean; shell?: boolean }
   | { kind: "todos"; id: string; todos: Todo[]; done: number }
   | { kind: "agent"; id: string; toolUseId: string; subagentType: string; description: string; taskId?: string; pending: boolean; error?: string }
   | { kind: "workflow"; id: string; toolUseId: string; input: Record<string, unknown> }
@@ -399,7 +400,17 @@ export function buildItems(messages: SDKMessage[]): Item[] {
     if (message.isSynthetic || message.isMeta || (origin && origin.kind !== "human")) {
       return;
     }
-    const { text, images } = userContent(content);
+    const { text: raw, images } = userContent(content);
+    const { blocks: shells, rest: text } = splitShell(raw);
+    shells.forEach((block, index) => {
+      const output = [block.stdout, block.stderr].map((part) => part.trim()).filter(Boolean).join("\n");
+      const last = items[items.length - 1];
+      if (block.command !== undefined) {
+        items.push({ kind: "bash", id: `${str(message.uuid) || `u${items.length}`}:shell${index}`, command: block.command, output, pending: false, shell: true });
+      } else if (last?.kind === "bash" && last.shell) {
+        last.output = output;
+      }
+    });
     const clean = reviewSummary(text) ?? cleanUserText(text);
     if (text.startsWith("[Request interrupted")) {
       items.push({ kind: "note", id: str(message.uuid) || `u${items.length}`, text: "Interrupted", tone: "muted" });

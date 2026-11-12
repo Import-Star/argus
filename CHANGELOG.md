@@ -6,6 +6,8 @@ First public release.
 
 ### Highlights
 
+- **Run shell commands with `!`.** Start a message with `!` to run a command in the chat's folder and show its
+  output live. Claude gets the command and output and replies, so after `! npm test` Claude explains any failures.
 - **Pick another agent with `#`.** Type `#` in a chat to pick any session on your board. It goes in as
   `#"<name>"`, so you can tell one agent to message or check on another.
 

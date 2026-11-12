@@ -7,8 +7,10 @@ import type { HostMessage, WebviewMessage } from "../../src/chat/protocol";
 import type { ChatManager } from "./ChatManager";
 import type { ChatSession } from "./ChatSession";
 import { parseLocalCommand } from "../../src/chat/localCommands";
+import { shellCommand } from "../../src/chat/conversationText";
 import { rewind } from "./history";
 import { runLocalCommand } from "./localCommands";
+import { pathSuggestions } from "./shell";
 import { panelAction } from "./panels";
 import { commentsPrompt, fileDiff, listChanges } from "./review";
 import { SideQuestion } from "./sideQuestion";
@@ -187,6 +189,8 @@ export class ChatPanel implements vscode.Disposable {
         this.post({ type: "permission", sessionId: id, request });
       }
       this.post({ type: "queue", sessionId: id, items: session.queued() });
+      this.post({ type: "shells", sessionId: id, runs: session.shell.items() });
+      this.post({ type: "shellHistory", sessionId: id, commands: this.manager.shellHistory(session.meta.cwd) });
     }
   }
 
@@ -250,7 +254,12 @@ export class ChatPanel implements vscode.Disposable {
       switch (message.type) {
         case "send": {
           const local = !message.images?.length ? parseLocalCommand(message.text) : undefined;
-          if (local) {
+          const command = !message.images?.length ? shellCommand(message.text) : undefined;
+          if (command) {
+            session.shell.run(command);
+            this.manager.addShellHistory(cwd, command);
+            this.post({ type: "shellHistory", sessionId: session.sessionId, commands: this.manager.shellHistory(cwd) });
+          } else if (local) {
             await runLocalCommand(this.manager, session, local.name, local.args);
           } else {
             session.send(message.text, message.images);
@@ -259,6 +268,12 @@ export class ChatPanel implements vscode.Disposable {
         }
         case "interrupt":
           await session.interrupt();
+          return;
+        case "shell":
+          session.shell.act(message.id, message.action);
+          return;
+        case "pathSuggestions":
+          this.post({ type: "fileSuggestions", sessionId: session.sessionId, query: message.query, files: await pathSuggestions(cwd, message.query) });
           return;
         case "setModel":
           await session.setModel(message.model);

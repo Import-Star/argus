@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/ho
 import { runReplyAction, useReplyActions } from "../extensions";
 import { highlightCode, languageFor } from "../highlight";
 import { renderMarkdown } from "../markdown";
+import type { ShellRun } from "../../../src/chat/protocol";
 import { post, setUi, useSession } from "../store";
 import { scenarioParts, severityOf, type Severity } from "../findings";
 import { buildItems, displayPath, MAX_OUTPUT, messageUuid, searchText, textOnlyRows, turnOutputTokens, type Finding, type Item, type Row as TranscriptRow } from "../transcript";
@@ -152,15 +153,16 @@ function EditCard({ item, sessionId, cwd }: { item: Extract<Item, { kind: "edit"
   );
 }
 
-function BashCard({ item, forceOpen }: { item: Extract<Item, { kind: "bash" }>; forceOpen?: boolean }) {
-  const [open, toggle] = useToggle(forceOpen);
+function BashCard({ item, forceOpen, children }: { item: Extract<Item, { kind: "bash" }>; forceOpen?: boolean; children?: ComponentChildren }) {
+  const [open, toggle] = useToggle(forceOpen || item.shell);
   const output = item.output?.trim();
   return (
     <div class="tr-card">
       <div class="tr-head">
-        <span class="muted mono">$</span>
+        <span class="muted mono">{item.shell ? "!" : "$"}</span>
         <Code class="mono tr-bash-cmd" title={item.command} text={item.command.split("\n")[0]} language="bash" />
         <Status pending={item.pending} error={item.error} />
+        {children}
       </div>
       {item.description && <div class="tr-desc">{item.description}</div>}
       {output && (
@@ -172,6 +174,26 @@ function BashCard({ item, forceOpen }: { item: Extract<Item, { kind: "bash" }>; 
         </>
       )}
     </div>
+  );
+}
+
+function ShellRunCard({ run, sessionId }: { run: ShellRun; sessionId: string }) {
+  const item: Extract<Item, { kind: "bash" }> = { kind: "bash", id: run.id, command: run.command, output: run.output, pending: run.status !== "held", error: !!run.exitCode, shell: true };
+  const act = (action: "stop" | "background") => post({ type: "shell", sessionId, id: run.id, action });
+  const description = run.status === "background" ? "Running in the background" : run.status === "held" ? "Goes to Claude with your next message" : undefined;
+  return (
+    <BashCard item={{ ...item, description }}>
+      {run.status === "running" && (
+        <button type="button" class="ghost" title="Ctrl+B" onClick={() => act("background")}>
+          Background
+        </button>
+      )}
+      {run.status !== "held" && (
+        <button type="button" class="ghost" onClick={() => act("stop")}>
+          Stop
+        </button>
+      )}
+    </BashCard>
   );
 }
 
@@ -646,7 +668,7 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
     if (pinned.current) {
       scrollToEnd();
     }
-  }, [shown, session.permissions, working]);
+  }, [shown, session.permissions, session.shells, working]);
 
   return (
     <div class={`chat-transcript${compact ? " tr-compact" : ""}`} data-session={sessionId} ref={root}>
@@ -667,6 +689,11 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
               </div>
             )
           )}
+          {session.shells.map((run) => (
+            <div key={run.id} class="tr-item">
+              <ShellRunCard run={run} sessionId={sessionId} />
+            </div>
+          ))}
           {session.permissions.map((request) => (
             <PermissionCard key={request.id} sessionId={sessionId} request={request} compact={compact} />
           ))}

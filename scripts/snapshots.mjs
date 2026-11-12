@@ -129,6 +129,12 @@ async function slashSteps(page) {
   await page.locator(".cmp-command").first().waitFor();
 }
 
+async function shellSteps(page, data) {
+  await page.getByLabel("Message Claude").first().pressSequentially("!ls ./sr");
+  await page.evaluate((message) => window.__harness.play([message]), data.paths);
+  await page.locator('.cmp-suggest[aria-label="Files"]').waitFor();
+}
+
 async function agentSteps(page) {
   await page.getByLabel("Message Claude").first().pressSequentially("ask #");
   await page.locator('.cmp-suggest[aria-label="Agents"]').waitFor();
@@ -349,6 +355,7 @@ const SCREENS = [
   { name: "working", ...CHAT_PAGE, expect: { working: ".tr-working", glyph: ".tr-working-glyph", meta: ".tr-working-meta" } },
   { name: "queue", ...CHAT_PAGE, messages: () => [...fixture("working").messages, ...fixture("queue").messages], steps: queueSteps, expect: { queue: ".q", rows: ".q-row", sent: ".q-sent .q-warn", editor: ".q-edit", sendNow: ".q-now" } },
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
+  { name: "shell", ...CHAT_PAGE, messages: () => [...fixture("history").messages, ...fixture("shell").messages], steps: shellSteps, expect: { mode: ".cmp-box[data-shell]", paths: ".cmp-option.mono", cards: ".tr-bash-cmd", running: ".tr-card .spinner" } },
   { name: "agents", ...CHAT_PAGE, fixture: "slash", steps: agentSteps, expect: { popup: '.cmp-suggest[aria-label="Agents"]', agents: ".cmp-option" } },
   { name: "agents-narrow", ...CHAT_PAGE, width: 900, fixture: "slash", steps: agentSteps, whatsNew: { file: "0.15.0-agents.png", clip: (page) => [page.locator(".cmp-suggest"), page.locator(".cmp-box")] }, expect: { popup: '.cmp-suggest[aria-label="Agents"]' } },
   { name: "paste", ...CHAT_PAGE, steps: pasteSteps, expect: { chips: ".cmp-chip.mono", note: ".cmp-note" } },
