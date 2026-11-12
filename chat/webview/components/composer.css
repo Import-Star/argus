@@ -33,6 +33,15 @@
   border-color: var(--accent);
 }
 
+.cmp-box[data-shell],
+.cmp-box[data-shell]:focus-within {
+  border-color: var(--coral);
+}
+
+.cmp-box[data-shell] .cmp-input {
+  font-family: var(--mono);
+}
+
 .cmp-input {
   border: 0;
   outline: 0;

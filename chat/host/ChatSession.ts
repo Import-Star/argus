@@ -5,6 +5,7 @@ import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 import { MessageQueue, type QueueAction } from "./messageQueue";
+import { ShellRunner } from "./shell";
 import { withLocalCommandOutput } from "./restore";
 import { withWorkflowTasks } from "./workflowHistory";
 import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
@@ -92,7 +93,7 @@ function parseTtl(value: unknown): number | undefined {
   return value === "5m" ? FIVE_MINUTES : value === "1h" ? ONE_HOUR : undefined;
 }
 
-function readSettings(file: string): { promptCacheTtl?: unknown; env?: Record<string, unknown> } {
+function readSettings(file: string): { promptCacheTtl?: unknown; respondToBashCommands?: unknown; env?: Record<string, unknown> } {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
   } catch {
@@ -100,12 +101,17 @@ function readSettings(file: string): { promptCacheTtl?: unknown; env?: Record<st
   }
 }
 
+const settingsFiles = (cwd: string) => [path.join(cwd, ".claude", "settings.local.json"), path.join(cwd, ".claude", "settings.json"), path.join(os.homedir(), ".claude", "settings.json")];
+
 // Settings and env beat the account default, in the order the CLI reads them (local over project over user).
 function configuredCacheTtl(cwd: string): number | undefined {
-  const files = [path.join(cwd, ".claude", "settings.local.json"), path.join(cwd, ".claude", "settings.json"), path.join(os.homedir(), ".claude", "settings.json")];
-  const settings = files.map(readSettings);
+  const settings = settingsFiles(cwd).map(readSettings);
   const fromEnv = parseTtl(process.env.CLAUDE_CODE_PROMPT_CACHE_TTL) ?? settings.map((entry) => parseTtl(entry.env?.CLAUDE_CODE_PROMPT_CACHE_TTL)).find((ttl) => ttl);
   return fromEnv ?? settings.map((entry) => parseTtl(entry.promptCacheTtl)).find((ttl) => ttl);
+}
+
+function respondsToShell(cwd: string): boolean {
+  return settingsFiles(cwd).map(readSettings).find((entry) => typeof entry.respondToBashCommands === "boolean")?.respondToBashCommands !== false;
 }
 
 const EDIT_TOOLS = new Set(["Edit", "MultiEdit", "Write", "NotebookEdit"]);
@@ -149,6 +155,7 @@ export class ChatSession implements vscode.Disposable {
     started: (entry) => this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message: this.userMessage(entry.uuid, entry.text, entry.images) }),
     changed: (items) => this.emitter.fire({ type: "queue", sessionId: this.sessionId, items })
   });
+  public readonly shell: ShellRunner;
 
   constructor(private readonly options: ChatSessionOptions) {
     this.sessionId = options.sessionId ?? randomUUID();
@@ -166,6 +173,12 @@ export class ChatSession implements vscode.Disposable {
       color: options.color,
       models: []
     };
+    this.shell = new ShellRunner({
+      cwd: options.cwd,
+      respond: () => respondsToShell(options.cwd),
+      deliver: (text) => this.send(text),
+      changed: (runs) => this.emitter.fire({ type: "shells", sessionId: this.sessionId, runs })
+    });
   }
 
   public start(resumeAt?: string): void {
@@ -301,7 +314,8 @@ export class ChatSession implements vscode.Disposable {
     return [...this.pending.values()].map((entry) => entry.request);
   }
 
-  public send(text: string, images: { mediaType: string; data: string }[] = []): void {
+  public send(prompt: string, images: { mediaType: string; data: string }[] = []): void {
+    const text = [this.shell.takeHeld(), prompt].filter(Boolean).join("\n\n");
     this.start();
     if (this.meta.status === "working" || this.meta.status === "needs-you") {
       this.queue.add(text, images);
@@ -512,6 +526,7 @@ export class ChatSession implements vscode.Disposable {
     }
     this.input.close();
     this.q?.close();
+    this.shell.dispose();
     this.emitter.dispose();
   }
 

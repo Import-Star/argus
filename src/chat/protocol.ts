@@ -127,6 +127,15 @@ export interface QueuedMessage {
   sent: boolean;
 }
 
+// A `!` command. "held" means it finished and waits to go to Claude with the next message (respondToBashCommands off).
+export interface ShellRun {
+  id: string;
+  command: string;
+  output: string;
+  status: "running" | "background" | "held";
+  exitCode?: number;
+}
+
 export type ChangeScope = "base" | "turn" | "uncommitted" | "session" | "pr";
 
 export interface FileChange {
@@ -176,6 +185,9 @@ export type HostMessage =
   | { type: "taskOutput"; sessionId: string; taskId: string; output: string }
   | { type: "agentMessages"; sessionId: string; taskId: string; messages: SDKMessage[] }
   | { type: "queue"; sessionId: string; items: QueuedMessage[] }
+  | { type: "shells"; sessionId: string; runs: ShellRun[] }
+  // Earlier `!` commands in this chat's folder, newest first, for Tab completion.
+  | { type: "shellHistory"; sessionId: string; commands: string[] }
   | { type: "usage"; sessionId: string; usage: PlanUsage | null }
   | { type: "openReview"; sessionId: string; scope: ChangeScope; worktree?: string; prUrl?: string }
   | { type: "rewound"; sessionId: string; userMessageId: string; text: string }
@@ -198,6 +210,9 @@ export type WebviewMessage =
   | { type: "setPermissionMode"; sessionId: string; mode: PermissionMode }
   | { type: "permission"; sessionId: string; id: string; decision: PermissionDecision }
   | { type: "fileSuggestions"; sessionId: string; query: string }
+  // A `!` command's path token; answered with fileSuggestions for the same query.
+  | { type: "pathSuggestions"; sessionId: string; query: string }
+  | { type: "shell"; sessionId: string; id: string; action: "stop" | "background" }
   | { type: "openFile"; sessionId: string; path: string; line?: number; worktree?: string }
   | { type: "openUrl"; url: string }
   | { type: "copy"; text: string }

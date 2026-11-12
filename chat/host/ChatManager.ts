@@ -30,6 +30,8 @@ interface Remembered {
 const SESSION_CHOICES_KEY = "argus.chat.sessionChoices";
 const SESSION_CWDS_KEY = "argus.chat.sessionCwds";
 const SAVED_TABS_KEY = "argus.chat.savedTabs";
+const SHELL_HISTORY_KEY = "argus.chat.shellHistory";
+const SHELL_HISTORY_MAX = 100;
 const FOCUS_GROUP = ["First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth"].map((nth) => `workbench.action.focus${nth}EditorGroup`);
 
 function gitBranch(folder: string): string | undefined {
@@ -219,6 +221,16 @@ export class ChatManager implements vscode.Disposable {
 
   public send(sessionId: string, text: string): void {
     this.sessions.get(sessionId)?.send(text);
+  }
+
+  public shellHistory(cwd: string): string[] {
+    return this.context.globalState.get<Record<string, string[]>>(SHELL_HISTORY_KEY)?.[cwd] ?? [];
+  }
+
+  public addShellHistory(cwd: string, command: string): void {
+    const all = this.context.globalState.get<Record<string, string[]>>(SHELL_HISTORY_KEY) ?? {};
+    const commands = [command, ...(all[cwd] ?? []).filter((entry) => entry !== command)].slice(0, SHELL_HISTORY_MAX);
+    void this.context.globalState.update(SHELL_HISTORY_KEY, { ...all, [cwd]: commands });
   }
 
   public remember(sessionId: string, choice: Remembered): void {

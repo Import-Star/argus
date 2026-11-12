@@ -1,0 +1,58 @@
+{
+  "messages": [
+    {
+      "type": "sdk",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "message": {
+        "type": "user",
+        "uuid": "aaaaaaaa-0000-4000-8000-0000000000a1",
+        "message": {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "<bash-input>git status --short</bash-input>\n<bash-stdout> M src/money.ts\n?? test/money.test.ts\n</bash-stdout><bash-stderr></bash-stderr>\n\nWhy is the test file untracked?"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "shells",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "runs": [
+        {
+          "id": "s1",
+          "command": "npm run lint",
+          "output": "src/money.ts\n  12:5  warning  Unexpected console statement  no-console\n\n1 problem (0 errors, 1 warning)\n",
+          "status": "held",
+          "exitCode": 0
+        },
+        {
+          "id": "s2",
+          "command": "npm test",
+          "output": "> money@1.0.0 test\n> node --test\n\n✔ rounds half cents up (1.2ms)\n✔ keeps whole cents (0.4ms)\n",
+          "status": "running"
+        }
+      ]
+    },
+    {
+      "type": "shellHistory",
+      "sessionId": "11111111-0000-4000-8000-000000000001",
+      "commands": [
+        "npm test",
+        "npm run lint",
+        "git status --short"
+      ]
+    }
+  ],
+  "paths": {
+    "type": "fileSuggestions",
+    "sessionId": "11111111-0000-4000-8000-000000000001",
+    "query": "./sr",
+    "files": [
+      "./src/",
+      "./scripts/"
+    ]
+  }
+}

@@ -135,6 +135,12 @@ board; opening one while it is running there warns you first, since two processe
   Each reply shows its turn's cost, and code blocks and replies have copy buttons. Type `/` for the session's
   slash commands, and paste or drop files to attach them. Type `#` to pick another session on the board; it's
   added as `#"<name>"`, the name Claude uses to message it when it's running, or its title when it isn't.
+- Start a message with `!` to run a shell command yourself, as in Claude Code's shell mode. It runs in the chat's
+  folder with your shell, without a permission prompt, and its output streams into the transcript. **Stop** (or Esc)
+  ends it; **Background** (or Ctrl+B) lets you keep chatting while it runs. When it finishes, the command and output
+  go to Claude, which replies to them. With Claude Code's `respondToBashCommands` set to `false`, the output waits
+  and goes with your next message instead. Tab completes from earlier `!` commands in the same folder, and typing a
+  path with a `/` lists matching files and folders.
 - Commands Claude Code only has in its terminal screen are run by Argus itself:
   - `/remote-control` (`/rc`) continues the chat from claude.ai/code or the Claude app. The header shows
     **Remote Control** while it's on. Claude Code's `remoteControlAtStartup` setting turns it on for every chat.

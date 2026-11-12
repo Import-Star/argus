@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "preact/hooks";
 import type { Panel } from "../../src/chat/panels";
-import type { CardInfo, ChangeScope, ChatGroup, ChatMeta, FileChange, FileDiff, HostMessage, PermissionRequest, PlanUsage, QueuedMessage, RailSession,SDKMessage, WebviewMessage } from "../../src/chat/protocol";
+import type { CardInfo, ChangeScope, ChatGroup, ChatMeta, FileChange, FileDiff, HostMessage, PermissionRequest, PlanUsage, QueuedMessage, RailSession,SDKMessage, ShellRun, WebviewMessage } from "../../src/chat/protocol";
 
 import { noteArrival } from "./backgroundTasks";
 import { EMPTY_REVIEW, type ReviewState } from "./review";
@@ -40,6 +40,8 @@ export interface SessionState {
   taskOutputs: Record<string, string>;
   agentMessages: Record<string, SDKMessage[]>;
   queue: QueuedMessage[];
+  shells: ShellRun[];
+  shellHistory: string[];
   usage?: PlanUsage | null;
   review: ReviewState;
   ui: SessionUi;
@@ -60,7 +62,7 @@ let state: State = { view: "single", sessionIds: [], multiAgent: false, keepAwak
 const listeners = new Set<() => void>();
 
 function emptySession(): SessionState {
-  return { messages: [], permissions: [], diffs: {}, taskOutputs: {}, agentMessages: {}, queue: [], review: EMPTY_REVIEW, ui: { side: "details", reviewScope: "base" } };
+  return { messages: [], permissions: [], diffs: {}, taskOutputs: {}, agentMessages: {}, queue: [], shells: [], shellHistory: [], review: EMPTY_REVIEW, ui: { side: "details", reviewScope: "base" } };
 }
 
 function set(next: State): void {
@@ -157,6 +159,12 @@ export function dispatch(message: HostMessage): void {
       return;
     case "queue":
       updateSession(message.sessionId, (session) => ({ ...session, queue: message.items }));
+      return;
+    case "shells":
+      updateSession(message.sessionId, (session) => ({ ...session, shells: message.runs }));
+      return;
+    case "shellHistory":
+      updateSession(message.sessionId, (session) => ({ ...session, shellHistory: message.commands }));
       return;
     case "taskOutput":
       updateSession(message.sessionId, (session) => ({ ...session, taskOutputs: { ...session.taskOutputs, [message.taskId]: message.output } }));
