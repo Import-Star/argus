@@ -450,6 +450,7 @@ export class ChatManager implements vscode.Disposable {
       .map((card) => ({
         sessionId: card.record.sessionId,
         title: card.record.title || card.record.lastPrompt || "Untitled chat",
+        name: card.name,
         column: card.column,
         activity: card.record.pending || card.record.lastTool,
         since: card.record.stateSince,

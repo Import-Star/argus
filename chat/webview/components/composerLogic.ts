@@ -1,5 +1,3 @@
-import type { SlashItem } from "../../../src/chat/protocol";
-
 export const MAX_TEXT_BYTES = 200 * 1024;
 
 const TEXT_TYPE = /^text\/|json|xml|javascript|typescript|yaml|toml|x-sh$|sql|csv/;
@@ -16,10 +14,10 @@ export function fileUris(list: string): string[] {
     .filter((line) => line.startsWith("file://"));
 }
 
-export function filterCommands(commands: SlashItem[], query: string): SlashItem[] {
+export function filterByName<T extends { name: string }>(items: T[], query: string): T[] {
   const q = query.toLowerCase();
-  const starts = commands.filter((command) => command.name.toLowerCase().startsWith(q));
-  const rest = commands.filter((command) => !command.name.toLowerCase().startsWith(q) && command.name.toLowerCase().includes(q));
+  const starts = items.filter((item) => item.name.toLowerCase().startsWith(q));
+  const rest = items.filter((item) => !item.name.toLowerCase().startsWith(q) && item.name.toLowerCase().includes(q));
   return [...starts, ...rest];
 }
 

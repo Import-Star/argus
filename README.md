@@ -132,7 +132,8 @@ board; opening one while it is running there warns you first, since two processe
   new chat from it. Cmd/Ctrl+F searches the transcript, folded tool output included. **Ask aside** (Cmd/Ctrl+;)
   asks a side question without adding it to the transcript. Queued messages can be edited, reordered or sent now.
   Each reply shows its turn's cost, and code blocks and replies have copy buttons. Type `/` for the session's
-  slash commands, and paste or drop files to attach them.
+  slash commands, and paste or drop files to attach them. Type `#` to pick another session on the board; it's
+  added as `#"<name>"`, the name Claude uses to message it when it's running, or its title when it isn't.
 - Commands Claude Code only has in its terminal screen are run by Argus itself:
   - `/remote-control` (`/rc`) continues the chat from claude.ai/code or the Claude app. The header shows
     **Remote Control** while it's on. Claude Code's `remoteControlAtStartup` setting turns it on for every chat.

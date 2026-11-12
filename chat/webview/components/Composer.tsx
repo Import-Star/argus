@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { ComponentChildren } from "preact";
 import type { EffortLevel, PermissionMode } from "../../../src/chat/protocol";
-import { post, useSession } from "../store";
-import { fenceFile, fileUris, filterCommands, isTextLike, MAX_TEXT_BYTES } from "./composerLogic";
+import { post, useSession, useStore, type State } from "../store";
+import { fenceFile, fileUris, filterByName, isTextLike, MAX_TEXT_BYTES } from "./composerLogic";
 import { uriToPath } from "../sessionFiles";
 import { Queue } from "./Queue";
 import "./composer.css";
@@ -18,9 +18,11 @@ const MODES: { value: PermissionMode; label: string }[] = [
 ];
 
 const SLASH = /^\/(\S*)$/;
-const MENTION = /(^|\s)@([^\s@]*)$/;
+const MENTION = /(^|\s)([@#])([^\s@#]*)$/;
+const selectRail = (state: State) => state.rail;
 
 interface Mention {
+  trigger: string;
   query: string;
   start: number;
   end: number;
@@ -68,6 +70,7 @@ function Pick({ label, value, onChange, class: extra, children, text }: { label:
 
 export function Composer({ sessionId, compact }: { sessionId: string; compact?: boolean }) {
   const { meta, fileSuggestions } = useSession(sessionId);
+  const rail = useStore(selectRail);
   const [text, setText] = useState("");
   const [images, setImages] = useState<Attachment[]>([]);
   const [files, setFiles] = useState<string[]>([]);
@@ -84,10 +87,11 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   const model = meta?.models.find((option) => option.value === meta.model) ?? (meta?.model ? undefined : meta?.models[0]);
   // A model missing from the list (an explicit id) still gets the control; the CLI downgrades what it can't use.
   const efforts = model ? model.efforts : meta?.models.length ? ALL_EFFORTS : [];
-  const suggestions = mention && fileSuggestions?.query === mention.query ? fileSuggestions.files : [];
+  const suggestions = mention?.trigger === "@" && fileSuggestions?.query === mention.query ? fileSuggestions.files : [];
+  const agents = mention?.trigger === "#" ? filterByName(rail.filter((entry) => entry.sessionId !== sessionId).map((entry) => ({ ...entry, name: entry.name ?? entry.title })), mention.query) : [];
   const slashQuery = !slashOff ? SLASH.exec(text)?.[1] : undefined;
-  const commands = slashQuery === undefined ? [] : filterCommands(meta?.commands ?? [], slashQuery);
-  const options = commands.length ? commands.map((command) => command.name) : suggestions;
+  const commands = slashQuery === undefined ? [] : filterByName(meta?.commands ?? [], slashQuery);
+  const options = commands.length ? commands.map((command) => command.name) : agents.length ? agents.map((agent) => agent.name) : suggestions;
   // While the slash or @ menu is open the textarea acts as a combobox. Preact 11's types only allow role="textbox"
   // on a textarea, so the role is set on the element directly.
   const menuOpen = options.length > 0;
@@ -147,10 +151,13 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
       setMention(undefined);
       return;
     }
-    const query = match[2];
-    setMention({ query, start: caret - query.length - 1, end: caret });
+    const [, , trigger, query] = match;
+    setMention({ trigger, query, start: caret - query.length - 1, end: caret });
     setActive(0);
     window.clearTimeout(suggestTimer.current);
+    if (trigger === "#") {
+      return;
+    }
     suggestTimer.current = window.setTimeout(() => post({ type: "fileSuggestions", sessionId, query }), 120);
   }
 
@@ -211,18 +218,23 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   function choose(index: number) {
     if (commands.length) {
       pickCommand(commands[index].name);
+    } else if (agents.length) {
+      insertMention(`#"${agents[index].name}" `);
     } else {
       pick(suggestions[index]);
     }
   }
 
   function pick(path: string) {
+    insertMention(`@${path} `);
+    setFiles((current) => [...new Set([...current, path])]);
+  }
+
+  function insertMention(insert: string) {
     if (!mention) {
       return;
     }
-    const insert = `@${path} `;
     setText(text.slice(0, mention.start) + insert + text.slice(mention.end));
-    setFiles((current) => [...new Set([...current, path])]);
     setMention(undefined);
     const caret = mention.start + insert.length;
     requestAnimationFrame(() => {
@@ -307,7 +319,28 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
             ))}
           </div>
         )}
-        {commands.length === 0 && suggestions.length > 0 && (
+        {commands.length === 0 && agents.length > 0 && (
+          <div class="cmp-suggest" role="listbox" aria-label="Agents">
+            {agents.map((agent, index) => (
+              <div
+                key={agent.sessionId}
+                id={`cmp-${sessionId}-opt-${index}`}
+                role="option"
+                aria-selected={index === active}
+                class={`cmp-option cmp-command${index === active ? " active" : ""}`}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  choose(index);
+                }}
+                onMouseEnter={() => setActive(index)}
+              >
+                <span>#{agent.name}</span>
+                <span class="cmp-desc">{agent.repo}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {commands.length === 0 && agents.length === 0 && suggestions.length > 0 && (
           <div class="cmp-suggest" role="listbox" aria-label="Files">
             {suggestions.map((file, index) => (
               <div
@@ -369,7 +402,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
           class="cmp-input"
           rows={compact ? 1 : 2}
           value={text}
-          placeholder={hint ? hint : working ? "Queue a follow-up, @ to add files" : "Message Claude, @ to add files"}
+          placeholder={hint ? hint : working ? "Queue a follow-up, @ to add files, # to name an agent" : "Message Claude, @ to add files, # to name an agent"}
           aria-expanded={options.length ? true : undefined}
           aria-activedescendant={options.length ? `cmp-${sessionId}-opt-${active}` : undefined}
           onInput={(event) => {
