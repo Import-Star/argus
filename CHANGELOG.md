@@ -2,7 +2,22 @@
 
 First public release.
 
-## Unreleased
+## 0.16.0
+
+### Highlights
+
+- **Comment on parts of a plan.** Plans now show as full Markdown, with tables, links and highlighted code. Select
+  any text in a plan to comment on it. The text stays highlighted and your comment shows right under it.
+
+  ![A highlighted line in a plan with a comment card under it](media/whats-new/0.16.0-plan-comment.png)
+- **Comment on rendered Markdown in diff review.** Switch a Markdown file to **Show rendered** and select text to
+  comment on it. The comment is sent on the matching source line.
+
+  ![A rendered Markdown table in diff review with a comment box under the selected row](media/whats-new/0.16.0-review-markdown.png)
+- **Open and delete worktrees from the chat.** The chat's details pane lists each worktree with **Diff**, **Open**
+  and **Delete**, so you can remove a worktree you're done with without a terminal.
+
+### Changes
 
 - Scrolling up in a side-by-side tile now loads earlier messages. Before, a tile showed only its last 12 rows.
 - Fix a chat showing "Idle" and no "Working…" line while Claude runs tools in a turn you didn't start by sending a message, such as one started by another session.
