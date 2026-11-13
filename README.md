@@ -190,7 +190,7 @@ side. With it off, forks open in their own tab and each agent has its own card.
   agent, lists each agent with its status, and opens them all side by side when clicked. Archiving the card
   archives every agent. Groups are stored in `~/.claude/argus/board.json` (`groupOf`).
 - **Argus: Open Chats Side by Side** shows several chats in a grid, each with its transcript and a message box.
-  Tiles that need you are outlined. A details panel on the right (changed files, worktrees, PRs, subagents, usage) follows the tile you click or the
+  A tile shows its latest messages and loads earlier ones as you scroll up. Tiles that need you are outlined. A details panel on the right (changed files, worktrees, PRs, subagents, usage) follows the tile you click or the
   tab you pick; the panel button in the bar hides it. Each tile's header can focus it (fill the tab with that agent and
   its details; click again to go back), pop it out to its own tab, or archive it (as
   its board card would, removing the tile).

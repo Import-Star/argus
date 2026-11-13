@@ -2,6 +2,10 @@
 
 First public release.
 
+## Unreleased
+
+- Scrolling up in a side-by-side tile now loads earlier messages. Before, a tile showed only its last 12 rows.
+
 ## 0.15.0
 
 ### Highlights
