@@ -2,6 +2,10 @@
 
 First public release.
 
+## Unreleased
+
+- Fix a chat showing "Idle" and no "Working…" line while Claude runs tools in a turn you didn't start by sending a message, such as one started by another session.
+
 ## 0.15.0
 
 ### Highlights
