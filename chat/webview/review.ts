@@ -12,6 +12,7 @@ export interface ReviewThread {
   line: number;
   side: "old" | "new";
   code: string;
+  quote?: string;
   resolved: boolean;
   turns: ReviewTurn[];
 }
@@ -108,10 +109,21 @@ const mapThread = (review: ReviewState, id: string, update: (thread: ReviewThrea
   threads: review.threads.map((thread) => (thread.id === id ? update(thread) : thread))
 });
 
-export function addThread(review: ReviewState, anchor: Pick<ReviewThread, "path" | "line" | "side" | "code">): { review: ReviewState; threadId: string } {
+export function addThread(review: ReviewState, anchor: Pick<ReviewThread, "path" | "line" | "side" | "code" | "quote">): { review: ReviewState; threadId: string } {
   const id = `c${review.next}`;
   const thread: ReviewThread = { ...anchor, id: `t${id}`, resolved: false, turns: [{ id, text: "", sent: false }] };
   return { review: { ...review, next: review.next + 1, threads: [...review.threads, thread] }, threadId: thread.id };
+}
+
+const plain = (text: string) => text.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/[*_`~|\s]/g, "");
+
+// Source line in `start`..`end` (1-based) that rendered text selected in a Markdown block starts on.
+export function quoteLine(source: string[], start: number, end: number, quote: string): number {
+  const first = plain(quote.split("\n")[0]).slice(0, 30);
+  for (let line = start; line <= end; line++) {
+    if (plain(source[line - 1] ?? "").includes(first)) return line;
+  }
+  return start;
 }
 
 export function setDraftText(review: ReviewState, threadId: string, turnId: string, text: string): ReviewState {
