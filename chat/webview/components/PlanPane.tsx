@@ -1,43 +1,14 @@
-import { useRef, useState } from "preact/hooks";
-import { inlineParts, lastPlan, parsePlan, planComments, type PlanBlock, type PlanComment } from "../plan";
+import { createPortal } from "preact/compat";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { renderMarkdownBlocks } from "../markdown";
+import { lastPlan, planComments, type PlanComment as Comment } from "../plan";
 import { setUi, useSession } from "../store";
 import { approvePlan, keepPlanning } from "./PermissionCard";
+import { AddComment, commentHolder, removeHolder, useHighlight, useTextSelection, type TextSelection } from "./selectionComment";
+import { onLinkClick } from "./SideQuestion";
 import "./plan.css";
 
-interface Selection {
-  block: number;
-  quote: string;
-  top: number;
-  left: number;
-}
-
-function Inline({ text }: { text: string }) {
-  return (
-    <>
-      {inlineParts(text).map((part, index) => (part.code ? <code key={index}>{part.text}</code> : part.bold ? <strong key={index}>{part.text}</strong> : part.text))}
-    </>
-  );
-}
-
-function Block({ block }: { block: PlanBlock }) {
-  if (block.kind === "heading") {
-    return <h3 class={`plan-h plan-h${Math.min(block.level, 3)}`}><Inline text={block.text} /></h3>;
-  }
-  if (block.kind === "code") {
-    return <pre class="plan-code">{block.text}</pre>;
-  }
-  if (block.kind === "list") {
-    const Tag = block.ordered ? "ol" : "ul";
-    return (
-      <Tag class="plan-list">
-        {block.items.map((item, index) => (
-          <li key={index}><Inline text={item} /></li>
-        ))}
-      </Tag>
-    );
-  }
-  return <p class="plan-para"><Inline text={block.text} /></p>;
-}
+type PlanComment = Comment & { range: Range; holder: HTMLElement };
 
 function CommentCard({ comment, editing, onSave, onEdit, onRemove }: { comment: PlanComment; editing: boolean; onSave: (text: string) => void; onEdit: () => void; onRemove: () => void }) {
   const [draft, setDraft] = useState(comment.text);
@@ -70,50 +41,31 @@ function CommentCard({ comment, editing, onSave, onEdit, onRemove }: { comment: 
   );
 }
 
-function blockIndex(node: Node | null): number | undefined {
-  const element = node instanceof Element ? node : node?.parentElement;
-  const found = element?.closest<HTMLElement>("[data-block]");
-  return found ? Number(found.dataset.block) : undefined;
-}
-
 export function PlanPane({ sessionId }: { sessionId: string }) {
   const session = useSession(sessionId);
   const request = session.permissions.find((item) => item.toolName === "ExitPlanMode");
   const plan = typeof request?.input.plan === "string" ? request.input.plan : lastPlan(session.messages);
-  const blocks = parsePlan(plan ?? "");
-  const scroller = useRef<HTMLDivElement>(null);
-  const [selection, setSelection] = useState<Selection>();
+  const blocks = useMemo(() => renderMarkdownBlocks(plan ?? ""), [plan]);
+  const { selection, onMouseUp, clear } = useTextSelection(".plan-block", request !== undefined);
   const [comments, setComments] = useState<PlanComment[]>([]);
   const [editing, setEditing] = useState<number>();
   const nextId = useRef(1);
   const sendable = comments.filter((comment) => comment.text !== "");
 
-  const onMouseUp = () => {
-    const host = scroller.current;
-    const picked = window.getSelection();
-    const block = picked && picked.rangeCount > 0 ? blockIndex(picked.anchorNode) : undefined;
-    const quote = picked?.toString().trim();
-    if (!request || !host || !picked || picked.isCollapsed || !quote || block === undefined || blockIndex(picked.focusNode) === undefined) {
-      setSelection(undefined);
-      return;
-    }
-    const rect = picked.getRangeAt(0).getBoundingClientRect();
-    const box = host.getBoundingClientRect();
-    setSelection({ block, quote, top: rect.bottom - box.top + host.scrollTop + 4, left: Math.max(0, rect.left - box.left) });
-  };
+  useEffect(() => setComments([]), [plan]);
 
-  const addComment = () => {
-    if (!selection) {
-      return;
-    }
+  useHighlight(useMemo(() => comments.map((comment) => comment.range), [comments]));
+
+  const addComment = (picked: TextSelection) => {
     const id = nextId.current++;
-    setComments([...comments, { id, block: selection.block, quote: selection.quote, text: "" }]);
+    setComments([...comments, { id, quote: picked.quote, range: picked.range, holder: commentHolder(picked.range), text: "" }]);
     setEditing(id);
-    setSelection(undefined);
-    window.getSelection()?.removeAllRanges();
+    clear();
   };
 
   const remove = (id: number) => {
+    const holder = comments.find((comment) => comment.id === id)?.holder;
+    if (holder) removeHolder(holder);
     setComments(comments.filter((comment) => comment.id !== id));
     setEditing(undefined);
   };
@@ -134,23 +86,15 @@ export function PlanPane({ sessionId }: { sessionId: string }) {
           </svg>
         </button>
       </div>
-      <div class="plan-body" ref={scroller} onMouseUp={onMouseUp}>
+      <div class="plan-body" onMouseUp={onMouseUp} onClick={onLinkClick}>
         {blocks.length === 0 ? <div class="muted">No plan yet.</div> : null}
         {blocks.map((block, index) => (
-          <div class="plan-block" data-block={index} key={index}>
-            <Block block={block} />
-            {comments
-              .filter((comment) => comment.block === index)
-              .map((comment) => (
-                <CommentCard key={comment.id} comment={comment} editing={editing === comment.id} onSave={(text) => save(comment.id, text)} onEdit={() => setEditing(comment.id)} onRemove={() => remove(comment.id)} />
-              ))}
-          </div>
+          <div class="plan-block tr-text" key={index} dangerouslySetInnerHTML={{ __html: block.html }} />
         ))}
-        {selection ? (
-          <button type="button" class="primary plan-add" style={{ top: `${selection.top}px`, left: `${selection.left}px` }} onMouseDown={(event) => event.preventDefault()} onClick={addComment}>
-            Comment
-          </button>
-        ) : null}
+        {comments.map((comment) =>
+          createPortal(<CommentCard key={comment.id} comment={comment} editing={editing === comment.id} onSave={(text) => save(comment.id, text)} onEdit={() => setEditing(comment.id)} onRemove={() => remove(comment.id)} />, comment.holder)
+        )}
+        <AddComment selection={selection} onAdd={addComment} />
       </div>
       {request ? (
         <div class="plan-foot">

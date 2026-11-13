@@ -143,7 +143,6 @@ button.link { border: 0; background: none; padding: 0; color: var(--dim); font-s
 .prompt .q { margin-top: 2px; color: var(--muted); font-family: var(--vscode-font-family, sans-serif); font-size: 12px; word-break: normal; }
 .last { margin: 5px 0 0 20px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .last::before { content: "⏺ "; color: var(--dim); }
-.chip.wt { color: var(--blue); border-color: color-mix(in srgb, var(--blue) 45%, transparent); }
 .last.hit::before { content: "⌕ "; }
 button.icon.on { border-color: var(--coral); color: var(--coral); }
 .sboard.lanes { gap: 0 14px; }

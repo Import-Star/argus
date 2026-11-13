@@ -57,9 +57,16 @@ async function reviewMarkdownSteps(page) {
   await page.locator(".det-file").first().click();
   await page.locator(".review-file", { hasText: "README.md" }).click();
   await page.getByRole("button", { name: "Show rendered" }).click();
-  const table = page.locator('[data-line="README.md:new:5"]');
-  await table.locator(".review-block").click();
-  await table.locator("textarea").fill("Add a row for multiply once it lands?");
+  await page.evaluate(() => {
+    const row = [...document.querySelectorAll(".review-rendered tr")].find((el) => el.textContent.includes("subtract"));
+    const range = document.createRange();
+    range.selectNodeContents(row.cells[0]);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.querySelector(".review-rendered").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+  });
+  await page.locator(".comment-add").click();
+  await page.locator(".review-rendered textarea").fill("Add a row for multiply once it lands?");
 }
 
 // Diagrams draw after Mermaid's bundle loads, so wait for both, and for the broken one to fall back to code.
@@ -80,7 +87,7 @@ async function planSteps(page) {
     selection.addRange(range);
     document.querySelector(".plan-body").dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
   });
-  await page.locator(".plan-add").click();
+  await page.locator(".comment-add").click();
   await page.getByLabel("Comment", { exact: true }).fill("Is a one-cent shift acceptable for refunds too?");
   await page.getByRole("button", { name: "Save" }).click();
 }
@@ -339,6 +346,7 @@ const SCREENS = [
   { name: "chat-narrow", ...CHAT_PAGE, width: 900, fixture: "chat", expect: { agentsChip: ".hdr-agents", header: ".chat-header" } },
   { name: "permission", ...CHAT_PAGE, expect: { permission: ".perm-card", command: ".perm-code", actions: ".perm-actions button" } },
   { name: "question", ...CHAT_PAGE, steps: questionSteps, expect: { card: ".perm-card.question", answered: ".q-row", options: ".q-option", recommended: ".q-badge", receipt: ".tr-answer-list dd" } },
+  { name: "plan-details", ...CHAT_PAGE, fixture: "plan", expect: { openPlan: '.det-file[title="Open plan"]' } },
   { name: "plan", ...CHAT_PAGE, steps: planSteps, expect: { planPane: ".plan-pane", planBlocks: ".plan-block", comment: ".plan-comment", approve: ".plan-foot button" } },
   { name: "review", ...CHAT_PAGE, steps: reviewSteps, expect: { overlay: ".review", threads: ".review-thread", answered: ".review-claude:not(.review-working)", inProgress: ".review-working", files: ".review-file" } },
   { name: "review-markdown", ...CHAT_PAGE, fixture: "review", steps: reviewMarkdownSteps, expect: { overlay: ".review", rendered: ".review-rendered table", changed: ".review-block-add", thread: ".review-rendered .review-thread" } },

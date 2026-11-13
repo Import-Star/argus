@@ -33,7 +33,9 @@ export function parseChangelog(markdown: string): Release[] {
       item = { text: line.slice(2).trim() };
       (highlights ? release.highlights : release.changes).push(item);
     } else if (release && item && /^\s+\S/.test(line)) {
-      const image = highlights ? /^\s+!\[([^\]]*)\]\((media\/whats-new\/[\w.-]+)\)\s*$/.exec(line) : null;
+      // `vsce package` rewrites relative links in the bundled CHANGELOG.md to https://github.com/<repo>/raw/<ref>/...,
+      // so accept that form too and use the copy of the file inside the extension.
+      const image = highlights ? /^\s+!\[([^\]]*)\]\((?:https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/raw\/[\w.-]+\/)?(media\/whats-new\/[\w.-]+)\)\s*$/.exec(line) : null;
       if (image) {
         item.image = { alt: image[1], path: image[2] };
       } else {
