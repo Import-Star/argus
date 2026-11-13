@@ -1,0 +1,19 @@
+::highlight(comment) {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+.comment-add {
+  position: absolute;
+  z-index: 1;
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+.comment-holder {
+  cursor: auto;
+}
+
+tr.comment-holder > td {
+  padding: 0;
+  border: 0;
+}

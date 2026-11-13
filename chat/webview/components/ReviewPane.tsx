@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { createPortal } from "preact/compat";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { ChangeScope, DiffLine, FileChange } from "../../../src/chat/protocol";
 import { highlightCode, languageFor } from "../highlight";
 import { renderMarkdown, renderMarkdownBlocks } from "../markdown";
@@ -9,6 +10,7 @@ import {
   deriveTurns,
   draftComments,
   markSent,
+  quoteLine,
   removeTurn,
   setDraftText,
   setResolved,
@@ -20,6 +22,7 @@ import { sessionFiles } from "../sessionFiles";
 import { getState, post, setUi, updateReview, useSession } from "../store";
 import { prLabel } from "./Header";
 import { Composer } from "./Composer";
+import { AddComment, commentHolder, findQuote, removeHolder, useHighlight, useTextSelection, type TextSelection } from "./selectionComment";
 import { onLinkClick } from "./SideQuestion";
 import { Transcript } from "./Transcript";
 import "./review.css";
@@ -320,16 +323,59 @@ interface RenderedProps {
   threads: ReviewThread[];
   views: Map<string, TurnView>;
   actions: ThreadActions;
-  onOpen(anchor: Anchor, code: string): void;
+  onOpen(anchor: Anchor, code: string, quote?: string): void;
+}
+
+interface Placed {
+  holder: HTMLElement;
+  range: Range;
 }
 
 function RenderedMarkdown({ path, markdown, added, threads, views, actions, onOpen }: RenderedProps) {
   const blocks = useMemo(() => renderMarkdownBlocks(markdown), [markdown]);
   const source = useMemo(() => markdown.split("\n"), [markdown]);
+  const root = useRef<HTMLDivElement>(null);
+  const placed = useRef(new Map<string, Placed>());
+  const [, rerender] = useState(0);
+  const { selection, onMouseUp, clear } = useTextSelection(".review-block");
   const inBlock = (thread: ReviewThread, block: { start: number; end: number }) => thread.side === "new" && thread.line >= block.start && thread.line <= block.end;
   const orphans = threads.filter((thread) => !blocks.some((block) => inBlock(thread, block)));
+
+  // Threads from a text selection go under the line holding their quote, found again after each render.
+  useLayoutEffect(() => {
+    let changed = false;
+    for (const [id, { holder }] of placed.current) {
+      if (!holder.isConnected || !threads.some((thread) => thread.id === id)) {
+        removeHolder(holder);
+        placed.current.delete(id);
+        changed = true;
+      }
+    }
+    for (const thread of threads) {
+      const block = blocks.find((candidate) => inBlock(thread, candidate));
+      const element = block && root.current?.querySelector(`[data-start="${block.start}"] .review-block`);
+      const range = thread.quote && element && !placed.current.has(thread.id) ? findQuote(element, thread.quote) : undefined;
+      if (range) {
+        placed.current.set(thread.id, { holder: commentHolder(range), range });
+        changed = true;
+      }
+    }
+    if (changed) rerender((count) => count + 1);
+  });
+  useHighlight([...placed.current.values()].map((entry) => entry.range));
+
+  const addComment = (picked: TextSelection) => {
+    const start = Number(picked.range.startContainer.parentElement?.closest<HTMLElement>("[data-start]")?.dataset.start);
+    const block = blocks.find((candidate) => candidate.start === start);
+    if (block) {
+      const line = quoteLine(source, block.start, block.end, picked.quote);
+      onOpen({ side: "new", no: line }, source[line - 1] ?? "", picked.quote);
+    }
+    clear();
+  };
+
   return (
-    <div class="review-rendered" onClick={onLinkClick}>
+    <div class="review-rendered" ref={root} onClick={onLinkClick} onMouseUp={onMouseUp}>
       {orphans.map((thread) => (
         <Thread key={thread.id} thread={thread} views={views} actions={actions} />
       ))}
@@ -338,10 +384,10 @@ function RenderedMarkdown({ path, markdown, added, threads, views, actions, onOp
         let changed = false;
         for (let line = block.start; line <= block.end && !changed; line++) changed = added.has(line);
         return (
-          <div key={block.start} data-line={`${path}:new:${block.start}`}>
+          <div key={block.start} data-start={block.start} data-line={`${path}:new:${block.start}`}>
             <div
               class={`tr-text review-block${changed ? " review-block-add" : ""}${here.length > 0 ? " review-commented" : ""}`}
-              title={here.length > 0 ? undefined : `Comment on lines ${block.start}–${block.end}`}
+              title={here.length > 0 ? undefined : `Comment on lines ${block.start}–${block.end}, or select text to comment on it`}
               onClick={(event) =>
                 here.length === 0 &&
                 !(event.target as HTMLElement).closest("a, button") &&
@@ -350,12 +396,19 @@ function RenderedMarkdown({ path, markdown, added, threads, views, actions, onOp
               }
               dangerouslySetInnerHTML={{ __html: block.html }}
             />
-            {here.map((thread) => (
-              <Thread key={thread.id} thread={thread} views={views} actions={actions} />
-            ))}
+            {here
+              .filter((thread) => !placed.current.has(thread.id))
+              .map((thread) => (
+                <Thread key={thread.id} thread={thread} views={views} actions={actions} />
+              ))}
           </div>
         );
       })}
+      {threads.map((thread) => {
+        const target = placed.current.get(thread.id)?.holder;
+        return target ? createPortal(<Thread key={thread.id} thread={thread} views={views} actions={actions} />, target) : null;
+      })}
+      <AddComment selection={selection} onAdd={addComment} />
     </div>
   );
 }
@@ -446,8 +499,8 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
     }
   };
 
-  const open = (anchor: Anchor, code: string) => {
-    updateReview(sessionId, (r) => addThread(r, { path: current!, line: anchor.no, side: anchor.side, code }).review);
+  const open = (anchor: Anchor, code: string, quote?: string) => {
+    updateReview(sessionId, (r) => addThread(r, { path: current!, line: anchor.no, side: anchor.side, code, quote }).review);
     setFocusLine(anchor.no);
   };
 

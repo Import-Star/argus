@@ -5,7 +5,7 @@ import { SessionChipsRegistry } from "../api";
 import type { ChatLoader } from "../chat/loader";
 import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../chat/multiAgent";
 import { answeredInput, toWirePending, type WirePending } from "../chat/pendingWire";
-import { newChat, openWorktree } from "../services/openSession";
+import { newChat } from "../services/openSession";
 import { renameSessionPrompt, SessionStore } from "../services/SessionStore";
 import type { TrackingMonitor } from "../services/TrackingMonitor";
 
@@ -29,7 +29,6 @@ type FromWebview =
   | { type: "unarchiveSession"; sessionId: string }
   | { type: "archiveSessions"; sessionIds: string[] }
   | { type: "unarchiveSessions"; sessionIds: string[] }
-  | { type: "openWorktree"; folder: string }
   | { type: "chipClick"; sessionId: string; index: number }
   | { type: "search"; query: string }
   | { type: "chatRespond"; sessionId: string; id: string; decision: "allow" | "always" | "deny"; answers?: unknown }
@@ -128,9 +127,6 @@ export function createSessionsTab(
           return;
         case "unarchiveSession":
           sessions.setArchived(msg.sessionId, false);
-          return;
-        case "openWorktree":
-          await openWorktree(msg.folder);
           return;
         case "search": {
           const matches = await sessions.searchTranscripts(msg.query);

@@ -5,6 +5,14 @@ First public release.
 ## Unreleased
 
 - Fix a chat showing "Idle" and no "Working…" line while Claude runs tools in a turn you didn't start by sending a message, such as one started by another session.
+- The Claude plan usage list shows every weekly limit the API returns (e.g. a per-model Fable limit), not just the four it knew by name.
+- The plan pane renders plans as full Markdown (tables, links, nested lists, highlighted code), and text you comment on
+  stays highlighted with its comment right under that line.
+- Rendered Markdown in diff review: select text to comment on it. The text stays highlighted, the comment shows under
+  that line and is sent on the matching source line.
+- The chat's details pane has a **Plan** section that opens the latest plan, so it can be reopened after a window
+  reload or with Text only on.
+- Cards no longer show worktree and diff chips. The chat's details pane has Diff, Open and Delete for each worktree.
 
 ## 0.15.0
 

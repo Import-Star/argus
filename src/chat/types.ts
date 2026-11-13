@@ -14,6 +14,8 @@ export interface ChatDeps {
   removeFromGroup(sessionId: string): void;
   setLiveChats(provider: (() => LiveChat[]) | undefined): void;
   archive(sessionId: string): Promise<void>;
+  openWorktree(folder: string): Promise<void>;
+  deleteWorktree(folder: string): Promise<void>;
   rename(sessionId: string): Promise<void>;
   // Plugin sections for the Details pane (ArgusApi.registerChatDetails).
   pluginSections(card: SessionCard): ChatPluginSection[];

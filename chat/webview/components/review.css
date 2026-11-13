@@ -283,6 +283,7 @@
 }
 
 .review-rendered {
+  position: relative;
   padding: 8px 0;
   max-width: 900px;
 }
