@@ -198,6 +198,16 @@ export class ChatManager implements vscode.Disposable {
     await this.deps.rename(sessionId);
   }
 
+  public openWorktree(sessionId: string, folder: string): Promise<void> {
+    const known = this.worktreePath(sessionId, folder);
+    return known ? this.deps.openWorktree(known) : Promise.resolve();
+  }
+
+  public deleteWorktree(sessionId: string, folder: string): Promise<void> {
+    const known = this.worktreePath(sessionId, folder);
+    return known ? this.deps.deleteWorktree(known) : Promise.resolve();
+  }
+
   public archive(sessionId: string): Promise<void> {
     return this.deps.archive(sessionId);
   }
