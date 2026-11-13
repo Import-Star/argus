@@ -13,8 +13,7 @@ Review what a session changed, comment on lines, and send the comments to the ag
 ## Opening it
 
 - **Review changes** in a chat's header.
-- A card with a worktree gets a `± <worktree>` chip; a card with an open PR gets `± #<number>`. Click either to open
-  the session's chat with that diff in its review panel.
+- **Diff** next to a worktree or PR in the chat's details pane.
 - Click a file under **Changed files** in the chat's details pane.
 
 ## What you can compare
@@ -37,8 +36,9 @@ answer under it. Unchanged lines between changes are folded; click a gap to expa
 ones 20 lines at a time). Expanded lines can be commented on too.
 
 Long lines wrap. A changed Markdown file has **Show rendered** in its header to read the new version rendered.
-Click a rendered block (paragraph, heading, list, table, code) to comment on it; the comment is on the block's first
-line. Blocks with added lines are highlighted. Comments on deleted lines show at the top. **Show diff** goes back.
+Select text to comment on it: the text stays highlighted, the comment shows under that line (list item, table row,
+paragraph) and is sent on the source line the text is on. Or click a block to comment on its first line. Blocks
+with added lines are highlighted. Comments on deleted lines show at the top. **Show diff** goes back.
 
 `argus.diffReview.baseRef` sets the base branch (empty: `origin/HEAD`, then `origin/main`, `origin/master`, `main`,
 `master`) and `argus.diffReview.contextLines` the unchanged lines shown around each change.

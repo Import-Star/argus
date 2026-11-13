@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type { CardInfo, ChangeScope, PlanUsageWindow, PluginItem, SDKMessage } from "../../../src/chat/protocol";
 import { backgroundTasks, type BackgroundTask } from "../backgroundTasks";
+import { lastPlan } from "../plan";
 import { sessionArtifacts } from "../sessionArtifacts";
 import { sessionFiles } from "../sessionFiles";
 import { post, setUi, useSession } from "../store";
@@ -257,6 +258,7 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
   const doneCount = agents.filter((agent) => agent.state === "done").length;
   const edited = useMemo(() => sessionFiles(messages, meta?.cwd), [messages, meta?.cwd]);
   const artifacts = useMemo(() => sessionArtifacts(messages), [messages]);
+  const planTitle = useMemo(() => lastPlan(messages)?.split("\n").find((line) => line.trim() !== "")?.replace(/^#+\s*/, ""), [messages]);
   const stats = changes?.scope === "session" ? changes.files : [];
   const status = meta?.status;
   const prs = card?.prs ?? [];
@@ -281,6 +283,13 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
 
   return (
     <div class="det" role="region" aria-label="Session details">
+      {planTitle !== undefined && (
+        <Section title="Plan">
+          <button type="button" class="ghost det-file" title="Open plan" onClick={() => setUi(sessionId, { side: "plan" })}>
+            <span class="det-path">{planTitle}</span>
+          </button>
+        </Section>
+      )}
       {edited.length > 0 && (
         <FoldedSection title={`Changed files · ${edited.length}`}>
           {changes?.scope === "session" && changes.error && <div class="det-error">{changes.error}</div>}
@@ -319,6 +328,12 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
                   {tree.branch && <span class="muted"> · {tree.branch}</span>}
                 </div>
                 <DiffButton label={`Diff of worktree ${tree.name} against main`} onClick={() => setUi(sessionId, { side: "review", reviewScope: "base", worktree: tree.path, prUrl: undefined, reviewFile: undefined })} />
+                <button type="button" class="det-diff" aria-label={`Open worktree ${tree.name} in a new window`} onClick={() => post({ type: "openWorktree", sessionId, folder: tree.path })}>
+                  Open
+                </button>
+                <button type="button" class="det-diff" aria-label={`Delete worktree ${tree.name}`} onClick={() => post({ type: "deleteWorktree", sessionId, folder: tree.path })}>
+                  Delete
+                </button>
               </div>
               <div class="muted det-note det-wrap">{tree.path}</div>
             </div>

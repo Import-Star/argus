@@ -113,10 +113,11 @@ Settings UI filtered to Argus.
 
 ![Reviewing a session's changes and sending line comments to Claude](docs/assets/git-diff.gif)
 
-- A card with a worktree gets a `± <worktree>` chip; a card with an open PR gets `± #<number>`. Click either to
-  open the session's chat with that diff in its review panel.
+- In a chat's details pane, each worktree and each PR has a **Diff** button. Worktrees also have **Open** (new window)
+  and **Delete**.
 - Comment on lines and send the comments to the agent from the review panel.
-- Long lines wrap. A changed Markdown file has **Show rendered** to read and comment on it rendered.
+- Long lines wrap. A changed Markdown file has **Show rendered** to read and comment on it rendered: select text to
+  comment on it, and the comment shows under that line with the text highlighted.
 
 ### Argus chat
 
@@ -125,7 +126,8 @@ so it uses your existing Claude Code sign-in, settings and hooks. Sessions start
 board; opening one while it is running there warns you first, since two processes would write to one transcript.
 
 - **Argus: New Chat** starts a chat. Opening a card from the board resumes its session in the chat.
-- Permission requests, questions and plan approvals appear inline in the chat.
+- Permission requests, questions and plan approvals appear inline in the chat. The plan pane shows the plan as
+  Markdown; select text to comment on it, and the comment shows under that line with the text highlighted.
 - On the Control Center Sessions tab, a card waiting on a permission or question from an Argus chat expands in
   place: **Allow once**, **Always allow** or **Deny**, or choose an option and **Send answer**. Plan approvals
   open the chat.
@@ -171,8 +173,8 @@ board; opening one while it is running there warns you first, since two processe
 - ` ```mermaid ` blocks in replies are drawn as diagrams in your theme's colours, with **Show source** to see the
   code. A block that doesn't parse stays as code, with the error above it. Mermaid loads the first time a reply has
   a diagram.
-- The details pane shows plan usage, background shells, monitors and agents (with their output and a stop
-  button), and the worktrees linked to the session.
+- The details pane shows the latest plan (click to reopen it), plan usage, background shells, monitors and agents
+  (with their output and a stop button), and the worktrees linked to the session.
 - A workflow or background agent opens in a side pane with its phases and agents. Click an agent for its result and
   output; **Open conversation** shows its whole conversation the way the chat shows its own.
 - A chat's name is sent to Claude Code with `/rename`, so `/resume` and other sessions show the same title.

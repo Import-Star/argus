@@ -41,6 +41,18 @@ describe("parseChangelog", () => {
       { version: "1.1.0", highlights: [], changes: [{ text: "Old change." }] }
     ]);
   });
+
+  it("reads a picture whose link vsce rewrote to a GitHub URL as the bundled file", () => {
+    const [release] = parseChangelog(`## 1.2.0
+
+### Highlights
+
+- **Big thing.**
+
+  ![The big thing](https://github.com/Import-Star/argus/raw/HEAD/media/whats-new/1.2.0-big.png)
+`);
+    assert.deepEqual(release.highlights, [{ text: "**Big thing.**", image: { alt: "The big thing", path: "media/whats-new/1.2.0-big.png" } }]);
+  });
 });
 
 describe("inlineMarkdown", () => {

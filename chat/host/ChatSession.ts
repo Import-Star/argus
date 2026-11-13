@@ -204,7 +204,7 @@ export class ChatSession implements vscode.Disposable {
         extraArgs: chromeArgs(this.options.chrome),
         // SDK sessions leave the to-do tools off; the transcript's to-do card needs them.
         // Under the SDK's default "sdk-ts" entrypoint the CLI turns the Artifact tools off; the to-do tools are off by default too.
-        env: { ...process.env, CLAUDE_CODE_ENTRYPOINT: "claude-vscode", CLAUDE_CODE_ENABLE_TODO_TOOLS: "1", CLAUDE_CODE_ENABLE_TASKS: "1" },
+        env: { ...process.env, CLAUDE_CODE_ENTRYPOINT: "claude-vscode", CLAUDE_CODE_ENABLE_TODO_TOOLS: "1", CLAUDE_CODE_ENABLE_TASKS: "1", CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS: "1" },
         includePartialMessages: true,
         hooks: { Stop: [{ hooks: [async (input) => {
           this.sessionCrons = (input as StopHookInput).session_crons ?? this.sessionCrons;

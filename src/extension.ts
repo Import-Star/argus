@@ -10,7 +10,7 @@ import { ControlCenter } from "./providers/ControlCenter";
 import { SessionTreeProvider } from "./providers/SessionTreeProvider";
 import { createSessionsTab } from "./providers/SessionsTab";
 import { createSettingsTab } from "./providers/SettingsTab";
-import { ArchiveCleanupRegistry, archiveWithCleanup } from "./services/archiveSession";
+import { ArchiveCleanupRegistry, archiveWithCleanup, deleteWorktree } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
 import { TrackingMonitor } from "./services/TrackingMonitor";
@@ -67,6 +67,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     removeFromGroup: (sessionId) => sessions.removeFromGroup(sessionId),
     setLiveChats: (provider) => sessions.setLiveChats(provider),
     archive: (sessionId) => archiveWithCleanup(sessions, archiveCleanup, sessionId),
+    openWorktree,
+    deleteWorktree: (folder) => deleteWorktree(sessions, folder),
     rename: (sessionId) => renameSessionPrompt(sessions, sessionId),
     pluginSections: (card) => chatDetails.sectionsFor(card),
     pluginAction: (sessionId, key, itemId, value) => chatDetails.action(sessionId, key, itemId, value),
@@ -75,7 +77,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     planUsage: () => (usage ? usage.service.planUsage() : null),
     onDidChangePlanUsage: usageChanged.event
   });
-  registerDiffReview(context, chips, chat);
+  registerDiffReview(context, chat);
   const tracking = new TrackingMonitor(context);
   context.subscriptions.push(tracking);
   const sessionsTab = createSessionsTab(context.extensionUri, sessions, chips, archiveCleanup, chat, tracking);

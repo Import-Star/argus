@@ -379,7 +379,6 @@
       const chips = [
         ...prs.filter((pr) => showDone || !done.includes(pr)).map((pr) => this.prChip(pr)),
         done.length ? `<button class="chip" data-action="toggle-done-prs" data-session-id="${id}" title="Show or hide merged and closed PRs">${showDone ? "hide" : "+"} ${esc(doneLabel(done))}</button>` : "",
-        ...uniqueBy(item.members.flatMap((member) => member.record.worktrees || []), (folder) => folder).map((folder) => `<button class="chip wt" data-action="open-worktree" data-folder="${esc(folder)}" title="Open ${esc(folder)}">⎇ ${esc(folder.split("/").pop())}</button>`),
         ...item.members.flatMap((member) => member.timers || []).map((timer) => this.timerChip(timer)),
         ...item.members.flatMap((member) => member.chips.map((chip, index) => `<button class="chip" data-action="chip" data-session-id="${esc(member.record.sessionId)}" data-index="${index}" title="${esc(chip.tooltip || chip.text)}">${esc(chip.text)}</button>`))
       ].join("");
@@ -629,12 +628,6 @@
           const id = el.getAttribute("data-session-id");
           if (!this.state.showDonePrs.delete(id)) this.state.showDonePrs.add(id);
           this.render();
-        });
-      }
-      for (const el of this.root.querySelectorAll("[data-action='open-worktree']")) {
-        el.addEventListener("click", (event) => {
-          event.stopPropagation();
-          this.ctx.post({ type: "openWorktree", folder: el.getAttribute("data-folder") });
         });
       }
       for (const el of this.root.querySelectorAll("[data-action='chip']")) {

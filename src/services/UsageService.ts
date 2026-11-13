@@ -168,7 +168,7 @@ export class UsageService implements vscode.Disposable {
 function parseWindows(body: Record<string, unknown>): UsageWindow[] {
   const windows: UsageWindow[] = [];
   for (const [key, value] of Object.entries(body)) {
-    if (!(key in LABELS)) {
+    if (!(key in LABELS) && !key.startsWith("seven_day_")) {
       continue;
     }
     const window = value as { utilization?: unknown; resets_at?: unknown } | null;
@@ -177,13 +177,18 @@ function parseWindows(body: Record<string, unknown>): UsageWindow[] {
     }
     windows.push({
       key,
-      label: LABELS[key] ?? key.replace(/_/g, " "),
+      label: LABELS[key] ?? windowLabel(key),
       utilization: window.utilization,
       resetsAt: typeof window.resets_at === "string" ? new Date(window.resets_at) : undefined
     });
   }
   const order = Object.keys(LABELS);
   return windows.sort((a, b) => (order.indexOf(a.key) + 1 || 99) - (order.indexOf(b.key) + 1 || 99));
+}
+
+function windowLabel(key: string): string {
+  const name = key.slice("seven_day_".length).replace(/_/g, " ");
+  return `Weekly (${name.charAt(0).toUpperCase()}${name.slice(1)})`;
 }
 
 function parseExtra(value: unknown): UsageExtra | undefined {
