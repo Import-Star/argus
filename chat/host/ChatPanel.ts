@@ -245,6 +245,14 @@ export class ChatPanel implements vscode.Disposable {
       await this.manager.archive(message.sessionId);
       return;
     }
+    if (message.type === "openWorktree") {
+      await this.manager.openWorktree(message.sessionId, message.folder);
+      return;
+    }
+    if (message.type === "deleteWorktree") {
+      await this.manager.deleteWorktree(message.sessionId, message.folder);
+      return;
+    }
     const session = this.manager.session(message.sessionId);
     if (!session) {
       return;

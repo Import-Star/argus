@@ -13,8 +13,7 @@ Review what a session changed, comment on lines, and send the comments to the ag
 ## Opening it
 
 - **Review changes** in a chat's header.
-- A card with a worktree gets a `± <worktree>` chip; a card with an open PR gets `± #<number>`. Click either to open
-  the session's chat with that diff in its review panel.
+- **Diff** next to a worktree or PR in the chat's details pane.
 - Click a file under **Changed files** in the chat's details pane.
 
 ## What you can compare

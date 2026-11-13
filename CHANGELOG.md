@@ -10,6 +10,7 @@ First public release.
   that line and is sent on the matching source line.
 - The chat's details pane has a **Plan** section that opens the latest plan, so it can be reopened after a window
   reload or with Text only on.
+- Cards no longer show worktree and diff chips. The chat's details pane has Diff, Open and Delete for each worktree.
 
 ## 0.15.0
 

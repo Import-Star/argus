@@ -328,6 +328,12 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
                   {tree.branch && <span class="muted"> · {tree.branch}</span>}
                 </div>
                 <DiffButton label={`Diff of worktree ${tree.name} against main`} onClick={() => setUi(sessionId, { side: "review", reviewScope: "base", worktree: tree.path, prUrl: undefined, reviewFile: undefined })} />
+                <button type="button" class="det-diff" aria-label={`Open worktree ${tree.name} in a new window`} onClick={() => post({ type: "openWorktree", sessionId, folder: tree.path })}>
+                  Open
+                </button>
+                <button type="button" class="det-diff" aria-label={`Delete worktree ${tree.name}`} onClick={() => post({ type: "deleteWorktree", sessionId, folder: tree.path })}>
+                  Delete
+                </button>
               </div>
               <div class="muted det-note det-wrap">{tree.path}</div>
             </div>
