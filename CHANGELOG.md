@@ -2,6 +2,10 @@
 
 First public release.
 
+## Unreleased
+
+- Cards no longer show worktree and diff chips. The chat's details pane has Diff, Open and Delete for each worktree.
+
 ## 0.15.0
 
 ### Highlights

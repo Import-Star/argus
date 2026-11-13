@@ -202,6 +202,8 @@ export type WebviewMessage =
   | { type: "rename"; sessionId: string }
   | { type: "setTextOnly"; sessionId: string; value: boolean }
   | { type: "archive"; sessionId: string }
+  | { type: "openWorktree"; sessionId: string; folder: string }
+  | { type: "deleteWorktree"; sessionId: string; folder: string }
   | { type: "ready" }
   | { type: "send"; sessionId: string; text: string; images?: { mediaType: string; data: string }[] }
   | { type: "interrupt"; sessionId: string }

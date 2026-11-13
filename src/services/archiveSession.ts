@@ -63,6 +63,24 @@ async function removeWorktree(folder: string, force: boolean): Promise<string | 
   }
 }
 
+export async function deleteWorktree(sessions: SessionStore, folder: string): Promise<void> {
+  const dirty = await uncommittedFiles(folder);
+  const force = "Delete and discard uncommitted files";
+  const choice = await vscode.window.showWarningMessage(
+    `Delete worktree ${path.basename(folder)}?`,
+    { modal: true, detail: `${folder}${dirty ? `\n${dirty} uncommitted file${dirty === 1 ? "" : "s"} would be lost.` : ""}` },
+    ...(dirty ? [force] : ["Delete"])
+  );
+  if (!choice) {
+    return;
+  }
+  const failure = await removeWorktree(folder, choice === force);
+  if (failure) {
+    void vscode.window.showWarningMessage(`Argus: worktree not removed. ${failure}`);
+  }
+  sessions.refresh();
+}
+
 export async function archiveWithCleanup(sessions: SessionStore, cleanup: ArchiveCleanupRegistry, sessionId: string): Promise<void> {
   await archiveManyWithCleanup(sessions, cleanup, [sessionId]);
 }

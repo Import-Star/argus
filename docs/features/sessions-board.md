@@ -30,7 +30,7 @@ their own as session state changes.
   sessions too. Once you rename a card, Argus keeps that name.
 - Cards show open PRs with their checks, review decision and unresolved review comments (`💬 2`). A
   `+ 2 merged · 1 closed` chip shows the merged and closed ones too; click it again to hide them.
-- Cards with a worktree or a PR get `±` chips that open [diff review](review.md).
+- Worktree and [diff review](review.md) links are in the chat's details pane, not on the card.
 
 ## Keyboard
 
