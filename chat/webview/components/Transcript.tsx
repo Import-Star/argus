@@ -16,6 +16,7 @@ import "./transcript.css";
 
 const COMPACT_ITEMS = 12;
 const BOTTOM_SLACK = 48;
+const TOP_SLACK = 200;
 const GLYPHS = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
 const VERBS = ["Thinking", "Pondering", "Cogitating", "Working", "Brewing", "Noodling", "Mulling", "Churning", "Ruminating", "Simmering"];
 const VERB_MS = 4000;
@@ -490,7 +491,8 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
   const [focusTick, setFocusTick] = useState(0);
   const needle = searching && query.trim() ? query.toLowerCase() : "";
   const rows = useMemo<TranscriptRow[]>(() => (textOnly && !needle ? textOnlyRows(items) : items), [items, textOnly, needle]);
-  const shown = compact ? rows.slice(-COMPACT_ITEMS) : rows;
+  const [limit, setLimit] = useState(COMPACT_ITEMS);
+  const shown = compact ? rows.slice(-limit) : rows;
   const matched = useMemo(() => new Set(needle ? shown.filter((row) => row.kind !== "hidden" && searchText(row).toLowerCase().includes(needle)).map((row) => row.id) : []), [shown, needle]);
   const firstUserId = useMemo(() => items.find((item) => item.kind === "user")?.id, [items]);
   const rewindable = !!session.meta && !BUSY.has(session.meta.status);
@@ -519,6 +521,15 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
     const el = scroller.current!;
     pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < BOTTOM_SLACK;
     setAway(!pinned.current);
+    loadOlder();
+  };
+
+  const loadOlder = () => {
+    const el = scroller.current;
+    if (el && compact && limit < rows.length && el.scrollTop < TOP_SLACK) {
+      anchor.current = captureAnchor(el);
+      setLimit(limit + COMPACT_ITEMS);
+    }
   };
 
   const onClick = (event: MouseEvent) => {
@@ -662,12 +673,13 @@ export function Transcript({ sessionId, compact }: { sessionId: string; compact?
       }
       anchor.current = undefined;
     }
-  }, [textOnly]);
+  }, [textOnly, limit]);
 
   useLayoutEffect(() => {
     if (pinned.current) {
       scrollToEnd();
     }
+    loadOlder();
   }, [shown, session.permissions, session.shells, working]);
 
   return (
