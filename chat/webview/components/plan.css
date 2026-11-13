@@ -38,50 +38,6 @@
   margin-bottom: 12px;
 }
 
-.plan-h {
-  margin: 0;
-  color: var(--strong);
-}
-
-.plan-h1 {
-  font-size: 16px;
-}
-
-.plan-h2,
-.plan-h3 {
-  font-size: 14px;
-}
-
-.plan-para {
-  margin: 0;
-}
-
-.plan-list {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.plan-list li {
-  margin-bottom: 4px;
-}
-
-.plan-body code {
-  background: var(--row);
-  padding: 1px 5px;
-  border-radius: 4px;
-}
-
-.plan-code {
-  margin: 0;
-  padding: 8px 10px;
-  font-family: var(--mono);
-  font-size: 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow-x: auto;
-}
-
 .plan-comment {
   margin-top: 6px;
   padding: 8px 10px;
@@ -127,13 +83,6 @@
 }
 
 .plan-comment-actions button {
-  font-size: 12px;
-  padding: 2px 8px;
-}
-
-.plan-add {
-  position: absolute;
-  z-index: 1;
   font-size: 12px;
   padding: 2px 8px;
 }
