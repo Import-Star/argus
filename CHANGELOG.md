@@ -2,6 +2,10 @@
 
 First public release.
 
+## Unreleased
+
+- The Claude plan usage list shows every weekly limit the API returns (e.g. a per-model Fable limit), not just the four it knew by name.
+
 ## 0.15.0
 
 ### Highlights
