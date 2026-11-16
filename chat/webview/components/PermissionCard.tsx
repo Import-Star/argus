@@ -93,8 +93,8 @@ function ToolCard({ sessionId, request, compact }: { sessionId: string; request:
   const [instead, setInstead] = useState("");
   const { title, icon } = toolTitle(request.toolName);
   const allowOnce = () => decide(sessionId, request.id, { behavior: "allow" });
-  const sendInstead = (event: Event) => {
-    event.preventDefault();
+  const sendInstead = (event?: Event) => {
+    event?.preventDefault();
     if (instead.trim()) {
       decide(sessionId, request.id, { behavior: "deny", message: instead.trim() });
     }
@@ -125,7 +125,7 @@ function ToolCard({ sessionId, request, compact }: { sessionId: string; request:
       {compact ? null : (
         <form class="perm-instead" onSubmit={sendInstead}>
           <label for={`perm-instead-${request.id}`}>Or tell Claude what to do instead</label>
-          <input id={`perm-instead-${request.id}`} type="text" value={instead} onInput={(event) => setInstead(event.currentTarget.value)} />
+          <AnswerBox id={`perm-instead-${request.id}`} value={instead} onInput={setInstead} onEnter={sendInstead} />
         </form>
       )}
     </Shell>
@@ -156,6 +156,26 @@ function Tick() {
       <path d={CHECK} />
     </svg>
   );
+}
+
+// Text box that grows with its content (VS Code 1.90's Chromium predates field-sizing). Shift+Enter adds a line;
+// Enter calls onEnter, or is left to the card's onKeyDown when there's no onEnter.
+function AnswerBox({ value, onInput, onEnter, ...rest }: { value: string; onInput: (value: string) => void; onEnter?: () => void; id?: string; class?: string; placeholder?: string; "aria-label"?: string; autoFocus?: boolean }) {
+  const box = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = box.current;
+    if (el) {
+      el.style.height = "auto";
+      el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+    }
+  }, [value]);
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (onEnter && event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      onEnter();
+    }
+  };
+  return <textarea {...rest} ref={box} rows={1} value={value} onInput={(event) => onInput(event.currentTarget.value)} onKeyDown={onKeyDown} />;
 }
 
 function QuestionBlock({ id, index, question, choice, compact, onChange, onPicked }: { id: string; index: number; question: AskQuestion; choice: Choice; compact?: boolean; onChange: (choice: Choice) => void; onPicked: () => void }) {
@@ -197,27 +217,15 @@ function QuestionBlock({ id, index, question, choice, compact, onChange, onPicke
       })}
       <div class={`q-option q-other${choice.otherOn ? " on" : ""}`}>
         <span class="q-key" aria-hidden="true">{question.options.length + 1}</span>
-        <input
-          type="text"
+        <AnswerBox
           aria-label={`Other answer for ${question.header}`}
           placeholder="Something else…"
           value={choice.other}
-          onInput={(event) => {
-            const other = event.currentTarget.value;
-            onChange({ ...choice, other, otherOn: other.trim() !== "", picked: multi ? choice.picked : [] });
-          }}
+          onInput={(other) => onChange({ ...choice, other, otherOn: other.trim() !== "", picked: multi ? choice.picked : [] })}
         />
       </div>
       {compact ? null : choice.noteOpen ? (
-        <input
-          type="text"
-          class="q-note"
-          aria-label={`Note for ${question.header}`}
-          placeholder="Note for Claude"
-          value={choice.note}
-          autoFocus
-          onInput={(event) => onChange({ ...choice, note: event.currentTarget.value })}
-        />
+        <AnswerBox class="q-note" aria-label={`Note for ${question.header}`} placeholder="Note for Claude" value={choice.note} autoFocus onInput={(note) => onChange({ ...choice, note })} />
       ) : (
         <button type="button" class="q-add-note" onClick={() => onChange({ ...choice, noteOpen: true })}>
           + Add a note to this answer
@@ -264,8 +272,8 @@ function QuestionCard({ sessionId, request, compact }: { sessionId: string; requ
 
   const onKeyDown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement;
-    if (target instanceof HTMLInputElement && target.type === "text") {
-      if (event.key === "Enter") {
+    if (target instanceof HTMLTextAreaElement) {
+      if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
         event.preventDefault();
         send();
       } else if (event.key === "Escape") {
@@ -277,9 +285,9 @@ function QuestionCard({ sessionId, request, compact }: { sessionId: string; requ
     const digit = Number(event.key);
     if (question && Number.isInteger(digit) && digit >= 1 && digit <= question.options.length + 1) {
       event.preventDefault();
-      const inputs = card.current?.querySelectorAll<HTMLInputElement>(".q-question input");
+      const inputs = card.current?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(".q-question input, .q-question textarea");
       const input = inputs?.[digit - 1];
-      if (input?.type === "text") {
+      if (input instanceof HTMLTextAreaElement) {
         input.focus();
       } else {
         input?.click();

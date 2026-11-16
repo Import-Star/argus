@@ -203,6 +203,17 @@ async function searchSteps(page) {
   await page.locator(".tr-search-count", { hasText: "3 of" }).waitFor();
 }
 
+async function permissionSteps(page) {
+  await page.getByLabel("Or tell Claude what to do instead").fill("Run only the unit tests");
+  await page.keyboard.press("Shift+Enter");
+  await page.keyboard.type("and skip e2e");
+  await page.keyboard.press("Enter");
+  const sent = await page.evaluate(() => window.__posted.filter((message) => message.type === "permission").at(-1));
+  if (sent?.decision?.behavior !== "deny" || sent.decision.message !== "Run only the unit tests\nand skip e2e") {
+    throw new Error(`unexpected permission decision: ${JSON.stringify(sent)}`);
+  }
+}
+
 async function questionSteps(page) {
   await page.locator(".perm-card.question").focus();
   await page.keyboard.press("1");
@@ -210,11 +221,13 @@ async function questionSteps(page) {
   await page.keyboard.press("1");
   await page.getByRole("button", { name: "+ Add a note to this answer" }).click();
   await page.getByLabel("Note for PRs").fill("stack PR2 on PR1");
+  await page.keyboard.press("Shift+Enter");
+  await page.keyboard.type("keep PR1 small");
   await page.keyboard.press("Enter");
   const sent = await page.evaluate(() => window.__posted.filter((message) => message.type === "permission").at(-1));
   const input = sent?.decision?.updatedInput;
   const prs = input?.questions?.[1]?.question ?? "";
-  if (!prs.startsWith("Should the PRs be opened when done?") || input.answers[prs] !== "Draft PRs, no Slack (Recommended)" || input.annotations?.[prs]?.notes !== "stack PR2 on PR1" || Object.keys(input.answers).length !== 2) {
+  if (!prs.startsWith("Should the PRs be opened when done?") || input.answers[prs] !== "Draft PRs, no Slack (Recommended)" || input.annotations?.[prs]?.notes !== "stack PR2 on PR1\nkeep PR1 small" || Object.keys(input.answers).length !== 2) {
     throw new Error(`unexpected question answer: ${JSON.stringify(sent)}`);
   }
 }
@@ -345,7 +358,7 @@ const CENTER_PAGE = { html: "center.html" };
 const SCREENS = [
   { name: "chat", ...CHAT_PAGE, expect: { todos: ".tr-todos", diffCard: ".tr-diff", agent: ".tr-row strong", streaming: ".tr-cursor", cache: ".det-row[title=\"Prompt cache expires if idle\"]", effort: ".cmp-effort .on", details: ".det-section", agentsChip: ".hdr-agents", agentDots: ".hdr-agent-dots .hdr-dot" } },
   { name: "chat-narrow", ...CHAT_PAGE, width: 900, fixture: "chat", expect: { agentsChip: ".hdr-agents", header: ".chat-header" } },
-  { name: "permission", ...CHAT_PAGE, expect: { permission: ".perm-card", command: ".perm-code", actions: ".perm-actions button" } },
+  { name: "permission", ...CHAT_PAGE, steps: permissionSteps, expect: { permission: ".perm-card", command: ".perm-code", actions: ".perm-actions button" } },
   { name: "question", ...CHAT_PAGE, steps: questionSteps, expect: { card: ".perm-card.question", answered: ".q-row", options: ".q-option", recommended: ".q-badge", receipt: ".tr-answer-list dd" } },
   { name: "plan-details", ...CHAT_PAGE, fixture: "plan", expect: { openPlan: '.det-file[title="Open plan"]' } },
   { name: "plan", ...CHAT_PAGE, steps: planSteps, whatsNew: { file: "0.16.0-plan-comment.png", clip: (page) => [page.locator(".plan-block li", { hasText: "Totals can shift" }), page.locator(".plan-comment")] }, expect: { planPane: ".plan-pane", planBlocks: ".plan-block", comment: ".plan-comment", approve: ".plan-foot button" } },
