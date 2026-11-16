@@ -51,7 +51,7 @@ jobs:
             - Webview code keeps the strict CSP and escapes interpolated text with ctx.esc().
             - hooks/session-tracker.ts stays fast, synchronous, dependency-free, silent on stdout and never throws.
             - The Claude OAuth token is never logged, stored or sent anywhere.
-            - README.md and CHANGELOG.md are updated when behaviour changes.
+            - README.md is updated and a changes/*.md entry added when behaviour changes. CHANGELOG.md is only edited by release PRs.
 
             The working directory is the default branch, not the PR. Use `gh pr diff` and `gh pr view` to read the change.
             Focus on correctness bugs, not style. Comment on specific lines with

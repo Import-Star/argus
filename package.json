@@ -422,7 +422,8 @@
     "watch:chat": "node scripts/build-chat.mjs --watch",
     "snapshots": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs",
     "snapshots:whats-new": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/snapshots.mjs --whats-new",
-    "docs:reference": "node scripts/docs-reference.mjs"
+    "docs:reference": "node scripts/docs-reference.mjs",
+    "changelog": "node scripts/release-changelog.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

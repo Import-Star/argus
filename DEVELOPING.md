@@ -62,7 +62,7 @@ layout and the rules. A good loop:
 2. It edits, then runs `npm run compile` and `npm test` (or `npm run build` in a plugin folder).
 3. You press `F5` or run the install script and try it. For a plugin change, **Argus: Reload Plugins** is enough.
 
-Ask it to keep changes small and to update the README and CHANGELOG when behaviour changes.
+Ask it to keep changes small and to update the README and add a `changes/` entry when behaviour changes.
 
 ## Architecture
 
@@ -310,7 +310,8 @@ from the extension arrives.
   text with `ctx.esc()`.
 - Nothing may be specific to one company or repo. Use settings instead of constants.
 - Never send or log the Claude OAuth token (relevant to `UsageService.ts`).
-- Keep public behaviour in the relevant README and add a CHANGELOG entry, for the core or the plugin you changed.
+- Keep public behaviour in the relevant README and add a `changes/` entry (see
+  `changes/README.md`) for the core or the plugin you changed.
   A plugin's settings only exist in its README, so a new key that is not written up is a key nobody will find.
 
 ## Publish your own build
@@ -320,8 +321,8 @@ installed from the Marketplace.
 
 1. Create a publisher at <https://marketplace.visualstudio.com/manage>.
 2. In `package.json`, set `publisher` to yours, and update `repository`, `bugs` and `homepage`.
-3. Bump `version` (in `package.json` and `package-lock.json`) and turn `## Unreleased` in `CHANGELOG.md` into
-   `## X.Y.Z`. Merge that to `main`; don't tag it.
+3. Bump `version` (in `package.json` and `package-lock.json`) and run `npm run changelog -- X.Y.Z` to move
+   the `changes/` entries into `CHANGELOG.md`. Merge that to `main`; don't tag it.
 4. Publish with Trusted Publishing, which needs no token. On your publisher's page choose Trusted Publishing, then
    Create, and enter your GitHub owner, repo, workflow file (`publish.yml`) and environment (`marketplace`). Create
    a `marketplace` environment in the repo settings (require a reviewer, allow only `main`). Then run

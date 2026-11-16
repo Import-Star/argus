@@ -16,4 +16,5 @@ docs/**
 plugins/**
 chat/**
 scripts/**
+changes/**
 out/snapshots/**

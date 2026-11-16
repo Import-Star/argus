@@ -32,8 +32,9 @@ Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins` that
 
 ## Releases
 
-- A release is a `chore: release X.Y.Z` PR that bumps `version` in `package.json` and `package-lock.json` and turns
-  `## Unreleased` in `CHANGELOG.md` into `## X.Y.Z`. Don't tag it by hand: the publish workflow makes the tag.
+- A release is a `chore: release X.Y.Z` PR that bumps `version` in `package.json` and `package-lock.json` and runs
+  `npm run changelog -- X.Y.Z`, which moves the `changes/*.md` entries into a new `## X.Y.Z` section of
+  `CHANGELOG.md`. Don't tag it by hand: the publish workflow makes the tag.
 - When cutting a release, check whether it has new features a user would want to hear about. If it does, put a
   `### Highlights` list at the top of its section and `### Changes` above the rest. After an update, **What's New**
   (`src/providers/WhatsNewPanel.ts`) shows each highlight as a card: one bullet that starts with a short bold title,
@@ -51,8 +52,7 @@ Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins` that
   tag and a GitHub release with that CHANGELOG section as notes and the `.vsix` attached. Never create releases or
   tags by hand. Tick `dry_run` to only build the `.vsix`. `npm run publish:store` is a local fallback until the Azure
   DevOps PATs end on 2026-12-01.
-  A tagged version is released: later changes go under `## Unreleased` (add the heading if it's missing), never into
-  a version heading.
+  A tagged version is released: later changes go in `changes/`, never into a version heading.
 - Every pull request runs **CI** (`.github/workflows/ci.yml`: `npm ci`, `npm run compile`, `npm test` on Windows,
   macOS and Linux). All three must pass before it can merge. Run `npm run compile` locally too: `npm test` alone
   doesn't type-check the chat webview.
@@ -77,7 +77,8 @@ Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins` that
   script) is plain JS with a strict CSP (no inline scripts). Escape interpolated text with `ctx.esc()`.
 - Do not log, store or transmit the user's local Claude OAuth token (the CI review's `CLAUDE_CODE_OAUTH_TOKEN` secret
   is separate); only `src/services/UsageService.ts` reads it.
-- Update the relevant README and CHANGELOG when behaviour changes. List any new network call in the README's
+- Update the relevant README and add a `changes/<branch>.md` entry (see `changes/README.md`) when behaviour
+  changes. Never edit `CHANGELOG.md` directly outside a release PR. List any new network call in the README's
   Network use line.
 - The docs site (`docs/`, GitHub Pages at https://import-star.github.io/argus/) covers the same behaviour in more
   depth: update its page too. `docs/settings.md` and `docs/commands.md` are generated: run `npm run docs:reference`
