@@ -66,6 +66,19 @@ A chat whose tab you close keeps running until it has been idle for `argus.chat.
 60), so other agents can message it and its timers keep firing. A reply that finishes after its tab closed shows in
 **Needs you**.
 
+Argus chat runs in one background process per user, not inside each window. Argus starts it when a chat opens, and
+it runs on VS Code's own Node, so there's nothing to install. Closing or reloading a window doesn't stop its chats:
+a reply that's still running finishes, and reopening the chat (or the restored tab after a reload) shows it. The
+same chat open in two windows shares one Claude process, and either window can answer its permission prompts.
+Archiving a chat stops it at once in every window. A chat that no window has open stops after it has been idle for
+`argus.chat.backgroundIdleMinutes`.
+
+Windows talk to the process over a local socket only: `~/.claude/argus/chat.sock` on macOS and Linux, a named pipe on
+Windows. Each connection must send a random token from `~/.claude/argus/chat-daemon.json`, which only your user can
+read. The process exits about 10 seconds after its last chat stops and no window is connected. After an Argus
+update, the old process keeps its chats running until they are all idle, then exits. Windows reconnect to the new
+one and resume their chats. Its log is `~/.claude/argus/chat-daemon.log`.
+
 ## Finding Claude Code
 
 `argus.chat.claudePath` sets the `claude` executable. Empty: `claude` on your PATH, then `~/.local/bin`, where

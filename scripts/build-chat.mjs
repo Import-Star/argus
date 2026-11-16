@@ -17,6 +17,13 @@ const host = {
   banner: { js: 'const __argusImportMetaUrl = require("url").pathToFileURL(__filename).href;' }
 };
 
+const daemon = {
+  ...host,
+  entryPoints: ["chat/daemon/main.ts"],
+  outfile: "out/chat/daemon.js",
+  external: []
+};
+
 const webview = {
   entryPoints: ["chat/webview/index.tsx"],
   outfile: "out/chat/webview.js",
@@ -43,7 +50,7 @@ const mermaid = {
 };
 
 if (watch) {
-  await Promise.all([host, webview, mermaid].map(async (options) => (await context(options)).watch()));
+  await Promise.all([host, daemon, webview, mermaid].map(async (options) => (await context(options)).watch()));
 } else {
-  await Promise.all([build(host), build(webview), build(mermaid)]);
+  await Promise.all([build(host), build(daemon), build(webview), build(mermaid)]);
 }

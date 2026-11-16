@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import type { Query } from "@anthropic-ai/claude-agent-sdk";
 import { callbackUrlProblem, toMcpServers, type McpAuthenticateResponse, type McpPanelData } from "../../../src/chat/panels/mcp";
+import { QUERY_UNSUPPORTED } from "../../../src/chat/daemonProtocol";
 import type { ChatSession } from "../ChatSession";
 import { refreshPanel } from "./index";
 import type { PanelHandler } from "./types";
@@ -85,6 +86,9 @@ async function authenticate(session: ChatSession, server: string): Promise<void>
       throw new Error(reply.error);
     }
   } catch (error) {
+    if (message(error) === QUERY_UNSUPPORTED) {
+      return authenticateInTerminal(session);
+    }
     results.set(session, { server, action: "authenticate", error: message(error) });
     return;
   }

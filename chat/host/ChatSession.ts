@@ -1,18 +1,13 @@
-import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type RewindFilesResult, type SDKMessage, type SDKUserMessage, type SessionCronSummary, type SlashCommand, type StopHookInput } from "@anthropic-ai/claude-agent-sdk";
+import type { Query, RewindFilesResult, SDKMessage, SessionCronSummary } from "@anthropic-ai/claude-agent-sdk";
 import { randomUUID } from "crypto";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
 import * as vscode from "vscode";
-import { MessageQueue, type QueueAction } from "./messageQueue";
-import { ShellRunner } from "./shell";
-import { withLocalCommandOutput } from "./restore";
-import { withWorkflowTasks } from "./workflowHistory";
-import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
+import type { DaemonFrame, OpenOptions, SessionMethod, SessionState } from "../../src/chat/daemonProtocol";
 import type { Panel } from "../../src/chat/panels";
+import type { McpStatus } from "../../src/chat/panels/mcp";
+import type { ChatMeta, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, QueuedMessage, ShellRun } from "../../src/chat/protocol";
+import { ConnectionLostError, type DaemonClient } from "./daemonClient";
+import type { QueueAction } from "./messageQueue";
 import { refreshPanel } from "./panels";
-import { countMcpIssues, toMcpServers, type McpStatus } from "../../src/chat/panels/mcp";
-import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, QueuedMessage } from "../../src/chat/protocol";
 
 export interface ChatSessionOptions {
   sessionId?: string;
@@ -34,14 +29,6 @@ export interface ChatSessionOptions {
   log(line: string): void;
 }
 
-// The SDK runtime has these, but sdk.d.ts doesn't declare them.
-type RemoteControlQuery = Query & {
-  enableRemoteControl?(enabled: boolean, name?: string): Promise<{ session_url?: string }>;
-  getChromeBrowsers?(): Promise<{ browsers?: { device_id: string; name: string; os_platform?: string; current?: boolean }[] }>;
-  selectChromeBrowser?(deviceId: string): Promise<unknown>;
-  getSettings?(): Promise<{ effective?: Record<string, unknown>; applied?: { effort?: string | null; advisor?: string | null; ultracode?: boolean } }>;
-};
-
 export interface SessionSettings {
   effective: Record<string, unknown>;
   effort?: string | null;
@@ -49,192 +36,77 @@ export interface SessionSettings {
   ultracode?: boolean;
 }
 
-class InputQueue implements AsyncIterable<SDKUserMessage> {
-  private items: SDKUserMessage[] = [];
-  private waiting?: (result: IteratorResult<SDKUserMessage>) => void;
-  private closed = false;
+const describe = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
-  push(item: SDKUserMessage): void {
-    if (this.waiting) {
-      const resolve = this.waiting;
-      this.waiting = undefined;
-      resolve({ value: item, done: false });
-    } else {
-      this.items.push(item);
-    }
-  }
-
-  close(): void {
-    this.closed = true;
-    this.waiting?.({ value: undefined, done: true });
-    this.waiting = undefined;
-  }
-
-  [Symbol.asyncIterator](): AsyncIterator<SDKUserMessage> {
-    return {
-      next: () => {
-        const item = this.items.shift();
-        if (item) {
-          return Promise.resolve({ value: item, done: false });
-        }
-        if (this.closed) {
-          return Promise.resolve({ value: undefined, done: true });
-        }
-        return new Promise((resolve) => (this.waiting = resolve));
-      }
-    };
-  }
-}
-
-const FIVE_MINUTES = 5 * 60_000;
-const ONE_HOUR = 60 * 60_000;
-
-function parseTtl(value: unknown): number | undefined {
-  return value === "5m" ? FIVE_MINUTES : value === "1h" ? ONE_HOUR : undefined;
-}
-
-function readSettings(file: string): { promptCacheTtl?: unknown; respondToBashCommands?: unknown; env?: Record<string, unknown> } {
-  try {
-    return JSON.parse(fs.readFileSync(file, "utf8"));
-  } catch {
-    return {};
-  }
-}
-
-const settingsFiles = (cwd: string) => [path.join(cwd, ".claude", "settings.local.json"), path.join(cwd, ".claude", "settings.json"), path.join(os.homedir(), ".claude", "settings.json")];
-
-// Settings and env beat the account default, in the order the CLI reads them (local over project over user).
-function configuredCacheTtl(cwd: string): number | undefined {
-  const settings = settingsFiles(cwd).map(readSettings);
-  const fromEnv = parseTtl(process.env.CLAUDE_CODE_PROMPT_CACHE_TTL) ?? settings.map((entry) => parseTtl(entry.env?.CLAUDE_CODE_PROMPT_CACHE_TTL)).find((ttl) => ttl);
-  return fromEnv ?? settings.map((entry) => parseTtl(entry.promptCacheTtl)).find((ttl) => ttl);
-}
-
-function respondsToShell(cwd: string): boolean {
-  return settingsFiles(cwd).map(readSettings).find((entry) => typeof entry.respondToBashCommands === "boolean")?.respondToBashCommands !== false;
-}
-
-const EDIT_TOOLS = new Set(["Edit", "MultiEdit", "Write", "NotebookEdit"]);
-
-interface Pending {
-  request: PermissionRequest;
-  suggestions?: PermissionUpdate[];
-  resolve(result: PermissionResult): void;
-}
-
-function alwaysLabel(suggestions: PermissionUpdate[] | undefined): string | undefined {
-  const labels = (suggestions ?? []).flatMap((update) => {
-    if (update.type === "addRules") {
-      return update.rules.map((rule) => (rule.ruleContent ? `${rule.toolName}(${rule.ruleContent})` : rule.toolName));
-    }
-    return update.type === "setMode" ? [`switch to ${update.mode}`] : [];
-  });
-  return labels.length > 0 ? labels.join(", ") : undefined;
-}
-
+// This window's view of a session that runs in the background process; its state is mirrored from there.
 export class ChatSession implements vscode.Disposable {
   public readonly sessionId: string;
-  public meta: ChatMeta;
   private readonly emitter = new vscode.EventEmitter<HostMessage>();
   public readonly onMessage = this.emitter.event;
-  private input = new InputQueue();
-  private readonly pending = new Map<string, Pending>();
-  private q?: Query;
-  private pendingName?: string;
-  private sentName?: string;
-  private backgroundTasks = 0;
-  // When the current Claude process started; until one starts, when the chat was created.
-  public processStartedAt = Date.now();
-  private historyLoaded?: Promise<SDKMessage[]>;
-  private aliases = new Map<string, string>();
-  private turnFiles = new Set<string>();
-  private readonly queue = new MessageQueue({
-    submit: (entry) => this.input.push(this.userMessage(entry.uuid, entry.text, entry.images)),
-    cancel: (uuid) => this.cancelQueued(uuid),
-    interrupt: () => this.interrupt().catch((error) => this.options.log(`interrupt ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`)),
-    started: (entry) => this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message: this.userMessage(entry.uuid, entry.text, entry.images) }),
-    changed: (items) => this.emitter.fire({ type: "queue", sessionId: this.sessionId, items })
-  });
-  public readonly shell: ShellRunner;
+  private state: SessionState;
+  private opened?: Promise<void>;
+  private readonly query = new Proxy(
+    {},
+    {
+      // A thenable would make `await session.activeQuery` wait on it forever.
+      get: (_, method) => (typeof method === "string" && method !== "then" ? (...args: unknown[]) => this.client.request({ op: "query", sessionId: this.sessionId, method, args }) : undefined)
+    }
+  ) as unknown as Query;
+  public readonly shell = {
+    items: (): ShellRun[] => this.state.shellRuns,
+    run: (command: string): void => this.fire({ op: "shell", sessionId: this.sessionId, method: "run", args: [command] }, "shell run"),
+    act: (id: string, action: "stop" | "background"): void => this.fire({ op: "shell", sessionId: this.sessionId, method: "act", args: [id, action] }, "shell act")
+  };
 
-  constructor(private readonly options: ChatSessionOptions) {
+  constructor(private readonly client: DaemonClient, private readonly options: ChatSessionOptions) {
     this.sessionId = options.sessionId ?? randomUUID();
-    this.meta = {
-      sessionId: this.sessionId,
-      cwd: options.cwd,
-      title: options.title,
-      status: "starting",
-      statusSince: Date.now(),
-      model: options.model ?? "default",
-      textOnly: options.textOnly,
-      effort: options.effort,
-      permissionMode: options.permissionMode,
-      chrome: options.chrome,
-      color: options.color,
-      models: []
+    const now = Date.now();
+    this.state = {
+      meta: {
+        sessionId: this.sessionId,
+        cwd: options.cwd,
+        title: options.title,
+        status: "starting",
+        statusSince: now,
+        model: options.model ?? "default",
+        textOnly: options.textOnly,
+        effort: options.effort,
+        permissionMode: options.permissionMode,
+        chrome: options.chrome,
+        color: options.color,
+        models: []
+      },
+      processStartedAt: now,
+      claudePath: options.claudePath,
+      additionalDirectories: options.additionalDirectories,
+      runningBackgroundTasks: 0,
+      stoppable: false,
+      pendingRequests: [],
+      queued: [],
+      lastTurnFiles: [],
+      shellRuns: [],
+      hasQuery: false
     };
-    this.shell = new ShellRunner({
-      cwd: options.cwd,
-      respond: () => respondsToShell(options.cwd),
-      deliver: (text) => this.send(text),
-      changed: (runs) => this.emitter.fire({ type: "shells", sessionId: this.sessionId, runs })
-    });
   }
 
-  public start(resumeAt?: string): void {
-    if (this.q) {
-      return;
-    }
-    this.backgroundTasks = 0;
-    this.processStartedAt = Date.now();
-    const { cwd, resume, claudePath, additionalDirectories, model, effort, permissionMode, log } = this.options;
-    this.q = query({
-      prompt: this.input,
-      options: {
-        cwd,
-        additionalDirectories,
-        resume: resume ? this.sessionId : undefined,
-        resumeSessionAt: resumeAt,
-        enableFileCheckpointing: true,
-        sessionId: resume ? undefined : this.sessionId,
-        model,
-        effort,
-        permissionMode,
-        pathToClaudeCodeExecutable: claudePath,
-        extraArgs: chromeArgs(this.options.chrome),
-        // SDK sessions leave the to-do tools off; the transcript's to-do card needs them.
-        // Under the SDK's default "sdk-ts" entrypoint the CLI turns the Artifact tools off; the to-do tools are off by default too.
-        env: { ...process.env, CLAUDE_CODE_ENTRYPOINT: "claude-vscode", CLAUDE_CODE_ENABLE_TODO_TOOLS: "1", CLAUDE_CODE_ENABLE_TASKS: "1", CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS: "1" },
-        includePartialMessages: true,
-        hooks: { Stop: [{ hooks: [async (input) => {
-          this.sessionCrons = (input as StopHookInput).session_crons ?? this.sessionCrons;
-          void refreshPanel(this, "loops");
-          return {};
-        }] }] },
-        canUseTool: (toolName, input, { signal, suggestions, decisionReason, blockedPath, toolUseID }) =>
-          this.ask({ toolName, input, suggestions, decisionReason, blockedPath, toolUseId: toolUseID, signal }),
-        stderr: (data) => log(`[${this.sessionId}] ${data.trimEnd()}`)
-      }
-    });
-    void this.pump(this.q);
-    void this.loadModels(this.q);
-    void this.loadCommands(this.q);
-    void this.loadMcpIssues(this.q);
-    void this.loadCacheTtl(this.q);
-    if (this.options.remoteControlAtStartup) {
-      this.setRemoteControl(true).catch((error) => log(`remote control ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`));
-    }
+  public get meta(): ChatMeta {
+    return this.state.meta;
   }
 
-  // Session-only loops as of the last finished turn; undefined until the first one ends.
-  public sessionCrons?: SessionCronSummary[];
+  public get processStartedAt(): number {
+    return this.state.processStartedAt;
+  }
+
+  public get sessionCrons(): SessionCronSummary[] | undefined {
+    return this.state.sessionCrons;
+  }
 
   public get claudePath(): string | undefined {
-    return this.options.claudePath;
+    return this.state.claudePath;
   }
 
   public get additionalDirectories(): string[] {
-    return [...this.options.additionalDirectories];
+    return [...this.state.additionalDirectories];
   }
 
   public get busy(): boolean {
@@ -242,253 +114,137 @@ export class ChatSession implements vscode.Disposable {
   }
 
   public get runningBackgroundTasks(): number {
-    return this.backgroundTasks;
+    return this.state.runningBackgroundTasks;
   }
 
-  // Returns the claude.ai link while on. The session shows there under its Argus title.
-  public async setRemoteControl(enabled: boolean): Promise<string | undefined> {
-    this.start();
-    const q = this.q as RemoteControlQuery | undefined;
-    if (!q?.enableRemoteControl) {
-      throw new Error("This version of Claude Code can't start Remote Control from an SDK session. Update Claude Code.");
-    }
-    const response = await q.enableRemoteControl(enabled, enabled ? this.meta.title : undefined);
-    const url = enabled ? response?.session_url : undefined;
-    this.update({ remoteControlUrl: url });
-    return url;
+  public get stoppable(): boolean {
+    return this.state.stoppable;
   }
 
-  public async chromeBrowsers(): Promise<{ id: string; name: string; platform?: string; current: boolean }[]> {
-    const q = this.q as RemoteControlQuery | undefined;
-    const response = await q?.getChromeBrowsers?.();
-    return (response?.browsers ?? []).map((browser) => ({ id: browser.device_id, name: browser.name, platform: browser.os_platform, current: Boolean(browser.current) }));
+  public get activeQuery(): Query | undefined {
+    return this.state.hasQuery ? this.query : undefined;
   }
 
-  public async selectChromeBrowser(id: string): Promise<void> {
-    await (this.q as RemoteControlQuery | undefined)?.selectChromeBrowser?.(id);
+  public lastTurnFiles(): string[] {
+    return [...this.state.lastTurnFiles];
   }
 
-  // Claude in Chrome is a start-up flag, so changing it restarts the process on the same session.
-  public setChrome(enabled: boolean): void {
-    this.options.chrome = enabled;
-    this.update({ chrome: enabled });
-    this.relaunch();
+  public pendingRequests(): PermissionRequest[] {
+    return [...this.state.pendingRequests];
   }
 
-  public addDirectory(folder: string): void {
-    if (!this.options.additionalDirectories.includes(folder)) {
-      this.options.additionalDirectories.push(folder);
-      this.relaunch();
-    }
+  public queued(): QueuedMessage[] {
+    return [...this.state.queued];
   }
 
   public planUsage(): PlanUsage | null | undefined {
     return this.options.planUsage();
   }
 
-  public get activeQuery(): Query | undefined {
-    return this.q;
+  public start(): void {
+    this.client.attach(this.sessionId, { event: (frame) => this.onEvent(frame), reopen: () => this.reopen() });
+    this.opened ??= this.open(this.options.resume);
   }
 
-  public history(): Promise<SDKMessage[]> {
-    if (!this.options.resume) {
-      return Promise.resolve([]);
-    }
-    this.historyLoaded ??= getSessionMessages(this.sessionId, { dir: this.options.cwd })
-      .then((messages) => {
-        this.restoreLastResponse(messages as unknown as { type: string; parent_tool_use_id?: string | null; timestamp?: string }[]);
-        return withWorkflowTasks(withLocalCommandOutput(messages, this.sessionId)) as unknown as SDKMessage[];
-      })
-      .catch((error) => {
-        this.options.log(`history ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
-        return [];
-      });
-    return this.historyLoaded;
+  public async history(): Promise<SDKMessage[]> {
+    await this.opened;
+    return this.call("history");
   }
 
-  public lastTurnFiles(): string[] {
-    return [...this.turnFiles];
+  public setRemoteControl(enabled: boolean): Promise<string | undefined> {
+    return this.call("setRemoteControl", enabled);
   }
 
-  public pendingRequests(): PermissionRequest[] {
-    return [...this.pending.values()].map((entry) => entry.request);
+  public chromeBrowsers(): Promise<{ id: string; name: string; platform?: string; current: boolean }[]> {
+    return this.call("chromeBrowsers");
+  }
+
+  public selectChromeBrowser(id: string): Promise<void> {
+    return this.call("selectChromeBrowser", id);
+  }
+
+  public setChrome(enabled: boolean): void {
+    this.fireCall("setChrome", enabled);
+  }
+
+  public addDirectory(folder: string): void {
+    this.fireCall("addDirectory", folder);
   }
 
   public send(prompt: string, images: { mediaType: string; data: string }[] = []): void {
-    const text = [this.shell.takeHeld(), prompt].filter(Boolean).join("\n\n");
-    this.start();
-    if (this.meta.status === "working" || this.meta.status === "needs-you") {
-      this.queue.add(text, images);
-      return;
-    }
-    this.turnFiles = new Set();
-    const message = this.userMessage(randomUUID(), text, images);
-    this.input.push(message);
-    // The SDK doesn't echo prompts back, so the transcript gets them from here.
-    this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message });
-    this.setStatus("working");
-  }
-
-  public queued(): QueuedMessage[] {
-    return this.queue.items();
+    this.fireCall("send", prompt, images);
   }
 
   public queueAction(id: string, action: QueueAction, text?: string): void {
-    this.queue.act(id, action, text);
+    this.fireCall("queueAction", id, action, text);
   }
 
-  private userMessage(uuid: string, text: string, images: { mediaType: string; data: string }[]): SDKUserMessage {
-    const content = [
-      ...images.map((image) => ({ type: "image" as const, source: { type: "base64" as const, media_type: image.mediaType, data: image.data } })),
-      { type: "text" as const, text }
-    ];
-    return {
-      type: "user",
-      uuid,
-      session_id: this.sessionId,
-      message: { role: "user", content: images.length > 0 ? content : text },
-      parent_tool_use_id: null,
-      origin: { kind: "human" }
-    } as SDKUserMessage;
+  public interrupt(): Promise<void> {
+    return this.call("interrupt");
   }
 
-  // cancelAsyncMessage and command_lifecycle exist in the SDK runtime but not in sdk.d.ts.
-  private async cancelQueued(uuid: string): Promise<boolean> {
-    try {
-      const q = this.q as (Query & { cancelAsyncMessage?(uuid: string): Promise<boolean> }) | undefined;
-      return (await q?.cancelAsyncMessage?.(uuid)) === true;
-    } catch {
-      return false;
-    }
+  public setModel(model: string): Promise<void> {
+    return this.call("setModel", model);
   }
 
-  private trackLifecycle(message: SDKMessage): boolean {
-    const event = message as unknown as { type: string; command_uuid?: string; state?: string };
-    if (event.type !== "command_lifecycle") {
-      return false;
-    }
-    if (event.command_uuid && event.state) {
-      this.queue.onLifecycle(event.command_uuid, event.state);
-    }
-    return true;
+  public setEffort(effort: EffortLevel): Promise<void> {
+    return this.call("setEffort", effort);
   }
 
-  public async interrupt(): Promise<void> {
-    await this.q?.interrupt();
-  }
-
-  public async setModel(model: string): Promise<void> {
-    this.start();
-    await this.q?.setModel(model);
-    this.update({ model });
-  }
-
-  public async setEffort(effort: EffortLevel): Promise<void> {
-    this.start();
-    await this.q?.applyFlagSettings({ effortLevel: effort });
-    this.update({ effort });
-  }
-
-  // Saved through the CLI's own settings writer, the same way /effort does. Settings files have no "max" level.
-  public async saveEffortDefault(effort: EffortLevel): Promise<void> {
-    if (effort !== "max") {
-      await this.q?.updateSettings("userSettings", { effortLevel: effort });
-    }
+  public saveEffortDefault(effort: EffortLevel): Promise<void> {
+    return this.call("saveEffortDefault", effort);
   }
 
   public setColor(color: string | undefined): void {
-    this.update({ color });
+    this.fireCall("setColor", color);
   }
 
-  // `/effort auto` is text the SDK has no setter for, so the shown level is cleared rather than left stale.
   public clearEffort(): void {
-    this.update({ effort: undefined });
+    this.fireCall("clearEffort");
   }
 
-  public async initInfo(): Promise<{ outputStyle: string; outputStyles: string[] }> {
-    this.start();
-    const init = await this.q?.initializationResult();
-    return { outputStyle: init?.output_style ?? "", outputStyles: init?.available_output_styles ?? [] };
+  public initInfo(): Promise<{ outputStyle: string; outputStyles: string[] }> {
+    return this.call("initInfo");
   }
 
-  public async settings(): Promise<SessionSettings> {
-    this.start();
-    const response = await (this.q as RemoteControlQuery | undefined)?.getSettings?.();
-    return { effective: response?.effective ?? {}, ...response?.applied };
+  public settings(): Promise<SessionSettings> {
+    return this.call("settings");
   }
 
-  public async setPermissionMode(mode: PermissionMode): Promise<void> {
-    this.start();
-    await this.q?.setPermissionMode(mode);
-    this.update({ permissionMode: mode });
+  public setPermissionMode(mode: PermissionMode): Promise<void> {
+    return this.call("setPermissionMode", mode);
   }
 
-  public async stopTask(taskId: string): Promise<void> {
-    await this.q?.stopTask(taskId);
+  public stopTask(taskId: string): Promise<void> {
+    return this.call("stopTask", taskId);
   }
 
-  public async rewindFiles(userMessageId: string, dryRun: boolean): Promise<RewindFilesResult> {
-    this.start();
-    return this.q!.rewindFiles(userMessageId, { dryRun });
+  public rewindFiles(userMessageId: string, dryRun: boolean): Promise<RewindFilesResult> {
+    return this.call("rewindFiles", userMessageId, dryRun);
   }
 
-  // Restarts the CLI on the same session with the current options. Remote Control comes back on if it was on.
   public relaunch(): void {
-    const remote = Boolean(this.meta.remoteControlUrl);
-    this.stopProcess();
-    this.historyLoaded = undefined;
-    this.start();
-    this.restoreRemoteControl(remote);
+    this.fireCall("relaunch");
   }
 
-  // start() already turns it on when remoteControlAtStartup is set.
-  private restoreRemoteControl(wasOn: boolean): void {
-    if (wasOn && !this.options.remoteControlAtStartup) {
-      this.setRemoteControl(true).catch((error) => this.options.log(`remote control ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`));
-    }
-  }
-
-  private stopProcess(): void {
-    const old = this.q;
-    this.q = undefined;
-    this.input.close();
-    this.input = new InputQueue();
-    old?.close();
-    this.queue.clear();
-    this.update({ remoteControlUrl: undefined });
-  }
-
-  // Restarts the CLI on the same session, resumed only up to `at`; the SDK has no in-place truncate.
-  public async truncateTo(at: string, userMessageId: string, text: string): Promise<void> {
-    const remote = Boolean(this.meta.remoteControlUrl);
-    this.stopProcess();
-    this.options.resume = true;
-    this.historyLoaded = getSessionMessages(this.sessionId, { dir: this.options.cwd })
-      .then((chain) => chain.slice(0, chain.findIndex((entry) => entry.uuid === at) + 1) as unknown as SDKMessage[])
-      .catch(() => []);
-    this.start(at);
-    this.restoreRemoteControl(remote);
-    this.emitter.fire({ type: "rewound", sessionId: this.sessionId, userMessageId, text });
-    this.setStatus("idle");
+  public truncateTo(at: string, userMessageId: string, text: string): Promise<void> {
+    return this.call("truncateTo", at, userMessageId, text);
   }
 
   public respond(id: string, decision: PermissionDecision): void {
-    const entry = this.pending.get(id);
-    if (!entry) {
-      return;
-    }
-    this.pending.delete(id);
-    entry.resolve(
-      decision.behavior === "allow"
-        ? {
-            behavior: "allow",
-            updatedInput: decision.updatedInput ?? entry.request.input,
-            updatedPermissions: decision.always ? entry.suggestions : undefined
-          }
-        : { behavior: "deny", message: decision.message }
-    );
-    this.emitter.fire({ type: "permissionResolved", sessionId: this.sessionId, id });
-    this.setStatus(this.pending.size > 0 ? "needs-you" : "working");
+    this.fireCall("respond", id, decision);
+  }
+
+  public rename(title: string): void {
+    this.fireCall("rename", title);
+  }
+
+  public syncName(name: string): void {
+    this.fireCall("syncName", name);
+  }
+
+  public setMcpServers(servers: readonly { status: McpStatus }[]): void {
+    this.fireCall("setMcpServers", servers);
   }
 
   public showPanel(panel: Panel, refresh = false): void {
@@ -503,247 +259,88 @@ export class ChatSession implements vscode.Disposable {
     this.emitter.fire({ type: "draft", sessionId: this.sessionId, text });
   }
 
-  public rename(title: string): void {
-    this.update({ title });
-  }
-
-  // Other agents address a session by its Claude Code name, so keep it equal to the Argus title.
-  public syncName(name: string): void {
-    if (name === this.sentName) {
-      return;
-    }
-    this.pendingName = name;
-    if (this.q && this.meta.status === "idle") {
-      this.sentName = name;
-      this.input.push(this.userMessage(randomUUID(), `/rename ${name}`, []));
-      this.pendingName = undefined;
-    }
-  }
-
+  // Closes this window's view only; the agent keeps running until the background process's idle rule stops it.
   public dispose(): void {
-    for (const id of [...this.pending.keys()]) {
-      this.respond(id, { behavior: "deny", message: "The chat was closed." });
-    }
-    this.input.close();
-    this.q?.close();
-    this.shell.dispose();
+    this.release();
+    this.client.request({ op: "detach", sessionId: this.sessionId }).catch((error) => this.options.log(`detach ${this.sessionId}: ${describe(error)}`));
+  }
+
+  // Ends the agent in every window.
+  public async stop(): Promise<void> {
+    this.release();
+    await this.client.request({ op: "stop", sessionId: this.sessionId }).catch((error) => this.options.log(`stop ${this.sessionId}: ${describe(error)}`));
+  }
+
+  private release(): void {
+    this.client.detach(this.sessionId);
     this.emitter.dispose();
   }
 
-  private ask(args: {
-    toolName: string;
-    input: Record<string, unknown>;
-    suggestions?: PermissionUpdate[];
-    decisionReason?: string;
-    blockedPath?: string;
-    toolUseId?: string;
-    signal: AbortSignal;
-  }): Promise<PermissionResult> {
-    const request: PermissionRequest = {
-      id: randomUUID(),
-      toolName: args.toolName,
-      toolUseId: args.toolUseId,
-      input: args.input,
-      decisionReason: args.decisionReason,
-      blockedPath: args.blockedPath,
-      alwaysLabel: alwaysLabel(args.suggestions),
-      createdAt: Date.now()
-    };
-    return new Promise((resolve) => {
-      this.pending.set(request.id, { request, suggestions: args.suggestions, resolve });
-      args.signal.addEventListener("abort", () => {
-        if (this.pending.delete(request.id)) {
-          resolve({ behavior: "deny", message: "Cancelled." });
-          this.emitter.fire({ type: "permissionResolved", sessionId: this.sessionId, id: request.id });
-        }
-      });
-      this.emitter.fire({ type: "permission", sessionId: this.sessionId, request });
-      this.setStatus("needs-you");
-    });
+  private call<T>(method: SessionMethod, ...args: unknown[]): Promise<T> {
+    return this.client.request<T>({ op: "call", sessionId: this.sessionId, method, args });
   }
 
-  private async pump(q: Query): Promise<void> {
+  private fireCall(method: SessionMethod, ...args: unknown[]): void {
+    this.call(method, ...args).catch((error) => this.options.log(`${method} ${this.sessionId}: ${describe(error)}`));
+  }
+
+  private fire(request: Parameters<DaemonClient["request"]>[0], what: string): void {
+    this.client.request(request).catch((error) => this.options.log(`${what} ${this.sessionId}: ${describe(error)}`));
+  }
+
+  private openOptions(resume: boolean): OpenOptions {
+    const { planUsage, log, ...rest } = this.options;
+    const { meta, additionalDirectories, claudePath } = this.state;
+    const config = vscode.workspace.getConfiguration("argus.chat");
+    return {
+      ...rest,
+      sessionId: this.sessionId,
+      resume,
+      title: meta.title,
+      claudePath,
+      additionalDirectories,
+      model: meta.model === "default" ? undefined : meta.model,
+      effort: meta.effort,
+      permissionMode: meta.permissionMode,
+      chrome: meta.chrome,
+      color: meta.color,
+      hiddenModels: config.get<string[]>("hiddenModels", []),
+      idleMinutes: config.get<number>("backgroundIdleMinutes", 60),
+      env: process.env
+    };
+  }
+
+  private async open(resume: boolean): Promise<void> {
     try {
-      for await (const message of q) {
-        if (q !== this.q) {
-          return;
-        }
-        if (this.trackLifecycle(message)) {
-          continue;
-        }
-        this.track(message);
-        this.emitter.fire({ type: "sdk", sessionId: this.sessionId, message });
-      }
-      if (q === this.q) {
-        this.retire();
-        this.setStatus("ended");
-      }
+      this.state = await this.client.request<SessionState>({ op: "open", options: this.openOptions(resume) });
+      this.emitter.fire({ type: "meta", meta: this.meta });
+      this.emitter.fire({ type: "queue", sessionId: this.sessionId, items: this.state.queued });
+      this.emitter.fire({ type: "shells", sessionId: this.sessionId, runs: this.state.shellRuns });
     } catch (error) {
-      if (q !== this.q) {
+      if (error instanceof ConnectionLostError) {
         return;
       }
-      const text = error instanceof Error ? error.message : String(error);
-      this.options.log(`session ${this.sessionId}: ${text}`);
-      this.update({ error: text });
-      this.retire();
-      this.setStatus("error");
+      this.options.log(`open ${this.sessionId}: ${describe(error)}`);
+      this.state = { ...this.state, meta: { ...this.meta, status: "error", statusSince: Date.now() } };
+      this.emitter.fire({ type: "meta", meta: this.meta });
     }
   }
 
-  // The process is gone: drop it and its input so the next message starts a new one.
-  private retire(): void {
-    this.q = undefined;
-    this.input.close();
-    this.input = new InputQueue();
-    this.queue.clear();
-    this.update({ remoteControlUrl: undefined });
+  private reopen(): void {
+    this.opened = this.open(true);
   }
 
-  private track(message: SDKMessage): void {
-    if (message.type === "assistant") {
-      this.trackEdits(message.message.content);
-      this.markResponse(message.parent_tool_use_id);
-    } else if (message.type === "system" && message.subtype === "init") {
-      this.update({ model: this.modelValue(message.model), permissionMode: message.permissionMode });
-    } else if (message.type === "system" && message.subtype === "commands_changed") {
-      this.setCommands(message.commands);
-    } else if (message.type === "system" && message.subtype === "background_tasks_changed") {
-      this.backgroundTasks = message.tasks.filter((task) => !task.ambient).length;
-    } else if (message.type === "system" && message.subtype === "session_state_changed") {
-      const status: ChatStatus = message.state === "running" ? "working" : message.state === "requires_action" ? "needs-you" : "idle";
-      this.setStatus(this.pending.size > 0 ? "needs-you" : status);
-    } else if (message.type === "result") {
-      // The cached transcript stops at first load; a tab opened later must read the turns since.
-      this.historyLoaded = undefined;
-      this.options.resume = true;
-      this.markResponse(null);
-      this.queue.turnEnded();
-      this.setStatus(this.pending.size > 0 ? "needs-you" : "idle");
-      void this.loadContext();
-      if (this.q) {
-        void this.loadMcpIssues(this.q);
+  private onEvent(frame: Extract<DaemonFrame, { sessionId: string }>): void {
+    if (frame.event === "message") {
+      if (frame.state) {
+        this.state = frame.state;
       }
-      if (this.pendingName && this.meta.status === "idle") {
-        this.syncName(this.pendingName);
-      }
+      this.emitter.fire(frame.message);
+    } else if (frame.event === "refreshPanel") {
+      void refreshPanel(this, frame.kind);
+    } else {
+      this.state = { ...this.state, meta: { ...this.meta, status: "ended", statusSince: Date.now() } };
+      this.emitter.fire({ type: "meta", meta: this.meta });
     }
-  }
-
-  private trackEdits(content: unknown): void {
-    for (const block of Array.isArray(content) ? (content as { type: string; name?: string; input?: Record<string, unknown> }[]) : []) {
-      const file = block.type === "tool_use" && EDIT_TOOLS.has(block.name ?? "") ? (block.input?.file_path ?? block.input?.notebook_path) : undefined;
-      if (typeof file === "string") {
-        this.turnFiles.add(path.resolve(this.options.cwd, file));
-      }
-    }
-  }
-
-  private async loadCommands(q: Query): Promise<void> {
-    try {
-      this.setCommands(await q.supportedCommands());
-    } catch (error) {
-      this.options.log(`commands ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  private setCommands(commands: SlashCommand[]): void {
-    this.update({ commands: withLocalCommands(commands.map(({ name, description, argumentHint }) => ({ name, description, argumentHint }))) });
-  }
-
-  private async loadMcpIssues(q: Query): Promise<void> {
-    try {
-      this.setMcpServers(toMcpServers(await q.mcpServerStatus()));
-    } catch (error) {
-      this.options.log(`mcp status ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  public setMcpServers(servers: readonly { status: McpStatus }[]): void {
-    const mcpIssues = countMcpIssues(servers);
-    if (mcpIssues !== (this.meta.mcpIssues ?? 0)) {
-      this.update({ mcpIssues });
-    }
-  }
-
-  private async loadModels(q: Query): Promise<void> {
-    try {
-      const models = await q.supportedModels();
-      // init reports the full model id ("claude-haiku-5-5"); the picker lists aliases ("haiku").
-      for (const model of models) {
-        if (model.resolvedModel && model.value !== "default" && !this.aliases.has(model.resolvedModel)) {
-          this.aliases.set(model.resolvedModel, model.value);
-        }
-      }
-      const current = this.meta.model && this.modelValue(this.meta.model);
-      const hidden = new Set(vscode.workspace.getConfiguration("argus.chat").get<string[]>("hiddenModels", []).map((name) => name.trim().toLowerCase()));
-      // The chat's own model stays listed even when hidden, so the picker never goes blank.
-      const shown = models.filter((model) => model.value === current || ![model.value, model.displayName, model.resolvedModel].some((name) => name && hidden.has(name.toLowerCase())));
-      this.update({
-        models: shown.map((model) => ({ value: model.value, displayName: model.displayName, efforts: model.supportedEffortLevels ?? [] })),
-        model: current
-      });
-      if (this.meta.status === "starting") {
-        this.setStatus("idle");
-      }
-    } catch (error) {
-      this.options.log(`models ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  // A reopened chat has no live reply yet, so the cache countdown starts from the transcript's last reply.
-  private restoreLastResponse(messages: { type: string; parent_tool_use_id?: string | null; timestamp?: string }[]): void {
-    const last = [...messages].reverse().find((message) => message.type === "assistant" && !message.parent_tool_use_id && message.timestamp);
-    const at = last?.timestamp ? Date.parse(last.timestamp) : NaN;
-    if (!Number.isNaN(at) && (this.meta.lastResponseAt ?? 0) < at) {
-      this.update({ lastResponseAt: at });
-    }
-  }
-
-  private markResponse(parentToolUseId: string | null): void {
-    if (!parentToolUseId) {
-      this.update({ lastResponseAt: Date.now() });
-    }
-  }
-
-  private async loadCacheTtl(q: Query): Promise<void> {
-    try {
-      const account = await q.accountInfo();
-      const subscription = Boolean(account.subscriptionType) && (account.apiProvider ?? "firstParty") === "firstParty";
-      this.update({ cacheTtlMs: configuredCacheTtl(this.options.cwd) ?? (subscription ? ONE_HOUR : FIVE_MINUTES) });
-    } catch (error) {
-      this.options.log(`account ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  private modelValue(model: string): string {
-    return this.aliases.get(model) ?? model;
-  }
-
-  private async loadContext(): Promise<void> {
-    try {
-      const usage = await this.q?.getContextUsage({ detail: "summary" });
-      if (usage) {
-        this.update({ contextTokens: usage.totalTokens, contextMax: usage.maxTokens });
-      }
-    } catch {
-      // Older CLIs don't answer this; the header just hides the meter.
-    }
-  }
-
-  // Background agents live in the CLI process, so stopping it while one runs kills the agent.
-  public get stoppable(): boolean {
-    const { status } = this.meta;
-    return status === "ended" || status === "error" || (status === "idle" && this.backgroundTasks === 0);
-  }
-
-  private setStatus(status: ChatStatus): void {
-    if (status !== this.meta.status) {
-      this.update({ status, statusSince: Date.now() });
-    }
-  }
-
-  private update(patch: Partial<ChatMeta>): void {
-    this.meta = { ...this.meta, ...patch };
-    this.emitter.fire({ type: "meta", meta: this.meta });
   }
 }
