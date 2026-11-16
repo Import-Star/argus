@@ -39,7 +39,8 @@ Plugins are not in this repo: each is a folder in `~/.claude/argus/plugins` that
   `### Highlights` list at the top of its section and `### Changes` above the rest. After an update, **What's New**
   (`src/providers/WhatsNewPanel.ts`) shows each highlight as a card: one bullet that starts with a short bold title,
   then one or two sentences on what the user can now do, e.g. ``- **Pick another agent with `#`.** Type `#` in a
-  chat to ...``. Leave Highlights out of a release with only fixes.
+  chat to ...``. Leave Highlights out of a release with only fixes, and give it a patch version: What's New
+  shows a patch release with the highlights and changes of its minor version (0.16.1 with 0.16.0).
 - Give each highlight a picture when the feature has UI: add a `whatsNew: { file, clip }` crop to its screen in
   `scripts/snapshots.mjs` (file named `<version>-<feature>.png`), run `npm run snapshots:whats-new` to write it to
   `media/whats-new/`, look at the PNG, then add an indented `![what it shows](media/whats-new/<file>)` line under
