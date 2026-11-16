@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { inlineMarkdown, parseChangelog, Release, ReleaseItem, versionToAnnounce } from "../services/releaseNotes";
+import { inlineMarkdown, notesFor, parseChangelog, Release, ReleaseItem, versionToAnnounce } from "../services/releaseNotes";
 import { escapeHtml, getNonce, MARK_SVG } from "./ControlCenter";
 import { WELCOME_SHOWN_KEY } from "./WelcomePanel";
 
@@ -65,9 +65,7 @@ export class WhatsNewPanel implements vscode.Disposable {
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "styles.css"));
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "welcome.js"));
     const version = this.context.extension.packageJSON.version as string;
-    const releases = this.releases();
-    const index = Math.max(0, releases.findIndex((release) => release.version === version));
-    const current = releases[index];
+    const { current, earlier: before } = notesFor(this.releases(), version);
     const items = (list: ReleaseItem[]) => `<ul>${list.map((item) => `<li>${inlineMarkdown(item.text)}</li>`).join("")}</ul>`;
     const picture = (item: ReleaseItem) => {
       if (!item.image) {
@@ -83,8 +81,8 @@ export class WhatsNewPanel implements vscode.Disposable {
       ? `<section class="whatsnew-highlights">${current.highlights.map((item) => `<div class="welcome-step${item.image ? " has-image" : ""}"><div>${inlineMarkdown(item.text)}</div>${picture(item)}</div>`).join("")}</section>`
       : "";
     const changes = current?.changes.length ? `<section class="welcome-step"><h2>${current.highlights.length ? "Other changes" : "Changes"}</h2>${items(current.changes)}</section>` : "";
-    const earlier = releases
-      .slice(index + 1, index + 1 + EARLIER)
+    const earlier = before
+      .slice(0, EARLIER)
       .map((release) => `<h3>${escapeHtml(release.version)}</h3>${items([...release.highlights, ...release.changes])}`)
       .join("");
 

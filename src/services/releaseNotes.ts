@@ -63,3 +63,17 @@ export function inlineMarkdown(text: string): string {
 export function versionToAnnounce(current: string, lastSeen: string | undefined, installedBefore: boolean): string | undefined {
   return lastSeen ? (lastSeen !== current ? current : undefined) : installedBefore ? current : undefined;
 }
+
+// The notes to show for `version`, with the rest of its minor version folded in so 0.16.1 still shows 0.16.0's
+// highlights, then the releases before that minor version.
+export function notesFor(releases: Release[], version: string): { current?: Release; earlier: Release[] } {
+  const index = Math.max(0, releases.findIndex((release) => release.version === version));
+  const minor = (release: Release) => release.version.split(".").slice(0, 2).join(".");
+  let end = index + 1;
+  while (releases[end] && minor(releases[end]) === minor(releases[index])) {
+    end++;
+  }
+  const line = releases.slice(index, end);
+  const current = line.length ? { version: line[0].version, highlights: line.flatMap((release) => release.highlights), changes: line.flatMap((release) => release.changes) } : undefined;
+  return { current, earlier: releases.slice(end) };
+}

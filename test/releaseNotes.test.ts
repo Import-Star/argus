@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { inlineMarkdown, parseChangelog, versionToAnnounce } from "../src/services/releaseNotes.ts";
+import { inlineMarkdown, notesFor, parseChangelog, versionToAnnounce } from "../src/services/releaseNotes.ts";
 
 describe("parseChangelog", () => {
   it("splits highlights from changes, joins wrapped lines and skips Unreleased", () => {
@@ -70,5 +70,33 @@ describe("versionToAnnounce", () => {
     assert.equal(versionToAnnounce("1.2.0", undefined, true), "1.2.0");
     assert.equal(versionToAnnounce("1.2.0", undefined, false), undefined);
     assert.equal(versionToAnnounce("1.2.0", "1.2.0", true), undefined);
+  });
+});
+
+describe("notesFor", () => {
+  it("folds earlier patch releases into the current one", () => {
+    const releases = parseChangelog(`## 1.2.1
+
+- Patch fix.
+
+## 1.2.0
+
+### Highlights
+
+- **Big thing.**
+
+### Changes
+
+- Minor fix.
+
+## 1.1.0
+
+- Old change.
+`);
+    assert.deepEqual(notesFor(releases, "1.2.1"), {
+      current: { version: "1.2.1", highlights: [{ text: "**Big thing.**" }], changes: [{ text: "Patch fix." }, { text: "Minor fix." }] },
+      earlier: [releases[2]]
+    });
+    assert.deepEqual(notesFor(releases, "1.2.0").current?.changes, [{ text: "Minor fix." }]);
   });
 });
