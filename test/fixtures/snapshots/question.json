@@ -453,7 +453,7 @@
                     "multiSelect": false
                   },
                   {
-                    "question": "Should the PRs be opened when done?",
+                    "question": "Should the PRs be opened when done? PR2 is stacked on PR1, so opening PR2 first would show PR1's changes in its diff until PR1 merges, and the create-pr skill posts a review request to the team channel as soon as a PR opens, which would ask reviewers to look at a stack that isn't ready yet. Drafts avoid both.",
                     "header": "PRs",
                     "options": [
                       {
@@ -506,7 +506,7 @@
               "multiSelect": false
             },
             {
-              "question": "Should the PRs be opened when done?",
+              "question": "Should the PRs be opened when done? PR2 is stacked on PR1, so opening PR2 first would show PR1's changes in its diff until PR1 merges, and the create-pr skill posts a review request to the team channel as soon as a PR opens, which would ask reviewers to look at a stack that isn't ready yet. Drafts avoid both.",
               "header": "PRs",
               "options": [
                 {

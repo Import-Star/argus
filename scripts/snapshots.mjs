@@ -175,7 +175,7 @@ async function asideSteps(page, data) {
 
 async function queueSteps(page) {
   await page.getByRole("button", { name: "Edit queued message 3" }).click();
-  await page.locator(".q-edit").waitFor();
+  await page.locator(".queue-edit").waitFor();
 }
 
 async function historySteps(page) {
@@ -226,7 +226,8 @@ async function questionSteps(page) {
   await page.keyboard.press("Enter");
   const sent = await page.evaluate(() => window.__posted.filter((message) => message.type === "permission").at(-1));
   const input = sent?.decision?.updatedInput;
-  if (input?.answers?.["Should the PRs be opened when done?"] !== "Draft PRs, no Slack (Recommended)" || input?.annotations?.["Should the PRs be opened when done?"]?.notes !== "stack PR2 on PR1\nkeep PR1 small" || Object.keys(input.answers).length !== 2) {
+  const prs = input?.questions?.[1]?.question ?? "";
+  if (!prs.startsWith("Should the PRs be opened when done?") || input.answers[prs] !== "Draft PRs, no Slack (Recommended)" || input.annotations?.[prs]?.notes !== "stack PR2 on PR1\nkeep PR1 small" || Object.keys(input.answers).length !== 2) {
     throw new Error(`unexpected question answer: ${JSON.stringify(sent)}`);
   }
 }
@@ -374,7 +375,7 @@ const SCREENS = [
   { name: "history", ...CHAT_PAGE, steps: historySteps, expect: { actions: ".tr-actions", usage: ".tr-usage", user: ".tr-user" } },
   { name: "history-search", ...CHAT_PAGE, messages: () => fixture("history").messages, steps: searchSteps, expect: { search: ".tr-search", count: ".tr-search-count", output: ".tr-output", thinking: ".tr-thinking-body" } },
   { name: "working", ...CHAT_PAGE, expect: { working: ".tr-working", glyph: ".tr-working-glyph", meta: ".tr-working-meta" } },
-  { name: "queue", ...CHAT_PAGE, messages: () => [...fixture("working").messages, ...fixture("queue").messages], steps: queueSteps, expect: { queue: ".q", rows: ".q-row", sent: ".q-sent .q-warn", editor: ".q-edit", sendNow: ".q-now" } },
+  { name: "queue", ...CHAT_PAGE, messages: () => [...fixture("working").messages, ...fixture("queue").messages], steps: queueSteps, expect: { queue: ".queue", rows: ".queue-row", sent: ".queue-sent .queue-warn", editor: ".queue-edit", sendNow: ".queue-now" } },
   { name: "slash", ...CHAT_PAGE, steps: slashSteps, expect: { popup: '.cmp-suggest[aria-label="Commands"]', commands: ".cmp-command", hint: ".cmp-hint" } },
   { name: "shell-narrow", ...CHAT_PAGE, width: 900, fixture: "shell", messages: () => [...fixture("history").messages, ...fixture("shell").messages], whatsNew: { file: "0.15.0-shell.png", clip: (page) => [page.locator(".tr-card", { has: page.locator(".tr-bash-cmd", { hasText: "npm run lint" }) })] }, expect: { cards: ".tr-bash-cmd" } },
   { name: "shell", ...CHAT_PAGE, messages: () => [...fixture("history").messages, ...fixture("shell").messages], steps: shellSteps, expect: { mode: ".cmp-box[data-shell]", paths: ".cmp-option.mono", cards: ".tr-bash-cmd", running: ".tr-card .spinner" } },
