@@ -81,6 +81,7 @@
 .perm-instead input,
 .q-note {
   font: inherit;
+  resize: none;
   color: var(--text);
   background: var(--input);
   border: 1px solid var(--border);
@@ -332,8 +333,9 @@
   cursor: text;
 }
 
-.q-other input {
+.q-other textarea {
   flex: 1;
+  resize: none;
   min-width: 0;
   border: 0;
   outline: 0;

@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Shift+Enter adds a new line in a typed answer or note to Claude's question, instead of sending it. The boxes grow to
+  fit what you type.
+
 ## 0.16.0
 
 ### Highlights

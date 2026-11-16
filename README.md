@@ -127,7 +127,8 @@ board; opening one while it is running there warns you first, since two processe
 
 - **Argus: New Chat** starts a chat. Opening a card from the board resumes its session in the chat.
 - Permission requests, questions and plan approvals appear inline in the chat. The plan pane shows the plan as
-  Markdown; select text to comment on it, and the comment shows under that line with the text highlighted.
+  Markdown; select text to comment on it, and the comment shows under that line with the text highlighted. In a
+  typed answer or note to a question, Shift+Enter adds a new line and Enter sends.
 - On the Control Center Sessions tab, a card waiting on a permission or question from an Argus chat expands in
   place: **Allow once**, **Always allow** or **Deny**, or choose an option and **Send answer**. Plan approvals
   open the chat.

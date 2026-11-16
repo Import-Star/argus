@@ -17,6 +17,7 @@ running there warns you first, since two processes would write to one transcript
   box change them for one chat.
 - Permission requests, questions and plan approvals appear inline in the chat, and on the chat's
   [board card](control-center.md#sessions-tab).
+- When answering a question, Shift+Enter adds a new line to a typed answer or note; Enter sends.
 - A plan waiting for approval offers **Approve, accept edits**, **Approve, ask before edits** or **Keep planning**.
   The plan pane shows the plan as Markdown. Select text to comment; the text stays highlighted and the comment shows under
   that line. **Keep planning** sends the saved comments back with the plan.

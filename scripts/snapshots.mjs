@@ -210,10 +210,12 @@ async function questionSteps(page) {
   await page.keyboard.press("1");
   await page.getByRole("button", { name: "+ Add a note to this answer" }).click();
   await page.getByLabel("Note for PRs").fill("stack PR2 on PR1");
+  await page.keyboard.press("Shift+Enter");
+  await page.keyboard.type("keep PR1 small");
   await page.keyboard.press("Enter");
   const sent = await page.evaluate(() => window.__posted.filter((message) => message.type === "permission").at(-1));
   const input = sent?.decision?.updatedInput;
-  if (input?.answers?.["Should the PRs be opened when done?"] !== "Draft PRs, no Slack (Recommended)" || input?.annotations?.["Should the PRs be opened when done?"]?.notes !== "stack PR2 on PR1" || Object.keys(input.answers).length !== 2) {
+  if (input?.answers?.["Should the PRs be opened when done?"] !== "Draft PRs, no Slack (Recommended)" || input?.annotations?.["Should the PRs be opened when done?"]?.notes !== "stack PR2 on PR1\nkeep PR1 small" || Object.keys(input.answers).length !== 2) {
     throw new Error(`unexpected question answer: ${JSON.stringify(sent)}`);
   }
 }
