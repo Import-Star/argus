@@ -93,8 +93,8 @@ function ToolCard({ sessionId, request, compact }: { sessionId: string; request:
   const [instead, setInstead] = useState("");
   const { title, icon } = toolTitle(request.toolName);
   const allowOnce = () => decide(sessionId, request.id, { behavior: "allow" });
-  const sendInstead = (event: Event) => {
-    event.preventDefault();
+  const sendInstead = (event?: Event) => {
+    event?.preventDefault();
     if (instead.trim()) {
       decide(sessionId, request.id, { behavior: "deny", message: instead.trim() });
     }
@@ -125,7 +125,7 @@ function ToolCard({ sessionId, request, compact }: { sessionId: string; request:
       {compact ? null : (
         <form class="perm-instead" onSubmit={sendInstead}>
           <label for={`perm-instead-${request.id}`}>Or tell Claude what to do instead</label>
-          <input id={`perm-instead-${request.id}`} type="text" value={instead} onInput={(event) => setInstead(event.currentTarget.value)} />
+          <AnswerBox id={`perm-instead-${request.id}`} value={instead} onInput={setInstead} onEnter={sendInstead} />
         </form>
       )}
     </Shell>
@@ -158,9 +158,9 @@ function Tick() {
   );
 }
 
-// Answer text box: grows with its content (VS Code 1.90's Chromium predates field-sizing), and Shift+Enter adds a
-// line while Enter sends (handled by the card's onKeyDown).
-function AnswerBox({ value, onInput, ...rest }: { value: string; onInput: (value: string) => void; class?: string; placeholder: string; "aria-label": string; autoFocus?: boolean }) {
+// Text box that grows with its content (VS Code 1.90's Chromium predates field-sizing). Shift+Enter adds a line;
+// Enter calls onEnter, or is left to the card's onKeyDown when there's no onEnter.
+function AnswerBox({ value, onInput, onEnter, ...rest }: { value: string; onInput: (value: string) => void; onEnter?: () => void; id?: string; class?: string; placeholder?: string; "aria-label"?: string; autoFocus?: boolean }) {
   const box = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const el = box.current;
@@ -169,7 +169,13 @@ function AnswerBox({ value, onInput, ...rest }: { value: string; onInput: (value
       el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
     }
   }, [value]);
-  return <textarea {...rest} ref={box} rows={1} value={value} onInput={(event) => onInput(event.currentTarget.value)} />;
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (onEnter && event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      onEnter();
+    }
+  };
+  return <textarea {...rest} ref={box} rows={1} value={value} onInput={(event) => onInput(event.currentTarget.value)} onKeyDown={onKeyDown} />;
 }
 
 function QuestionBlock({ id, index, question, choice, compact, onChange, onPicked }: { id: string; index: number; question: AskQuestion; choice: Choice; compact?: boolean; onChange: (choice: Choice) => void; onPicked: () => void }) {

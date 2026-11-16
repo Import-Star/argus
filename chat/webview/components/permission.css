@@ -78,7 +78,7 @@
   font-size: 12px;
 }
 
-.perm-instead input,
+.perm-instead textarea,
 .q-note {
   font: inherit;
   resize: none;
