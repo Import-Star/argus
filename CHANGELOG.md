@@ -2,6 +2,24 @@
 
 First public release.
 
+## 0.17.0
+
+### Highlights
+
+- **Chats keep running when you close the window.** Argus chat now runs its agents in a background process, so
+  closing or reloading VS Code no longer stops them. A reply still running finishes, and reopening the chat shows it.
+- **Agents are always on.** Run several agents on one task side by side without turning on a setting first. Click
+  **+** in a chat to add a new or existing agent, and open a group's card to see them all in one grid.
+
+  ![Three agents working side by side in one grid](media/whats-new/0.17.0-agents.png)
+
+### Changes
+
+- Argus chat runs in one background process per user instead of inside each window, so closing or reloading a window
+  no longer stops its chats. A reply still running finishes, and reopening the chat shows it. Windows talk to the
+  process over a local socket, so no network calls are added.
+- Multi-agent mode is always on: the `argus.chat.experimentalMultiAgent` setting is gone.
+
 ## 0.16.1
 
 - Fix long questions from Claude being cut off after two lines in the chat. The message queue's styles were
