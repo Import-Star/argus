@@ -53,6 +53,9 @@ one copy so the two do not both register the same commands.
 
 Run **Argus: Set Up Session Tracking** once per machine. After you change `hooks/session-tracker.ts`, reload the window: Argus copies the new script to `~/.claude/argus` on startup. Re-run setup only when you change which events are hooked (`EVENTS` in `HookInstaller.ts`); Argus shows a warning when that's needed.
 
+After you rebuild, an F5 window sees a different chat daemon build and asks the old one to restart once its chats are
+idle. To force it now, kill the process listed in `~/.claude/argus/chat-daemon.json`.
+
 ## Working with an agent
 
 Point your Claude Code session at the repo and it will pick up [CLAUDE.md](CLAUDE.md), which describes the
@@ -100,6 +103,11 @@ media/host.js, styles.css        Control Center webview shell: tab switching, sh
 media/sessions.js                the Sessions tab: board, search, keyboard shortcuts, multi-select
 media/settings.js, settings.css  the Settings tab
 media/welcome.js                 Welcome page buttons
+chat/host/ChatSession.ts         window-side stand-in for a chat: forwards its calls to the daemon
+chat/host/daemonClient.ts        the window's connection to the daemon: spawn, hello, reconnect
+chat/daemon/AgentSession.ts      the session that runs the Agent SDK query
+chat/daemon/server.ts            socket server, idle rule, restart when idle
+src/chat/daemonProtocol.ts       message format between a window and the daemon
 ```
 
 Data flow: Claude Code fires a hook, `session-tracker` writes `~/.claude/argus/sessions/<id>.json`,

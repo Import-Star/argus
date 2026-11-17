@@ -14,10 +14,13 @@ Argus is local-only. It has no telemetry.
 | `~/.claude/argus/plugins/` | Plugin folders, loaded on startup. Argus also writes `argus.d.ts` and `argus-webview.d.ts` here for plugin authors. |
 | `~/.claude/argus/sessions/<id>.json` | One record per session, written by the hook on SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PermissionRequest, Notification, Stop, SubagentStart, SubagentStop and SessionEnd. It holds prompt snippets, the last assistant message and any pending tool command in plain text. Deleted `argus.sessions.retentionDays` days after the session closes. |
 | `~/.claude/argus/prs.json` | The last synced state of each linked PR (title, state, checks, review decision, reviewers, unresolved comment count), so cards show it on startup before the first `gh` lookup finishes. |
+| `~/.claude/argus/chat.sock` | Local socket the chat background process listens on (macOS and Linux). Windows uses a named pipe instead. |
+| `~/.claude/argus/chat-daemon.json` | Random token that windows send to connect to the chat background process. Readable only by your user. |
+| `~/.claude/argus/chat-daemon.log` | Log of the chat background process. |
 | `~/.claude/sessions/<pid>.json` | Claude Code's own registry of open sessions (read only). |
 | `~/.claude/projects/**/*.jsonl` | Claude Code's session and sub-agent transcripts (read only), for token use and search. Only new lines are read, kept in memory and never written anywhere. |
 | `~/.claude/.credentials.json` | Claude Code sign-in (read only, while `argus.usage.enabled` is on, which is the default). Sent only to the Anthropic usage endpoint. |
 
 Network use: `gh` calls to GitHub for PR state and PR diffs, using your existing `gh` login, and the Claude plan
 usage call above, and a request to `downloads.claude.ai` for the newest Claude Code version at startup and every 4
-hours. A plugin may make its own network calls; see its README.
+hours. Argus chat talks to its background process over a local socket, which makes no network calls. A plugin may make its own network calls; see its README.

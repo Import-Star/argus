@@ -125,6 +125,14 @@ Sessions open in Argus's own chat panel. It runs your installed `claude` through
 so it uses your existing Claude Code sign-in, settings and hooks. Sessions started in a terminal still appear on the
 board; opening one while it is running there warns you first, since two processes would write to one transcript.
 
+Chats run in one background process per user, which Argus starts when a chat opens. It runs on VS Code's own Node, so
+there's nothing to install. Closing or reloading a window doesn't stop its chats: a reply that's still running
+finishes, and reopening the chat (or the restored tab after a reload) shows it. The same chat open in two windows
+shares one Claude process, and either window can answer its permission prompts. Archiving a chat stops it at once in
+every window. The process exits about 10 seconds after its last chat stops and no window is connected. After an
+Argus update, the old process keeps its chats running until they're idle, then exits, and windows reconnect to the
+new one and resume their chats. Its log is `~/.claude/argus/chat-daemon.log`.
+
 - **Argus: New Chat** starts a chat. Opening a card from the board resumes its session in the chat.
 - Permission requests, questions and plan approvals appear inline in the chat. The plan pane shows the plan as
   Markdown; select text to comment on it, and the comment shows under that line with the text highlighted. In a
@@ -336,13 +344,16 @@ Argus is local-only. It has no telemetry.
 | `~/.claude/argus/session-tracker.ts` | The hook script, copied out of the extension so updates never break the path in settings. Argus replaces it with its own version on startup once tracking is set up, unless a newer Argus wrote it (`~/.claude/argus/package.json` records the version). |
 | `~/.claude/argus/plugins/` | Plugin folders, loaded on startup. Argus also writes `argus.d.ts` and `argus-webview.d.ts` here for plugin authors. |
 | `~/.claude/argus/sessions/<id>.json` | One record per session, written by the hook on SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PermissionRequest, Notification, Stop, SubagentStart, SubagentStop and SessionEnd. It holds prompt snippets, the last assistant message and any pending tool command in plain text. Deleted `argus.sessions.retentionDays` days after the session closes. |
+| `~/.claude/argus/chat.sock` | Local socket the chat background process listens on (macOS and Linux). Windows uses a named pipe instead. |
+| `~/.claude/argus/chat-daemon.json` | Random token that windows send to connect to the chat background process. Readable only by your user. |
+| `~/.claude/argus/chat-daemon.log` | Log of the chat background process. |
 | `~/.claude/sessions/<pid>.json` | Claude Code's own registry of open sessions (read only). |
 | `~/.claude/projects/**/*.jsonl` | Claude Code's session and sub-agent transcripts (read only), for token use and search. Only new lines are read, kept in memory and never written anywhere. |
 | `~/.claude/.credentials.json` | Claude Code sign-in (read only, while `argus.usage.enabled` is on, which is the default). Sent only to the Anthropic usage endpoint. |
 
 Network use: `gh` calls to GitHub for PR state and PR diffs, using your existing `gh` login, and the Claude plan
 usage call above, and a request to `downloads.claude.ai` for the newest Claude Code version at startup and every 4
-hours. A plugin may make its own network calls; see its README.
+hours. Argus chat talks to its background process over a local socket, which makes no network calls. A plugin may make its own network calls; see its README.
 
 ## Troubleshooting
 

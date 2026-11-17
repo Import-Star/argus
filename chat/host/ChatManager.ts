@@ -15,6 +15,7 @@ import { BranchCache } from "./branchCache";
 import { ChatPanel } from "./ChatPanel";
 import { hasTranscript, readPanelState } from "./restore";
 import { ChatSession } from "./ChatSession";
+import { DaemonClient } from "./daemonClient";
 import { forkTranscript } from "./history";
 import { SavedTab, tabsToSave, unrestored } from "./savedTabs";
 
@@ -52,6 +53,7 @@ export class ChatManager implements vscode.Disposable {
   public readonly onDidChangePending = this.pendingEmitter.event;
   private readonly subscriptions: vscode.Disposable[] = [];
   private readonly log: vscode.OutputChannel;
+  private readonly client: DaemonClient;
   private reloadTimer: ReturnType<typeof setTimeout> | undefined;
 
   public get extensions(): ChatExtensionHub {
@@ -62,6 +64,7 @@ export class ChatManager implements vscode.Disposable {
 
   constructor(private readonly context: vscode.ExtensionContext, private readonly deps: ChatDeps) {
     this.log = vscode.window.createOutputChannel("Argus Chat");
+    this.client = new DaemonClient(context.extensionUri, (line) => this.log.appendLine(line));
     this.savedTabs = context.workspaceState.get<SavedTab[]>(SAVED_TABS_KEY, []);
     this.subscriptions.push(
       vscode.window.tabGroups.onDidChangeTabs(() => this.saveTabs()),
@@ -98,7 +101,7 @@ export class ChatManager implements vscode.Disposable {
       }
     }
     if (this.sessions.get(sessionId) === session) {
-      session.dispose();
+      void session.stop();
       this.sessions.delete(sessionId);
       this.deps.setLiveChats(() => this.liveChats());
     }
@@ -181,7 +184,7 @@ export class ChatManager implements vscode.Disposable {
     if (!cwd) {
       return undefined;
     }
-    return this.add(new ChatSession({ sessionId, cwd, resume: hasTranscript(sessionId), ...this.defaults(cwd, sessionId), title: card?.record.title }));
+    return this.add(new ChatSession(this.client, { sessionId, cwd, resume: hasTranscript(sessionId), ...this.defaults(cwd, sessionId), title: card?.record.title }));
   }
 
   public session(sessionId: string): ChatSession | undefined {
@@ -349,7 +352,7 @@ export class ChatManager implements vscode.Disposable {
       return;
     }
     const sessionId = await forkTranscript(from, messageId, before);
-    const session = this.add(new ChatSession({ sessionId, cwd: from.meta.cwd, resume: true, ...this.defaults(from.meta.cwd, fromSessionId), title: from.meta.title && `${from.meta.title} (fork)` }));
+    const session = this.add(new ChatSession(this.client, { sessionId, cwd: from.meta.cwd, resume: true, ...this.defaults(from.meta.cwd, fromSessionId), title: from.meta.title && `${from.meta.title} (fork)` }));
     if (multiAgentEnabled()) {
       this.deps.addToGroup(session.sessionId, fromSessionId);
       await this.showGroupFrom(fromSessionId);
@@ -545,6 +548,7 @@ export class ChatManager implements vscode.Disposable {
     this.deps.setLiveChats(undefined);
     this.subscriptions.forEach((item) => item.dispose());
     this.pendingEmitter.dispose();
+    this.client.dispose();
   }
 
   private track(panel: ChatPanel): ChatPanel {
@@ -582,7 +586,7 @@ export class ChatManager implements vscode.Disposable {
 
   private spawn(cwd: string, overrides?: Pick<NewChatOptions, "model" | "effort">): ChatSession {
     const defaults = this.defaults(cwd);
-    return this.add(new ChatSession({ cwd, resume: false, ...defaults, model: overrides?.model ?? defaults.model, effort: overrides?.effort ?? defaults.effort }));
+    return this.add(new ChatSession(this.client, { cwd, resume: false, ...defaults, model: overrides?.model ?? defaults.model, effort: overrides?.effort ?? defaults.effort }));
   }
 
   // The SDK's own binary package isn't shipped in the VSIX, so chat needs the user's Claude Code install.
@@ -624,7 +628,7 @@ export class ChatManager implements vscode.Disposable {
       void vscode.window.showWarningMessage(`Argus: no session ${sessionId} on the board.`);
       return undefined;
     }
-    if (card.open) {
+    if (card.open && !(await this.client.isLive(sessionId))) {
       const choice = await vscode.window.showWarningMessage(
         "This session is running in another Claude Code process, such as a terminal. Opening it here as well means two Claude processes write to the same transcript.",
         { modal: true },
@@ -635,7 +639,7 @@ export class ChatManager implements vscode.Disposable {
       }
     }
     return this.add(
-      new ChatSession({
+      new ChatSession(this.client, {
         sessionId,
         cwd: card.record.cwd,
         resume: true,
