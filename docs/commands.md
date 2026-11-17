@@ -30,8 +30,6 @@ nav_order: 6
 | **Argus: Open Chats Side by Side** | `argus.chat.openGrid` |
 | **Argus: Install or Update Claude Code** | `argus.chat.installClaude` |
 
-**Argus: Open Chats Side by Side** shows only while `argus.chat.experimentalMultiAgent` is on.
-
 ## Sessions view
 
 On the Sessions view's toolbar, its cards' icons and their context menu.

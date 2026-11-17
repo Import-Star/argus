@@ -78,8 +78,6 @@ nav_order: 6
 | --- | --- |
 ${commandRows(palette)}
 
-**Argus: Open Chats Side by Side** shows only while \`argus.chat.experimentalMultiAgent\` is on.
-
 ## Sessions view
 
 On the Sessions view's toolbar, its cards' icons and their context menu.

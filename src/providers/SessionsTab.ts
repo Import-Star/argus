@@ -3,7 +3,6 @@ import { ArgusTab, SessionCard, SessionChip, TabHandle } from "../types";
 import { ArchiveCleanupRegistry, archiveManyWithCleanup } from "../services/archiveSession";
 import { SessionChipsRegistry } from "../api";
 import type { ChatLoader } from "../chat/loader";
-import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../chat/multiAgent";
 import { answeredInput, toWirePending, type WirePending } from "../chat/pendingWire";
 import { newChat } from "../services/openSession";
 import { renameSessionPrompt, SessionStore } from "../services/SessionStore";
@@ -61,15 +60,13 @@ export function createSessionsTab(
         pending: pending.length ? pending : undefined
       };
     });
-    const multiAgent = Boolean(host) && multiAgentEnabled();
-    // With multi-agent off a card opens one chat, so grouped agents show as their own cards.
-    const groups = (multiAgent ? sessions.getGroups() : []).map((group) => ({
+    const groups = (host ? sessions.getGroups() : []).map((group) => ({
       id: group.id,
       members: group.members.map((member) => member.record.sessionId),
       column: group.column,
       summary: group.summary
     }));
-    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, refreshing: sessions.prsRefreshing, archiving: [...archiveCleanup.archiving], chat: Boolean(host), multiAgent, tracking: tracking.message });
+    handle.post({ type: "sessions", cards: wire, groups, refreshedAt: sessions.prsRefreshedAt, refreshing: sessions.prsRefreshing, archiving: [...archiveCleanup.archiving], chat: Boolean(host), tracking: tracking.message });
     handle.setBadge(sessions.needsYou().length || undefined);
   };
 
@@ -84,8 +81,7 @@ export function createSessionsTab(
       pendingListener = host?.onDidChangePending(() => push());
       push();
     }),
-    { dispose: () => pendingListener?.dispose() },
-    vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration(MULTI_AGENT_SETTING) && push())
+    { dispose: () => pendingListener?.dispose() }
   ];
 
   const findCard = (sessionId: string): SessionCard | undefined => sessions.getCards().find((candidate) => candidate.record.sessionId === sessionId);

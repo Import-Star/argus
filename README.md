@@ -192,8 +192,7 @@ new one and resume their chats. Its log is `~/.claude/argus/chat-daemon.log`.
   agents can message it and its timers keep firing. A reply that finishes after its tab closed shows in
   **Needs you**.
 
-**Agents (experimental).** Turn on `argus.chat.experimentalMultiAgent` to run several agents on one task side by
-side. With it off, forks open in their own tab and each agent has its own card.
+**Agents.** Run several agents on one task, side by side.
 
 ![Several agents working side by side in one grid](docs/assets/multi-agent.gif)
 
@@ -307,7 +306,6 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (tool calls hidden). Each chat remembers its own toggle. |
 | `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name (`Haiku 4.5`) or id. A chat's current model stays listed. |
 | `argus.chat.backgroundIdleMinutes` | `60` | How long a chat with no open tab keeps its Claude process after it goes idle. `0` stops it when its turn ends. |
-| `argus.chat.experimentalMultiAgent` | `false` | Experiment: **+** for agents, the side-by-side grid and group cards. Off: forks open in their own tab. |
 | `argus.plugins.config` | `{}` | Settings for locally installed plugins, keyed by plugin id. See [Plugins](#plugins). |
 | `argus.plugins.paths` | `[]` | Extra plugin folders to load, on top of everything in `~/.claude/argus/plugins`. |
 
@@ -323,7 +321,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 - **Argus: Remove Session Tracking** (`argus.sessions.removeHooks`)
 - **Argus: New Chat** (`argus.chat.new`)
 - **Argus: Install or Update Claude Code** (`argus.chat.installClaude`)
-- **Argus: Open Chats Side by Side** (`argus.chat.openGrid`, `argus.chat.experimentalMultiAgent` only)
+- **Argus: Open Chats Side by Side** (`argus.chat.openGrid`)
 - **Argus: Show Claude Plan Usage** (`argus.usage.show`)
 - **Argus: Refresh Claude Plan Usage** (`argus.usage.refresh`)
 - **Argus: Reload Plugins** (`argus.plugins.reload`)

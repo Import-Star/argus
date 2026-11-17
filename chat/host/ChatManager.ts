@@ -6,7 +6,6 @@ import * as vscode from "vscode";
 import type { ChatDeps, ChatExtensionHub } from "../../src/chat/types";
 import type { NewChatOptions } from "../../src/types";
 import type { LiveChat } from "../../src/services/sessionColumn";
-import { MULTI_AGENT_SETTING, multiAgentEnabled } from "../../src/chat/multiAgent";
 import { membersOf } from "../../src/services/sessionGroups";
 import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, RailSession } from "../../src/chat/protocol";
 import { findClaude } from "../../src/services/claudeCli";
@@ -75,8 +74,7 @@ export class ChatManager implements vscode.Disposable {
       deps.chatExtensions.onDidChange(() => this.reloadPanels()),
       deps.chatExtensions.onDidPost((id, message) => this.panels.forEach((panel) => panel.post({ type: "extension", id, message }))),
       vscode.window.registerWebviewPanelSerializer("argusChat", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "single", state) }),
-      vscode.window.registerWebviewPanelSerializer("argusChatGrid", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "grid", state) }),
-      vscode.workspace.onDidChangeConfiguration((event) => event.affectsConfiguration(MULTI_AGENT_SETTING) && this.panels.forEach((panel) => panel.sendLayout()))
+      vscode.window.registerWebviewPanelSerializer("argusChatGrid", { deserializeWebviewPanel: (panel, state) => this.restore(panel, "grid", state) })
     );
     deps.setLiveChats(() => this.liveChats());
   }
@@ -118,7 +116,7 @@ export class ChatManager implements vscode.Disposable {
     }
     // A tab that became a grid keeps its original view type, so trust the saved layout over it.
     const layout = state?.view ?? view;
-    if (ids.length === 0 || (layout === "grid" && !multiAgentEnabled())) {
+    if (ids.length === 0) {
       panel.dispose();
       return;
     }
@@ -299,15 +297,10 @@ export class ChatManager implements vscode.Disposable {
   }
 
   public openGrid(sessionIds?: string[], groupId?: string): void {
-    if (multiAgentEnabled()) {
-      void this.showGrid(sessionIds, groupId);
-    }
+    void this.showGrid(sessionIds, groupId);
   }
 
   public openGroup(sessionId: string): void {
-    if (!multiAgentEnabled()) {
-      return;
-    }
     const ids = this.memberIds(sessionId);
     this.openGrid(ids, this.deps.getGroupOf()[sessionId] ?? ids[0]);
   }
@@ -315,7 +308,7 @@ export class ChatManager implements vscode.Disposable {
   // The new agent starts in the same folder; an empty first message just opens it.
   public async addAgent(fromSessionId: string): Promise<void> {
     const from = this.sessions.get(fromSessionId);
-    if (!from || !multiAgentEnabled()) {
+    if (!from) {
       return;
     }
     const session = this.spawn(from.meta.cwd);
@@ -353,12 +346,8 @@ export class ChatManager implements vscode.Disposable {
     }
     const sessionId = await forkTranscript(from, messageId, before);
     const session = this.add(new ChatSession(this.client, { sessionId, cwd: from.meta.cwd, resume: true, ...this.defaults(from.meta.cwd, fromSessionId), title: from.meta.title && `${from.meta.title} (fork)` }));
-    if (multiAgentEnabled()) {
-      this.deps.addToGroup(session.sessionId, fromSessionId);
-      await this.showGroupFrom(fromSessionId);
-    } else {
-      await this.open(session.sessionId);
-    }
+    this.deps.addToGroup(session.sessionId, fromSessionId);
+    await this.showGroupFrom(fromSessionId);
     if (draft) {
       session.fillComposer(draft);
     }
@@ -411,9 +400,6 @@ export class ChatManager implements vscode.Disposable {
   }
 
   public gridAction(action: "add" | "remove", sessionId: string, target: ChatPanel): void {
-    if (action === "add" && !multiAgentEnabled()) {
-      return;
-    }
     if (action === "remove") {
       void this.popOut(target, sessionId);
       return;

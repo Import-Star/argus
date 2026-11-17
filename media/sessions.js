@@ -44,7 +44,6 @@
         deep: {},
         // Whether Argus chat has loaded, and the answers picked for pending AskUserQuestion requests (key: session|request|question index).
         chat: false,
-        multiAgent: false,
         answers: {}
       };
       this.active = false;
@@ -66,7 +65,6 @@
         this.state.refreshing = Boolean(message.refreshing);
         this.state.archiving = new Set(message.archiving || []);
         this.state.chat = Boolean(message.chat);
-        this.state.multiAgent = Boolean(message.multiAgent);
         this.state.tracking = typeof message.tracking === "string" ? message.tracking : "";
         const ids = new Set(this.state.cards.map((card) => card.record.sessionId));
         for (const id of this.state.picked) if (!ids.has(id)) this.state.picked.delete(id);
@@ -162,7 +160,7 @@
       const group = this.state.groups.find((entry) => entry.members[0] === sessionId);
       const live = group ? this.membersOf(sessionId).filter((card) => card.column !== "archived").map((card) => card.record.sessionId) : [];
       const ids = live.length ? live : group ? group.members : [];
-      if (this.state.multiAgent && ids.length > 1) {
+      if (this.state.chat && ids.length > 1) {
         this.ctx.post({ type: "openGrid", sessionIds: ids, groupId: group.id });
       } else {
         this.ctx.openSession(ids[0] || sessionId);

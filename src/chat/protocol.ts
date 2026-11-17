@@ -169,7 +169,7 @@ export interface DiffComment {
 }
 
 export type HostMessage =
-  | { type: "layout"; view: "single" | "grid"; sessionIds: string[]; groupId?: string; multiAgent: boolean }
+  | { type: "layout"; view: "single" | "grid"; sessionIds: string[]; groupId?: string }
   | { type: "groups"; groups: ChatGroup[] }
   | { type: "keepAwake"; mode: "off" | "on" | "auto" }
   | { type: "meta"; meta: ChatMeta }

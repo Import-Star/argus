@@ -51,14 +51,13 @@ export interface State {
   view: "single" | "grid";
   sessionIds: string[];
   groupId?: string;
-  multiAgent: boolean;
   keepAwake: "off" | "on" | "auto";
   groups: ChatGroup[];
   rail: RailSession[];
   sessions: Record<string, SessionState>;
 }
 
-let state: State = { view: "single", sessionIds: [], multiAgent: false, keepAwake: "off", groups: [], rail: [], sessions: {} };
+let state: State = { view: "single", sessionIds: [], keepAwake: "off", groups: [], rail: [], sessions: {} };
 const listeners = new Set<() => void>();
 
 function emptySession(): SessionState {
@@ -90,7 +89,7 @@ export function dispatch(message: HostMessage): void {
   switch (message.type) {
     case "layout":
       vscodeApi.setState({ view: message.view, sessionIds: message.sessionIds, groupId: message.groupId });
-      set({ ...state, view: message.view, sessionIds: message.sessionIds, groupId: message.groupId, multiAgent: message.multiAgent });
+      set({ ...state, view: message.view, sessionIds: message.sessionIds, groupId: message.groupId });
       return;
     case "keepAwake":
       set({ ...state, keepAwake: message.mode });

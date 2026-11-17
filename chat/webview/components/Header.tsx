@@ -130,7 +130,6 @@ export function CacheCountdown({ expiresAt }: { expiresAt: number }) {
   );
 }
 
-const selectMultiAgent = (state: State) => state.multiAgent;
 const selectKeepAwake = (state: State) => state.keepAwake;
 
 function AgentsChip({ group, sessionId }: { group: ChatGroup; sessionId: string }) {
@@ -150,7 +149,6 @@ function AgentsChip({ group, sessionId }: { group: ChatGroup; sessionId: string 
 export function Header({ sessionId }: { sessionId: string }) {
   const { meta, card, messages, ui } = useSession(sessionId);
   const group = useStore(useCallback((state: State) => state.groups.find((entry) => entry.members.some((member) => member.sessionId === sessionId)), [sessionId]));
-  const multiAgent = useStore(selectMultiAgent);
   const keepAwake = useStore(selectKeepAwake);
   const title = meta?.title || firstPrompt(messages) || "New chat";
   const reviewing = ui.side === "review";
@@ -174,7 +172,7 @@ export function Header({ sessionId }: { sessionId: string }) {
           {basename(card.worktree)}
         </span>
       )}
-      {group && multiAgent && <AgentsChip group={group} sessionId={sessionId} />}
+      {group && <AgentsChip group={group} sessionId={sessionId} />}
       {meta?.remoteControlUrl && (
         <button type="button" class="hdr-pr" title="Remote Control is on: open this chat on claude.ai. /remote-control off stops it." onClick={() => post({ type: "openUrl", url: meta.remoteControlUrl! })}>
           Remote Control
@@ -212,7 +210,7 @@ export function Header({ sessionId }: { sessionId: string }) {
         >
           <Icon d="M6 3v12M18 9v12M6 15a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM18 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM6 9h6l-2-2M18 15h-6l2 2" />
         </button>
-        {multiAgent && <AddAgent exclude={group ? group.members.map((member) => member.sessionId) : [sessionId]} newFrom={sessionId} />}
+        <AddAgent exclude={group ? group.members.map((member) => member.sessionId) : [sessionId]} newFrom={sessionId} />
         <button type="button" class="ghost hdr-icon" aria-label="Archive" title="Archive: like archiving its board card" onClick={() => post({ type: "archive", sessionId })}>
           <Icon d="M3 7h18M5 7v12h14V7M9 11h6M4 4h16v3H4z" />
         </button>

@@ -1,0 +1,1 @@
+- Multi-agent mode is always on: the `argus.chat.experimentalMultiAgent` setting is gone.

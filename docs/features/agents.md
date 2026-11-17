@@ -4,10 +4,9 @@ parent: Features
 nav_order: 6
 ---
 
-# Agents (experimental)
+# Agents
 
-Run several agents on one task, side by side. Turn on `argus.chat.experimentalMultiAgent` (it can be set per
-workspace). With it off, forks open in their own tab and each agent has its own card.
+Run several agents on one task, side by side.
 
 ![Several agents working side by side in one grid](../assets/multi-agent.gif)
 
