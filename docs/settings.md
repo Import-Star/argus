@@ -36,7 +36,6 @@ Every Argus setting, as it appears in VS Code's Settings and on the Control Cent
 | --- | --- | --- |
 | `argus.chat.claudePath` | `""` | Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, where Claude Code's installer puts it. **Argus: Install or Update Claude Code** installs it. |
 | `argus.chat.askForFolder` | `false` | In a window with several workspace folders, ask which folder each new Argus chat starts in. Off: new chats start in the first workspace folder, like the Claude Code extension. |
-| `argus.chat.experimentalMultiAgent` | `false` | Experiment: several agents on one task, shown side by side in one tab. Adds **+** (new or existing agent) and opening a group's card as a grid. Off: forks open in their own tab. |
 | `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (your messages and Claude's replies, tool calls hidden). The Text only button in a chat still switches it, and each chat remembers its own choice. |
 | `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name as shown (e.g. `Haiku 4.5`) or id (e.g. `claude-opus-4-6`, `haiku`). A chat's current model always stays listed. Applies to chats opened after the change. |
 | `argus.chat.backgroundIdleMinutes` | `60` | How long a chat with no open tab keeps its Claude process after it goes idle. While it runs, other agents can message it and its timers keep firing. A chat that is working or waiting on you is never stopped. `0` stops it as soon as its turn ends. |

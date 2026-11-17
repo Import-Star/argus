@@ -1,7 +1,6 @@
 import { randomBytes } from "crypto";
 import * as path from "path";
 import * as vscode from "vscode";
-import { multiAgentEnabled } from "../../src/chat/multiAgent";
 import { keepAwakeMode } from "../../src/services/keepAwakeMode";
 import type { HostMessage, WebviewMessage } from "../../src/chat/protocol";
 import type { ChatManager } from "./ChatManager";
@@ -166,7 +165,7 @@ export class ChatPanel implements vscode.Disposable {
   }
 
   public sendLayout(): void {
-    this.post({ type: "layout", view: this.view, sessionIds: this.ids, groupId: this.group, multiAgent: multiAgentEnabled() });
+    this.post({ type: "layout", view: this.view, sessionIds: this.ids, groupId: this.group });
   }
 
   private async sendAll(ids: readonly string[] = this.ids): Promise<void> {
