@@ -2,6 +2,10 @@
 
 First public release.
 
+## 0.17.1
+
+- Right-click a link in the chat to copy its address or its text; the menu's Copy copies the address.
+
 ## 0.17.0
 
 ### Highlights
