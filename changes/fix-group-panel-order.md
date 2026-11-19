@@ -1,2 +1,0 @@
-- Fix a multi-agent chat opened from the Sessions board showing its agents in a different order each time; they now keep the order they joined in.
-- Show "open alone ↗" when you point at an agent in a group card on the Sessions board, so it's clear a click opens just that agent in its own tab.
