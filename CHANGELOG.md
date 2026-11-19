@@ -2,6 +2,11 @@
 
 First public release.
 
+## 0.17.2
+
+- Fix a multi-agent chat opened from the Sessions board showing its agents in a different order each time; they now keep the order they joined in.
+- Show "open alone ↗" when you point at an agent in a group card on the Sessions board, so it's clear a click opens just that agent in its own tab.
+
 ## 0.17.1
 
 - Right-click a link in the chat to copy its address or its text; the menu's Copy copies the address.
