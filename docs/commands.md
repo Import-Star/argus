@@ -44,5 +44,7 @@ On the Sessions view's toolbar, its cards' icons and their context menu.
 | **Unarchive** | `argus.sessions.unarchive` |
 | **Open Worktree in New Window** | `argus.sessions.openWorktree` |
 | **New Chat** | `argus.sessions.newChat` |
+| **Copy Link** | `argus.chat.copyLink` |
+| **Copy Link Text** | `argus.chat.copyLinkText` |
 
 Plugins add their own commands; **Argus: Run Plugin Command** lists them.

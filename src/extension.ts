@@ -152,6 +152,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   chat.apply();
   register("argus.chat.new", () => chat.host?.open());
   register("argus.chat.openGrid", () => chat.host?.openGrid());
+  register("argus.chat.copyLink", (context) => vscode.env.clipboard.writeText((context as { url: string }).url));
+  register("argus.chat.copyLinkText", (context) => vscode.env.clipboard.writeText((context as { text: string }).text));
 
   register("argus.openControlCenter", (tabId?: unknown) => api.openControlCenter(typeof tabId === "string" ? tabId : undefined));
   register("argus.openSettings", () => api.openControlCenter("settings"));

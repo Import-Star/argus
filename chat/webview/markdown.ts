@@ -21,13 +21,14 @@ const marked = new Marked({
       return `${block}\n`;
     },
     image: ({ text }: Tokens.Image) => escapeHtml(text),
-    link(this, { href, title, tokens }: Tokens.Link) {
+    link(this, { href, title, text, tokens }: Tokens.Link) {
       const inner = this.parser.parseInline(tokens);
       if (!/^(https?:|mailto:)/i.test(href)) {
         return inner;
       }
       // No href: VS Code's webview would otherwise show its own "open external website?" prompt as well.
-      return `<a data-href="${escapeHtml(href)}" role="link" tabindex="0" title="${escapeHtml(title || href)}">${inner}</a>`;
+      const context = escapeHtml(JSON.stringify({ webviewSection: "argusLink", url: href, text }));
+      return `<a data-href="${escapeHtml(href)}" data-vscode-context="${context}" role="link" tabindex="0" title="${escapeHtml(title || href)}">${inner}</a>`;
     }
   }
 });
