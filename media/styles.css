@@ -105,6 +105,9 @@ button.link { border: 0; background: none; padding: 0; color: var(--dim); font-s
 .agent-act { flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
 .agent.col-needs-you .agent-act { color: var(--coral); }
 .agent.col-archived { opacity: 0.6; }
+.agent-open { display: none; flex: none; color: var(--accent); }
+.agent:hover .agent-act, .agent:focus-visible .agent-act { display: none; }
+.agent:hover .agent-open, .agent:focus-visible .agent-open { display: inline; }
 .agent-who { margin: 7px 0 -4px 20px; color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 0 20px; }
 .chip { padding: 1px 6px; border: 1px solid var(--border); border-radius: 4px; background: transparent; color: var(--muted); font: inherit; font-size: 11px; cursor: pointer; }
