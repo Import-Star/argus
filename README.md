@@ -198,7 +198,8 @@ new one and resume their chats. Its log is `~/.claude/argus/chat-daemon.log`.
 
 - **+** in a chat's header, or a group grid's bar, starts another chat in the same folder (optionally with a first
   message) and opens the group in a grid. The arrow next to it adds an existing chat to the group instead. Agents in a group share one Sessions card: it sits in the column of its most urgent
-  agent, lists each agent with its status, and opens them all side by side when clicked. Archiving the card
+  agent, lists each agent with its status, and opens them all side by side, in the order they joined, when clicked.
+  Click an agent's name on the card to open only that agent in its own tab. Archiving the card
   archives every agent. Groups are stored in `~/.claude/argus/board.json` (`groupOf`).
 - **Argus: Open Chats Side by Side** shows several chats in a grid, each with its transcript and a message box.
   A tile shows its latest messages and loads earlier ones as you scroll up. Tiles that need you are outlined. A details panel on the right (changed files, worktrees, PRs, subagents, usage) follows the tile you click or the

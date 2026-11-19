@@ -153,7 +153,7 @@
     membersOf(sessionId) {
       const group = this.state.groups.find((entry) => entry.members[0] === sessionId);
       const ids = group ? group.members : [sessionId];
-      return this.state.cards.filter((card) => ids.includes(card.record.sessionId));
+      return ids.map((id) => this.state.cards.find((card) => card.record.sessionId === id)).filter(Boolean);
     },
 
     openCard(sessionId) {
@@ -340,7 +340,7 @@
       const { esc } = this.ctx;
       const r = card.record;
       const activity = card.column === "working" && r.lastTool ? r.lastTool : r.pending ? `waiting · ${r.pending.split(" ")[0]}` : this.stateLabel(card);
-      return `<button class="agent col-${esc(card.column)}" data-action="open-session" data-session-id="${esc(r.sessionId)}" title="Open this agent">${this.glyphFor(card)}<span class="agent-title">${esc(r.title || "New chat")}</span><span class="agent-act mono">${esc(activity)}</span></button>`;
+      return `<button class="agent col-${esc(card.column)}" data-action="open-session" data-session-id="${esc(r.sessionId)}" title="Open only this agent, in its own tab">${this.glyphFor(card)}<span class="agent-title">${esc(r.title || "New chat")}</span><span class="agent-act mono">${esc(activity)}</span><span class="agent-open mono">open alone ↗</span></button>`;
     },
 
     renderAgents(item) {
