@@ -162,6 +162,14 @@
         "title": "Argus: Open Chats Side by Side"
       },
       {
+        "command": "argus.chat.copyLink",
+        "title": "Copy Link"
+      },
+      {
+        "command": "argus.chat.copyLinkText",
+        "title": "Copy Link Text"
+      },
+      {
         "command": "argus.chat.installClaude",
         "title": "Argus: Install or Update Claude Code"
       }
@@ -336,6 +344,28 @@
       ]
     },
     "menus": {
+      "commandPalette": [
+        {
+          "command": "argus.chat.copyLink",
+          "when": "false"
+        },
+        {
+          "command": "argus.chat.copyLinkText",
+          "when": "false"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "argus.chat.copyLink",
+          "when": "webviewSection == 'argusLink'",
+          "group": "9_link@1"
+        },
+        {
+          "command": "argus.chat.copyLinkText",
+          "when": "webviewSection == 'argusLink'",
+          "group": "9_link@2"
+        }
+      ],
       "view/title": [
         {
           "command": "argus.sessions.newChat",

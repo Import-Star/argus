@@ -40,3 +40,21 @@ document.addEventListener("keydown", (event) => {
     copy(text);
   }
 });
+
+// Right-clicking a link selects it so the menu's Copy is enabled; that Copy then copies the address.
+document.addEventListener("contextmenu", (event) => {
+  const link = (event.target as HTMLElement).closest("a[data-href]");
+  if (link) {
+    window.getSelection()?.selectAllChildren(link);
+  }
+});
+
+document.addEventListener("copy", (event) => {
+  const selection = window.getSelection();
+  const node = selection?.anchorNode;
+  const link = (node instanceof Element ? node : node?.parentElement)?.closest<HTMLElement>("a[data-href]");
+  if (link && selection?.toString() === link.textContent) {
+    event.preventDefault();
+    event.clipboardData?.setData("text/plain", link.dataset.href!);
+  }
+});
