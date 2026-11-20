@@ -1,16 +1,17 @@
-import { getSessionMessages, query, type PermissionResult, type PermissionUpdate, type Query, type RewindFilesResult, type SDKMessage, type SDKUserMessage, type SessionCronSummary, type SlashCommand, type StopHookInput } from "@anthropic-ai/claude-agent-sdk";
+import { createSdkMcpServer, getSessionMessages, query, tool, type PermissionResult, type PermissionUpdate, type Query, type RewindFilesResult, type SDKMessage, type SDKUserMessage, type SessionCronSummary, type SlashCommand, type StopHookInput } from "@anthropic-ai/claude-agent-sdk";
 import { randomUUID } from "crypto";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { EventEmitter } from "events";
+import { z } from "zod";
 import { MessageQueue, type QueueAction } from "../host/messageQueue";
 import { ShellRunner } from "../host/shell";
 import { withLocalCommandOutput } from "../host/restore";
 import { withWorkflowTasks } from "../host/workflowHistory";
 import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { PanelKind } from "../../src/chat/panels";
-import type { SessionState } from "../../src/chat/daemonProtocol";
+import type { NewAgentRequest, SessionState } from "../../src/chat/daemonProtocol";
 import { countMcpIssues, toMcpServers, type McpStatus } from "../../src/chat/panels/mcp";
 import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
 
@@ -34,6 +35,8 @@ export interface AgentSessionOptions {
   env: Record<string, string | undefined>;
   log(line: string): void;
   refreshPanel(kind: PanelKind): void;
+  // Returns false when no window has this chat open to start the agent.
+  newAgent(request: NewAgentRequest): boolean;
 }
 
 // The SDK runtime has these, but sdk.d.ts doesn't declare them.
@@ -233,6 +236,7 @@ export class AgentSession {
         // SDK sessions leave the to-do tools off; the transcript's to-do card needs them.
         // Under the SDK's default "sdk-ts" entrypoint the CLI turns the Artifact tools off; the to-do tools are off by default too.
         env: { ...this.options.env, CLAUDE_CODE_ENTRYPOINT: "claude-vscode", CLAUDE_CODE_ENABLE_TODO_TOOLS: "1", CLAUDE_CODE_ENABLE_TASKS: "1", CLAUDE_CODE_EMIT_SESSION_STATE_EVENTS: "1" },
+        mcpServers: { argus: this.argusTools() },
         includePartialMessages: true,
         hooks: { Stop: [{ hooks: [async (input) => {
           this.sessionCrons = (input as StopHookInput).session_crons ?? this.sessionCrons;
@@ -252,6 +256,28 @@ export class AgentSession {
     if (this.options.remoteControlAtStartup) {
       this.setRemoteControl(true).catch((error) => log(`remote control ${this.sessionId}: ${error instanceof Error ? error.message : String(error)}`));
     }
+  }
+
+  private argusTools() {
+    const newAgent = tool(
+      "new_agent",
+      "Start another Argus chat agent with a first message. Use only when the user asks for another Argus agent. inThisChat true (they say \"in this chat\") adds it to this chat's side-by-side grid; false opens it in its own tab. Pass cwd only to start it somewhere else, e.g. a git worktree you created for it when the user wants it isolated.",
+      {
+        prompt: z.string().min(1).describe("The new agent's first message: the whole task, since it can't see this chat."),
+        inThisChat: z.boolean(),
+        cwd: z.string().optional().describe("Folder to start in; defaults to this chat's folder.")
+      },
+      async ({ prompt, inThisChat, cwd }) => {
+        const folder = path.resolve(this.options.cwd, cwd ?? ".");
+        const text = !fs.statSync(folder, { throwIfNoEntry: false })?.isDirectory()
+          ? `No folder at ${folder}.`
+          : this.options.newAgent({ prompt, inThisChat, cwd: folder })
+            ? `Argus is starting the agent in ${folder}${inThisChat ? ", in this chat's grid" : ", in its own tab"}.`
+            : "No Argus window has this chat open, so it can't start an agent.";
+        return { content: [{ type: "text", text }] };
+      }
+    );
+    return createSdkMcpServer({ name: "argus", tools: [newAgent] });
   }
 
   // Session-only loops as of the last finished turn; undefined until the first one ends.

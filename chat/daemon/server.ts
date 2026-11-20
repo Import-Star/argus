@@ -139,7 +139,13 @@ function unsubscribe(client: Client, sessionId: string): void {
 function createEntry(options: OpenOptions): Entry {
   const { sessionId } = options;
   const entry: Entry = {
-    session: new AgentSession({ ...options, log: broadcastLog, refreshPanel: (kind) => forEach(entry, { event: "refreshPanel", sessionId, kind }) }),
+    session: new AgentSession({ ...options, log: broadcastLog, refreshPanel: (kind) => forEach(entry, { event: "refreshPanel", sessionId, kind }), newAgent: (request) => {
+      const [client] = entry.subscribers;
+      if (client) {
+        send(client, { event: "newAgent", sessionId, request });
+      }
+      return Boolean(client);
+    } }),
     idleMinutes: options.idleMinutes,
     subscribers: new Set(),
     lastState: ""

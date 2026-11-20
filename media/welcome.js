@@ -2,6 +2,11 @@
 (function () {
   const vscode = acquireVsCodeApi();
   document.addEventListener("click", (event) => {
+    const picture = event.target instanceof Element ? event.target.closest(".whatsnew-highlights img") : null;
+    if (picture) {
+      showFull(picture);
+      return;
+    }
     const target = event.target instanceof Element ? event.target.closest("button, a[data-url]") : null;
     if (!target) {
       return;
@@ -14,4 +19,18 @@
       vscode.postMessage({ type: "openExternal", url: target.dataset.url });
     }
   });
+
+  // Esc closes the dialog natively; a click anywhere closes it too.
+  function showFull(picture) {
+    const dialog = document.createElement("dialog");
+    dialog.className = "whatsnew-full";
+    const full = document.createElement("img");
+    full.src = picture.src;
+    full.alt = picture.alt;
+    dialog.append(full);
+    dialog.addEventListener("click", () => dialog.close());
+    dialog.addEventListener("close", () => dialog.remove());
+    document.body.append(dialog);
+    dialog.showModal();
+  }
 })();

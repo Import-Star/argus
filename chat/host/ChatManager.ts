@@ -7,6 +7,7 @@ import type { ChatDeps, ChatExtensionHub } from "../../src/chat/types";
 import type { NewChatOptions } from "../../src/types";
 import type { LiveChat } from "../../src/services/sessionColumn";
 import { membersOf } from "../../src/services/sessionGroups";
+import type { NewAgentRequest } from "../../src/chat/daemonProtocol";
 import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, RailSession } from "../../src/chat/protocol";
 import { findClaude } from "../../src/services/claudeCli";
 import { configuredClaude, promptMissingClaude } from "../../src/services/claudeSetup";
@@ -314,6 +315,17 @@ export class ChatManager implements vscode.Disposable {
     const session = this.spawn(from.meta.cwd);
     this.deps.addToGroup(session.sessionId, fromSessionId);
     await this.showGroupFrom(fromSessionId);
+  }
+
+  private async newAgent(fromSessionId: string, { prompt, inThisChat, cwd }: NewAgentRequest): Promise<void> {
+    if (!inThisChat) {
+      await this.open(undefined, prompt, undefined, { cwd });
+      return;
+    }
+    const session = this.spawn(cwd);
+    this.deps.addToGroup(session.sessionId, fromSessionId);
+    await this.showGroupFrom(fromSessionId);
+    session.send(prompt);
   }
 
   // Reuse the tab the agent was added from: a single chat becomes the grid, an open grid gets the new member.
@@ -644,6 +656,7 @@ export class ChatManager implements vscode.Disposable {
     const choices = this.context.globalState.get<Record<string, Remembered>>(SESSION_CHOICES_KEY) ?? {};
     const started: Remembered = { ...(model !== "default" && { model }), ...(effort && { effort }), ...(permissionMode && { permissionMode }) };
     void this.context.globalState.update(SESSION_CHOICES_KEY, { ...choices, [session.sessionId]: { ...started, ...choices[session.sessionId] } });
+    session.onNewAgent((request) => void this.newAgent(session.sessionId, request));
     let status = session.meta.status;
     session.onMessage((message) => {
       if (message.type === "meta" && message.meta.status !== status) {
