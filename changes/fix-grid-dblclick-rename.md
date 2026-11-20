@@ -1,4 +1,0 @@
-- Double-click an agent's title, or the group name, in the multi-agent grid to rename it, like on the Sessions board.
-- Ask Claude in an Argus chat to "create another argus agent in this chat and ..." (joins this chat's grid) or "create another argus agent and ..." (opens its own tab).
-- Keep unsent text in an agent's message box when the grid focuses one agent or goes back to all of them.
-- Click a picture in What's New to see it full size; click again or press Esc to close it.
