@@ -131,7 +131,8 @@ finishes, and reopening the chat (or the restored tab after a reload) shows it. 
 shares one Claude process, and either window can answer its permission prompts. Archiving a chat stops it at once in
 every window. The process exits about 10 seconds after its last chat stops and no window is connected. After an
 Argus update, the old process keeps its chats running until they're idle, then exits, and windows reconnect to the
-new one and resume their chats. Its log is `~/.claude/argus/chat-daemon.log`.
+new one and resume their chats. If the update changed how windows talk to the process, Argus chat waits for that
+handover and offers **Restart Now**, which stops the old process's running chats and background tasks. Its log is `~/.claude/argus/chat-daemon.log`.
 
 - **Argus: New Chat** starts a chat. Opening a card from the board resumes its session in the chat.
 - Permission requests, questions and plan approvals appear inline in the chat. The plan pane shows the plan as

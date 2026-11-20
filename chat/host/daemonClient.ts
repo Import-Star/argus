@@ -48,6 +48,7 @@ export class DaemonClient implements vscode.Disposable {
   private readonly listeners = new Map<string, SessionListener>();
   private disposed = false;
   private warnedOutdated = false;
+  private restartRequested = false;
   private lostConnection = false;
 
   constructor(private readonly extensionUri: vscode.Uri, private readonly log: (line: string) => void) {}
@@ -160,7 +161,7 @@ export class DaemonClient implements vscode.Disposable {
           throw new Error("connection closed");
         }
         const { token } = JSON.parse(fs.readFileSync(daemonPaths().info, "utf8")) as { token: string };
-        return await this.write<HelloResult>(socket, { op: "hello", token, protocol: DAEMON_PROTOCOL, ...own });
+        return await this.write<HelloResult>(socket, { op: "hello", token, protocol: DAEMON_PROTOCOL, ...own, restart: this.restartRequested });
       } catch (error) {
         if (Date.now() >= deadline) {
           socket.destroy();
@@ -187,7 +188,12 @@ export class DaemonClient implements vscode.Disposable {
   private warnOutdated(): void {
     if (!this.warnedOutdated) {
       this.warnedOutdated = true;
-      void vscode.window.showWarningMessage("Argus chat is waiting for the previous background process to finish its running chats before it can start. This needs no action.");
+      const restart = "Restart Now";
+      void vscode.window
+        .showWarningMessage("Argus chat is waiting for the previous background process to finish its running chats and background tasks before it can start.", restart)
+        .then((choice) => {
+          this.restartRequested = choice === restart;
+        });
     }
   }
 

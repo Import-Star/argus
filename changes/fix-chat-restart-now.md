@@ -1,0 +1,1 @@
+- Add **Restart Now** to the warning shown when Argus chat waits for the previous background process after an update, so a chat with a background task that never finishes can't keep Argus chat from loading.
