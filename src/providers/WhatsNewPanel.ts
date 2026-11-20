@@ -74,7 +74,7 @@ export class WhatsNewPanel implements vscode.Disposable {
       const file = vscode.Uri.joinPath(this.context.extensionUri, item.image.path);
       // Snapshots are saved at 2x; show them at their CSS size. A PNG's width is bytes 16-19.
       const width = fs.readFileSync(file.fsPath).readUInt32BE(16) / 2;
-      return `<img src="${webview.asWebviewUri(file)}" width="${width}" alt="${escapeHtml(item.image.alt)}" />`;
+      return `<img src="${webview.asWebviewUri(file)}" width="${width}" alt="${escapeHtml(item.image.alt)}" title="Click to see it full size" />`;
     };
 
     const highlights = current?.highlights.length

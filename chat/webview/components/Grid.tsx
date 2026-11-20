@@ -61,7 +61,9 @@ function Tile({ sessionId, now, focused, selected, onFocus, onSelect }: { sessio
     <section class={`grid-tile${status === "needs-you" ? " needs" : ""}${selected ? " selected" : ""}`} aria-label={title} onPointerDown={onSelect} onFocusIn={onSelect}>
       <header class="grid-tile-head">
         <Glyph status={status} />
-        <span class="grid-tile-title">{title}</span>
+        <span class="grid-tile-title" title="Double-click to rename" onDblClick={() => post({ type: "rename", sessionId })}>
+          {title}
+        </span>
         <span class={`grid-tile-status ${status}`}>
           {STATUS_TEXT[status]}
           {meta ? ` · ${age(meta.statusSince, now)}` : ""}
@@ -160,7 +162,7 @@ export function Grid() {
     <div class="chat-grid">
       <header class="grid-bar">
         {group && (
-          <span class="grid-group" title={group.title}>
+          <span class="grid-group" title={`${group.title} (double-click to rename)`} onDblClick={() => post({ type: "rename", sessionId: group.id })}>
             {group.title}
           </span>
         )}

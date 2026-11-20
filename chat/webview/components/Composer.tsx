@@ -70,10 +70,13 @@ function Pick({ label, value, onChange, class: extra, children, text }: { label:
   );
 }
 
+// Survives the composer unmounting, e.g. when the grid focuses one agent and drops the other tiles.
+const unsent = new Map<string, string>();
+
 export function Composer({ sessionId, compact }: { sessionId: string; compact?: boolean }) {
   const { meta, fileSuggestions, shells, shellHistory } = useSession(sessionId);
   const rail = useStore(selectRail);
-  const [text, setText] = useState("");
+  const [text, setText] = useState(() => unsent.get(sessionId) ?? "");
   const [images, setImages] = useState<Attachment[]>([]);
   const [files, setFiles] = useState<string[]>([]);
   const [docs, setDocs] = useState<Doc[]>([]);
@@ -110,6 +113,10 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
   const hint = typed ? meta?.commands?.find((command) => command.name === typed)?.argumentHint : undefined;
   const chips = files.filter((file) => text.includes(`@${file}`));
   const canSend = text.trim().length > 0 || images.length > 0 || docs.length > 0;
+
+  useEffect(() => {
+    unsent.set(sessionId, text);
+  }, [sessionId, text]);
 
   useEffect(() => {
     const el = input.current;

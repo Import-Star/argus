@@ -1,7 +1,7 @@
 import type { Query, RewindFilesResult, SDKMessage, SessionCronSummary } from "@anthropic-ai/claude-agent-sdk";
 import { randomUUID } from "crypto";
 import * as vscode from "vscode";
-import type { DaemonFrame, OpenOptions, SessionMethod, SessionState } from "../../src/chat/daemonProtocol";
+import type { DaemonFrame, NewAgentRequest, OpenOptions, SessionMethod, SessionState } from "../../src/chat/daemonProtocol";
 import type { Panel } from "../../src/chat/panels";
 import type { McpStatus } from "../../src/chat/panels/mcp";
 import type { ChatMeta, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, QueuedMessage, ShellRun } from "../../src/chat/protocol";
@@ -43,6 +43,8 @@ export class ChatSession implements vscode.Disposable {
   public readonly sessionId: string;
   private readonly emitter = new vscode.EventEmitter<HostMessage>();
   public readonly onMessage = this.emitter.event;
+  private readonly newAgentEmitter = new vscode.EventEmitter<NewAgentRequest>();
+  public readonly onNewAgent = this.newAgentEmitter.event;
   private state: SessionState;
   private opened?: Promise<void>;
   private readonly query = new Proxy(
@@ -274,6 +276,7 @@ export class ChatSession implements vscode.Disposable {
   private release(): void {
     this.client.detach(this.sessionId);
     this.emitter.dispose();
+    this.newAgentEmitter.dispose();
   }
 
   private call<T>(method: SessionMethod, ...args: unknown[]): Promise<T> {
@@ -338,6 +341,8 @@ export class ChatSession implements vscode.Disposable {
       this.emitter.fire(frame.message);
     } else if (frame.event === "refreshPanel") {
       void refreshPanel(this, frame.kind);
+    } else if (frame.event === "newAgent") {
+      this.newAgentEmitter.fire(frame.request);
     } else {
       this.state = { ...this.state, meta: { ...this.meta, status: "ended", statusSince: Date.now() } };
       this.emitter.fire({ type: "meta", meta: this.meta });

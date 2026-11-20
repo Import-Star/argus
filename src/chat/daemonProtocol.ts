@@ -4,7 +4,7 @@ import type { PanelKind } from "./panels";
 import type { ChatMeta, EffortLevel, HostMessage, PermissionMode, PermissionRequest, QueuedMessage, ShellRun } from "./protocol";
 
 // Bump when a frame's shape changes; a client and daemon with different numbers can't talk.
-export const DAEMON_PROTOCOL = 1;
+export const DAEMON_PROTOCOL = 2;
 
 export interface OpenOptions {
   sessionId: string;
@@ -25,6 +25,13 @@ export interface OpenOptions {
   idleMinutes: number;
   // The opening window's environment, so the claude process sees the same PATH etc. as it did in-process.
   env: Record<string, string | undefined>;
+}
+
+// Claude's new_agent tool: start another chat, in this chat's grid or in its own tab.
+export interface NewAgentRequest {
+  prompt: string;
+  inThisChat: boolean;
+  cwd: string;
 }
 
 // Everything a window reads from a session synchronously; sent whenever it changes.
@@ -110,6 +117,8 @@ export type DaemonFrame =
   | { event: "message"; sessionId: string; message: HostMessage; state?: SessionState }
   | { event: "refreshPanel"; sessionId: string; kind: PanelKind }
   | { event: "closed"; sessionId: string }
+  // Sent to one window only, so two windows showing the chat don't both start the agent.
+  | { event: "newAgent"; sessionId: string; request: NewAgentRequest }
   | { event: "log"; line: string };
 
 // Frames are one JSON object per line.
