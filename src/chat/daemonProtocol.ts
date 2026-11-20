@@ -81,7 +81,8 @@ export type ClientRequest =
   // Keep this shape in every protocol version: it is how mismatched builds find each other.
   // builtAt is daemon.js's mtime: a daemon hands over only to a newer build, so mixed windows don't take turns.
   // script is the client's daemon.js, which an older daemon starts as it exits.
-  | { op: "hello"; token: string; protocol: number; build: string; builtAt: number; script: string }
+  // restart asks an older daemon to hand over now, stopping chats and background tasks that are still running.
+  | { op: "hello"; token: string; protocol: number; build: string; builtAt: number; script: string; restart?: boolean }
   // Attaches this window to the session, creating it when the daemon doesn't have it. Result: SessionState.
   | { op: "open"; options: OpenOptions }
   // This window no longer shows the session; the daemon's idle rule decides when it stops.

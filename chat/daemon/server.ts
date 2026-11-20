@@ -179,6 +179,10 @@ async function handle(client: Client, frame: ClientFrame): Promise<unknown> {
         nextBuiltAt = frame.builtAt;
         setImmediate(checkRestart);
       }
+      if (frame.restart && frame.builtAt > builtAt) {
+        log("restarting: a window asked to restart now");
+        setImmediate(() => shutdown(0));
+      }
       client.authed = frame.protocol === DAEMON_PROTOCOL;
       return { protocol: DAEMON_PROTOCOL, build, builtAt, sessions: [...entries.keys()] } satisfies HelloResult;
     }

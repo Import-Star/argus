@@ -77,7 +77,9 @@ Windows talk to the process over a local socket only: `~/.claude/argus/chat.sock
 Windows. Each connection must send a random token from `~/.claude/argus/chat-daemon.json`, which only your user can
 read. The process exits about 10 seconds after its last chat stops and no window is connected. After an Argus
 update, the old process keeps its chats running until they are all idle, then exits. Windows reconnect to the new
-one and resume their chats. Its log is `~/.claude/argus/chat-daemon.log`.
+one and resume their chats. If the update changed how windows talk to the process, a window can't use the old one,
+so Argus chat waits and shows a warning with **Restart Now**. Clicking it makes the old process exit at once,
+stopping its running chats and background tasks, such as a background command that never finishes. Its log is `~/.claude/argus/chat-daemon.log`.
 
 ## Finding Claude Code
 
