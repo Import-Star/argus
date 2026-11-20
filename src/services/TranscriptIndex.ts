@@ -118,12 +118,17 @@ export class TranscriptIndex {
 
   private async listSubagents(ref: TranscriptRef): Promise<string[]> {
     const dir = subagentDir(ref);
-    try {
-      const names = await fs.promises.readdir(dir);
-      return names.filter((name) => name.endsWith(".jsonl")).map((name) => path.join(dir, name));
-    } catch {
-      return [];
-    }
+    const workflows = path.join(dir, "workflows");
+    const agents = async (folder: string) => {
+      try {
+        const names = await fs.promises.readdir(folder);
+        return names.filter((name) => name.startsWith("agent-") && name.endsWith(".jsonl")).map((name) => path.join(folder, name));
+      } catch {
+        return [];
+      }
+    };
+    const runs = await fs.promises.readdir(workflows).catch(() => []);
+    return (await Promise.all([dir, ...runs.map((run) => path.join(workflows, run))].map(agents))).flat();
   }
 
   // Serialises reads per file so two callers never ingest the same bytes twice.
