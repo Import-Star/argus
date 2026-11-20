@@ -65,6 +65,13 @@ export function workflowProgress(runDir: string): Record<string, unknown>[] {
   ];
 }
 
+function started(base: Record<string, unknown>, uuid: string, taskId: string, toolUseId: string | undefined, description: string, runDir: string | undefined): Record<string, unknown>[] {
+  return [
+    { ...base, subtype: "task_started", uuid: `${uuid}:started`, task_id: taskId, tool_use_id: toolUseId, task_type: "local_workflow", description },
+    { ...base, subtype: "task_progress", uuid: `${uuid}:progress`, task_id: taskId, tool_use_id: toolUseId, description: "", usage: { total_tokens: 0, tool_uses: 0, duration_ms: 0 }, workflow_progress: runDir ? workflowProgress(runDir) : [] }
+  ];
+}
+
 // Task events aren't saved in the transcript, so rebuild a workflow's from its tool result, notification and run folder.
 export function withWorkflowTasks<T extends Line>(messages: T[]): T[] {
   const workflowUses = new Set<string>();
@@ -82,14 +89,18 @@ export function withWorkflowTasks<T extends Line>(messages: T[]): T[] {
       if (block.type === "tool_result" && workflowUses.has(id) && taskId) {
         const runDir = field(result, /^Transcript dir:(.+)$/m);
         taskIds.add(taskId);
-        added.push(
-          { ...base, subtype: "task_started", uuid: `${message.uuid}:${taskId}:started`, task_id: taskId, tool_use_id: id, task_type: "local_workflow", description: field(result, /^Summary:(.+)$/m) ?? "" },
-          { ...base, subtype: "task_progress", uuid: `${message.uuid}:${taskId}:progress`, task_id: taskId, tool_use_id: id, description: "", usage: { total_tokens: 0, tool_uses: 0, duration_ms: 0 }, workflow_progress: runDir ? workflowProgress(runDir) : [] }
-        );
+        added.push(...started(base, `${message.uuid}:${taskId}`, taskId, id, field(result, /^Summary:(.+)$/m) ?? "", runDir));
       }
     }
     const note = message.type === "user" ? text((message.message as { content?: unknown } | undefined)?.content) : "";
     const taskId = field(note, /<task-id>([^<]+)<\/task-id>/);
+    const toolUseId = field(note, /<tool-use-id>([^<]+)<\/tool-use-id>/);
+    // After a compaction the saved history starts at the summary, so the Workflow call is gone and only its notice is left.
+    const journal = field(note, /Per-agent results:\s*(\S+journal\.jsonl)/);
+    if (taskId && !taskIds.has(taskId) && journal) {
+      taskIds.add(taskId);
+      added.push(...started(base, `${message.uuid}:${taskId}`, taskId, toolUseId, field(note, /<summary>Dynamic workflow "(.+)"/) ?? "", path.dirname(journal)));
+    }
     if (taskId && taskIds.has(taskId)) {
       const status = field(note, /<status>([^<]+)<\/status>/);
       added.push({
@@ -97,7 +108,7 @@ export function withWorkflowTasks<T extends Line>(messages: T[]): T[] {
         subtype: "task_notification",
         uuid: `${message.uuid}:${taskId}:notification`,
         task_id: taskId,
-        tool_use_id: field(note, /<tool-use-id>([^<]+)<\/tool-use-id>/),
+        tool_use_id: toolUseId,
         status: status === "completed" || status === "failed" ? status : "stopped",
         summary: field(note, /<summary>([^<]*)<\/summary>/) ?? "",
         output_file: ""

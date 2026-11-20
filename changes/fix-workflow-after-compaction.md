@@ -1,0 +1,1 @@
+- Fix a workflow disappearing from the chat after a reload when the chat compacted while it ran, and include workflow agents in transcript search and token counts.

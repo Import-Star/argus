@@ -50,4 +50,14 @@ describe("workflow rebuilt from a saved transcript", () => {
     assert.equal(workflow.status, "done");
     assert.equal(workflow.summary, "Workflow done");
   });
+
+  it("rebuilds a workflow from its notification when compaction dropped the Workflow call", () => {
+    const dir = runDir();
+    const note = { type: "user", uuid: "m3", session_id: "s", message: { role: "user", content: [{ type: "text", text: `<task-notification>\n<task-id>wabc</task-id>\n<tool-use-id>toolu_1</tool-use-id>\n<status>completed</status>\n<summary>Dynamic workflow "Build acme" completed</summary>\n<diagnostics>Per-agent results: ${path.join(dir, "journal.jsonl")} — one result line per agent\n</diagnostics>\n</task-notification>` }] } };
+    const messages = withWorkflowTasks([note]) as never[];
+    assert.deepEqual(backgroundTasks(messages).map((task) => [task.id, task.state]), [["wabc", "done"]]);
+    const workflow = taskGraph(messages).workflows[0];
+    assert.equal(workflow.status, "done");
+    assert.deepEqual(workflow.columns.map((column) => column.title), ["Build", "Verify"]);
+  });
 });
