@@ -2,6 +2,28 @@
 
 First public release.
 
+## 0.18.0
+
+### Highlights
+
+- **Ask Claude to start another agent.** In an Argus chat, say "create another argus agent in this chat and ..." to
+  add one to this chat's grid, or "create another argus agent and ..." to open it in its own tab. Claude writes its
+  first message and can start it in a separate worktree when you want it kept apart.
+
+  ![Several agents side by side in one grid](media/whats-new/0.17.0-agents.png)
+
+- **See What's New pictures full size.** Click a picture on this page to open it full size; click again or press
+  Esc to close it.
+
+### Changes
+
+- Add **Restart Now** to the warning shown when Argus chat waits for the previous background process after an update, so a chat with a background task that never finishes can't keep Argus chat from loading.
+- Double-click an agent's title, or the group name, in the multi-agent grid to rename it, like on the Sessions board.
+- Ask Claude in an Argus chat to "create another argus agent in this chat and ..." (joins this chat's grid) or "create another argus agent and ..." (opens its own tab).
+- Keep unsent text in an agent's message box when the grid focuses one agent or goes back to all of them.
+- Click a picture in What's New to see it full size; click again or press Esc to close it.
+- Fix a workflow disappearing from the chat after a reload when the chat compacted while it ran, and include workflow agents in transcript search and token counts.
+
 ## 0.17.2
 
 - Fix a multi-agent chat opened from the Sessions board showing its agents in a different order each time; they now keep the order they joined in.
