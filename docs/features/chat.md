@@ -81,6 +81,17 @@ one and resume their chats. If the update changed how windows talk to the proces
 so Argus chat waits and shows a warning with **Restart Now**. Clicking it makes the old process exit at once,
 stopping its running chats and background tasks, such as a background command that never finishes. Its log is `~/.claude/argus/chat-daemon.log`.
 
+## Start a chat from a link or web page
+
+Opening `vscode://importstar.argus-control-center/new-agent?prompt=<text>&cwd=<folder>` starts a new chat with that
+first message, in `cwd` or the window's first folder. VS Code asks before it opens each link. Don't tick "Don't ask
+again": any web page could then start a chat with its own prompt.
+
+[`userscripts/argus-agent.user.js`](https://github.com/Import-Star/argus/blob/main/userscripts/argus-agent.user.js)
+is a Tampermonkey script that uses the link. On any page, click **A** (or press Alt+Shift+A), click **Select UI** to
+pick parts of the page, type a message and send. The chat gets the page URL and each selected element's selector,
+text (up to 400 characters) and HTML (up to 2,000 characters). The folder you type is remembered.
+
 ## Finding Claude Code
 
 `argus.chat.claudePath` sets the `claude` executable. Empty: `claude` on your PATH, then `~/.local/bin`, where
