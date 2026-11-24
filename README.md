@@ -228,13 +228,11 @@ sends it only to Anthropic's undocumented usage endpoint (`https://api.anthropic
 is not stored, cached or logged. Usage refreshes every `argus.usage.refreshMinutes` minutes (default 5). Check
 Anthropic's terms on using your Claude subscription sign-in with third-party tools.
 
-### Start a chat from a link or web page
+### Start a chat from a link
 
 Opening `vscode://importstar.argus-control-center/new-agent?prompt=<text>&cwd=<folder>` starts a new Argus chat
 with that first message, in `cwd` or the window's first folder. VS Code asks before it opens each link; don't
-tick "Don't ask again", or any web page could start a chat. [`userscripts/argus-agent.user.js`](userscripts/argus-agent.user.js)
-is a Tampermonkey script that uses it: click **A** (or Alt+Shift+A) on any page, select parts of the page, add a
-message and send. The chat gets the page URL and each selected element's selector, text and HTML.
+tick "Don't ask again", or any web page could start a chat.
 
 ## Plugins
 
