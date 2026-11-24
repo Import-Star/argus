@@ -2,6 +2,19 @@
 
 First public release.
 
+## 0.19.0
+
+### Highlights
+
+- **Start a chat from any web page.** Add the Tampermonkey script in `userscripts/`, click **A** on a page, select
+  the parts you mean and type a message: Argus opens a new chat with the page URL and those elements. Other tools
+  can start a chat too by opening a `vscode://importstar.argus-control-center/new-agent?prompt=...` link.
+
+### Changes
+
+- Start an Argus chat from a `vscode://importstar.argus-control-center/new-agent?prompt=...` link, and from any web page with the new Tampermonkey script in `userscripts/`, which sends the page URL and the parts of the page you select.
+- Fix a chat that was stopped during its first reply failing to restart with "Session ID … is already in use".
+
 ## 0.18.0
 
 ### Highlights
