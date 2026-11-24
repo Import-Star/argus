@@ -39,7 +39,8 @@
     "onStartupFinished",
     "onWebviewPanel:argusControlCenter",
     "onWebviewPanel:argusChat",
-    "onWebviewPanel:argusChatGrid"
+    "onWebviewPanel:argusChatGrid",
+    "onUri"
   ],
   "capabilities": {
     "untrustedWorkspaces": {

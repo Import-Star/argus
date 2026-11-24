@@ -1,0 +1,1 @@
+- Start an Argus chat from a `vscode://importstar.argus-control-center/new-agent?prompt=...` link, and from any web page with the new Tampermonkey script in `userscripts/`, which sends the page URL and the parts of the page you select.
