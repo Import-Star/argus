@@ -1,0 +1,1 @@
+- Fix **Restart Now** leaving Argus chat waiting and every agent running: it now ends the previous background process from the window, even one from an older Argus that ignores the request, along with its chats' Claude processes and their background commands. The background process also stops those processes itself when it exits while a chat is still busy.

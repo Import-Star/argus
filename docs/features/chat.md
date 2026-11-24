@@ -78,8 +78,10 @@ Windows. Each connection must send a random token from `~/.claude/argus/chat-dae
 read. The process exits about 10 seconds after its last chat stops and no window is connected. After an Argus
 update, the old process keeps its chats running until they are all idle, then exits. Windows reconnect to the new
 one and resume their chats. If the update changed how windows talk to the process, a window can't use the old one,
-so Argus chat waits and shows a warning with **Restart Now**. Clicking it makes the old process exit at once,
-stopping its running chats and background tasks, such as a background command that never finishes. Its log is `~/.claude/argus/chat-daemon.log`.
+so Argus chat waits and shows a warning with **Restart Now**. Clicking it ends the old process from the window at
+once, whichever version it is, together with its chats' Claude processes and everything they started, such as a
+background command that never finishes. Whenever the process exits while a chat is still working or has background
+tasks, it stops that chat's Claude process and everything below it too, so nothing is left running. Its log is `~/.claude/argus/chat-daemon.log`.
 
 ## Start a chat from a link
 

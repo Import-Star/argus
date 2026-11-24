@@ -5,6 +5,7 @@ import * as net from "net";
 import * as vscode from "vscode";
 import { DAEMON_PROTOCOL, encodeFrame, frameReader, type ClientRequest, type DaemonFrame, type HelloResult } from "../../src/chat/daemonProtocol";
 import { daemonPaths } from "../../src/chat/daemonPaths";
+import { killProcessTree } from "../../src/chat/processTree";
 
 const CONNECT_TIMEOUT_MS = 10_000;
 const RETRY_MS = 200;
@@ -49,6 +50,8 @@ export class DaemonClient implements vscode.Disposable {
   private disposed = false;
   private warnedOutdated = false;
   private restartRequested = false;
+  // The older daemon this window is waiting on, while it waits.
+  private outdatedPid?: number;
   private lostConnection = false;
 
   constructor(private readonly extensionUri: vscode.Uri, private readonly log: (line: string) => void) {}
@@ -116,12 +119,15 @@ export class DaemonClient implements vscode.Disposable {
       const hello = await this.hello(socket, own);
       if (hello.protocol === DAEMON_PROTOCOL) {
         this.lostConnection = false;
+        this.outdatedPid = undefined;
+        this.warnedOutdated = false;
         return socket;
       }
       socket.destroy();
       if (hello.builtAt > own.builtAt) {
         throw new Error("Argus was updated in another window. Reload this window to keep using Argus chat.");
       }
+      this.outdatedPid = this.daemonPid();
       this.warnOutdated();
       await sleep(OUTDATED_RETRY_MS);
     }
@@ -192,8 +198,46 @@ export class DaemonClient implements vscode.Disposable {
       void vscode.window
         .showWarningMessage("Argus chat is waiting for the previous background process to finish its running chats and background tasks before it can start.", restart)
         .then((choice) => {
-          this.restartRequested = choice === restart;
+          if (choice === restart) {
+            this.restartRequested = true;
+            void this.stopPreviousDaemon();
+          }
         });
+    }
+  }
+
+  // An older daemon may not know the restart request, and its chats' processes would outlive it, so stop the whole
+  // tree from here. The establish loop then finds nothing listening and starts this build's daemon.
+  private async stopPreviousDaemon(): Promise<void> {
+    const { info } = daemonPaths();
+    try {
+      if (this.socket) {
+        // It handed over while the warning was showing.
+        return;
+      }
+      const pid = this.daemonPid();
+      if (pid === undefined || pid !== this.outdatedPid) {
+        throw new Error(`no process id in ${info} for the previous background process`);
+      }
+      this.log(`restart now: stopping the previous background process ${pid} and its chats`);
+      await killProcessTree(pid);
+      // Its token is stale now; the new daemon writes its own once it listens. Another window may have started that
+      // one already, so leave a file that names a different process.
+      if (this.daemonPid() === pid) {
+        fs.rmSync(info, { force: true });
+      }
+    } catch (error) {
+      this.log(`restart now: ${describe(error)}`);
+      void vscode.window.showErrorMessage(`Couldn't stop the previous Argus chat background process: ${describe(error)}. See ${daemonPaths().log}.`);
+    }
+  }
+
+  private daemonPid(): number | undefined {
+    try {
+      const { pid } = JSON.parse(fs.readFileSync(daemonPaths().info, "utf8")) as { pid?: unknown };
+      return typeof pid === "number" && Number.isInteger(pid) && pid > 0 && pid !== process.pid ? pid : undefined;
+    } catch {
+      return undefined;
     }
   }
 
