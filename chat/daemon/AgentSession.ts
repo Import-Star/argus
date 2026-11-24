@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { z } from "zod";
 import { MessageQueue, type QueueAction } from "../host/messageQueue";
 import { ShellRunner } from "../host/shell";
-import { withLocalCommandOutput } from "../host/restore";
+import { hasTranscript, withLocalCommandOutput } from "../host/restore";
 import { withWorkflowTasks } from "../host/workflowHistory";
 import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { PanelKind } from "../../src/chat/panels";
@@ -218,6 +218,8 @@ export class AgentSession {
     }
     this.backgroundTasks = 0;
     this.processStartedAt = Date.now();
+    // A chat killed during its first turn has a transcript but no result yet; starting it as new fails "already in use".
+    this.options.resume ||= hasTranscript(this.sessionId);
     const { cwd, resume, claudePath, additionalDirectories, model, effort, permissionMode, log } = this.options;
     this.q = query({
       prompt: this.input,
