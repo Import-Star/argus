@@ -2,6 +2,11 @@
 
 First public release.
 
+## 0.19.0
+
+- Start an Argus chat from a `vscode://importstar.argus-control-center/new-agent?prompt=...` link, in the window's first folder or the folder in `cwd`.
+- Fix a chat that was stopped during its first reply failing to restart with "Session ID … is already in use".
+
 ## 0.18.0
 
 ### Highlights

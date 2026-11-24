@@ -1,1 +1,0 @@
-- Fix a chat that was stopped during its first reply failing to restart with "Session ID … is already in use".
