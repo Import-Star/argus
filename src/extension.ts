@@ -22,6 +22,7 @@ import { findChats, readChat, writeChats } from "./services/importChats";
 import { newChat, openSession, openWorktree, routeChatsTo, routeCloseTo } from "./services/openSession";
 import { PluginHost, PLUGINS_DIR } from "./services/PluginHost";
 import { renameSessionPrompt, SessionStore, SESSIONS_DIR } from "./services/SessionStore";
+import { SearchRegistry } from "./services/search";
 import { UsageStatusBar } from "./providers/UsageStatusBar";
 import { WelcomePanel } from "./providers/WelcomePanel";
 import { WhatsNewPanel } from "./providers/WhatsNewPanel";
@@ -46,15 +47,26 @@ function cardOf(arg: unknown): SessionCard | undefined {
 export function activate(context: vscode.ExtensionContext): ArgusApi {
   const prSync = new GhPrSyncService();
   const sessions = new SessionStore(prSync);
+  const search = new SearchRegistry(
+    {
+      getCards: () => sessions.getCards(),
+      searchTranscripts: (query) => sessions.searchTranscripts(query),
+      open: (sessionId) => {
+        sessions.markRead(sessionId);
+        return openSession(sessionId);
+      }
+    },
+    (message) => void vscode.window.showErrorMessage(message)
+  );
   const compose = new ComposeMonitor(sessions);
-  const controlCenter = new ControlCenter(context);
+  const controlCenter = new ControlCenter(context, search);
   context.subscriptions.push(controlCenter.registerSerializer());
   const chips = new SessionChipsRegistry();
   const archiveCleanup = new ArchiveCleanupRegistry();
   const chatDetails = new ChatDetailsRegistry();
   const chatExtensions = new ChatExtensionRegistry();
 
-  const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails, chatExtensions });
+  const api = createApi({ sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails, chatExtensions, search });
 
   // Plan usage reads Claude Code's local sign-in. On by default; argus.usage.enabled turns it off without a reload.
   let usage: { service: UsageService; bar: UsageStatusBar; listener: vscode.Disposable } | undefined;
@@ -79,7 +91,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     onDidChangeCompose: compose.onDidChange,
     chatExtensions,
     planUsage: () => (usage ? usage.service.planUsage() : null),
-    onDidChangePlanUsage: usageChanged.event
+    onDidChangePlanUsage: usageChanged.event,
+    search
   });
   registerDiffReview(context, chat);
   const tracking = new TrackingMonitor(context);
@@ -170,6 +183,7 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
 
   register("argus.openControlCenter", (tabId?: unknown) => api.openControlCenter(typeof tabId === "string" ? tabId : undefined));
   register("argus.openSettings", () => api.openControlCenter("settings"));
+  register("argus.search", () => (chat.host?.showSearch() ? undefined : controlCenter.showSearch()));
   register("argus.keepAwake.choose", chooseKeepAwakeMode);
   register("argus.sessions.newChat", () => newChat());
   register("argus.sessions.refresh", () => vscode.window.withProgress({ location: { viewId: "argusSessions" } }, () => sessions.refreshPrs()));

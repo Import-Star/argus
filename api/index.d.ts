@@ -167,6 +167,27 @@ export interface ChatExtensionHandle extends vscode.Disposable {
   post(message: unknown): void;
 }
 
+// One thing a plugin makes findable in Argus search (Cmd+K / Ctrl+K in Argus panels, or "Argus: Search").
+export interface SearchItem {
+  id: string; // unique within the source; handed back to onOpen
+  title: string;
+  // Short muted text beside the title, e.g. "In progress" or "prod".
+  detail?: string;
+  // More text to match, e.g. a card's description. The result shows the part around the first match.
+  text?: string;
+}
+
+export interface SearchSource {
+  label: string; // heading above this source's results, e.g. "Work board"
+  // The user picked one of this source's results, e.g. open your tab on it.
+  onOpen(item: SearchItem): void | Promise<void>;
+}
+
+export interface SearchSourceHandle extends vscode.Disposable {
+  // Replaces every item from this source. Call it again whenever your data changes.
+  set(items: readonly SearchItem[]): void;
+}
+
 // One extra step offered when the user archives a session ("Archive and clean up").
 export interface CleanupItem {
   label: string; // shown in the confirmation dialog, e.g. "Remove work card: Fix login"
@@ -236,6 +257,8 @@ export interface ArgusApi {
   registerChatDetails?(provider: ChatDetailsProvider): vscode.Disposable & { refresh(): void };
   // A script that runs inside Argus chat webviews. Optional: older Argus versions don't have it.
   registerChatExtension?(extension: ArgusChatExtension): ChatExtensionHandle;
+  // Items from your plugin that Argus search matches alongside chats. Optional: older Argus versions don't have it.
+  registerSearchSource?(source: SearchSource): SearchSourceHandle;
 }
 
 // A plugin's slice of the "argus.plugins" setting. Keys missing from settings fall back to the defaults in the

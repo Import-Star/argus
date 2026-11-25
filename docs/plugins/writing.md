@@ -135,6 +135,10 @@ These work without a tab:
   carries the rendered element, the markdown, `setActive()` and an `overlay` for floating controls. `media: ["data:"]`
   (or `"blob:"`) lets the script play audio or video it builds. Registering or disposing reloads open chat tabs. Types
   are in `argus-webview.d.ts`; check for it with `?.` like `registerChatDetails`.
+- `argus.registerSearchSource?.({ label, onOpen(item) })` makes your items findable in Argus search (Cmd+K / Ctrl+K in
+  the Control Center or a chat). Call `.set(items)` on the returned handle with every item (`id`, `title`, optional
+  `detail` and `text`) whenever your data changes; Argus does the matching. Picking a result calls `onOpen`, e.g. to
+  open your tab on that item. Check for it with `?.`.
 
 ## Start a linked session
 

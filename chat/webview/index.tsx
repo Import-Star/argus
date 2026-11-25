@@ -2,11 +2,20 @@ import { render } from "preact";
 import type { HostMessage } from "../../src/chat/protocol";
 import { App } from "./App";
 import "./chat.css";
+import "../../media/search.js";
+import "../../media/search.css";
 import { onExtensionMessage } from "./extensions";
 import { startMermaid } from "./mermaid";
 import { dispatch, post } from "./store";
 
-window.addEventListener("message", (event: MessageEvent<HostMessage>) => (event.data.type === "extension" ? onExtensionMessage(event.data.id, event.data.message) : dispatch(event.data)));
+window.argusSearch.init(post);
+window.addEventListener("message", (event: MessageEvent<HostMessage>) => {
+  if (event.data.type === "extension") {
+    onExtensionMessage(event.data.id, event.data.message);
+  } else if (!window.argusSearch.onMessage(event.data)) {
+    dispatch(event.data);
+  }
+});
 render(<App />, document.getElementById("root")!);
 // Plugin chat extension scripts come after this bundle: say ready once they have run and registered.
 if (document.readyState === "loading") {

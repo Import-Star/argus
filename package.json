@@ -67,6 +67,10 @@
         "title": "Argus: Settings"
       },
       {
+        "command": "argus.search",
+        "title": "Argus: Search"
+      },
+      {
         "command": "argus.welcome",
         "title": "Argus: Welcome"
       },

@@ -215,6 +215,16 @@ export class ChatManager implements vscode.Disposable {
     return this.deps.archive(sessionId);
   }
 
+  public showSearch(): boolean {
+    const panel = [...this.panels].find((entry) => entry.active);
+    panel?.post({ type: "searchShow" });
+    return Boolean(panel);
+  }
+
+  public get search(): ChatDeps["search"] {
+    return this.deps.search;
+  }
+
   // True while the chat is on screen in front of the user: its tab is active in the focused window.
   public isViewing(sessionId: string): boolean {
     return vscode.window.state.focused && [...this.panels].some((panel) => panel.active && panel.sessionIds.includes(sessionId));

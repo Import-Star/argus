@@ -11,7 +11,7 @@
   --vscode-errorForeground: #f85149;
   --vscode-sideBar-background: #181818;
   --vscode-editorWidget-background: #202020;
-  --vscode-quickInput-background: #222222;
+  --vscode-quickInput-background: #222222; --vscode-quickInput-foreground: #cccccc; --vscode-quickInputList-focusBackground: #04395e; --vscode-quickInputList-focusForeground: #ffffff; --vscode-editor-findMatchHighlightBackground: rgba(234, 92, 0, 0.33);
   --vscode-widget-border: #2f2f2f;
   --vscode-panel-border: #2b2b2b;
   --vscode-input-background: #313131;

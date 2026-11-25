@@ -26,6 +26,14 @@ Everything the [sidebar](sessions-board.md) has, plus:
   A bar shows how many are picked with **Archive** (or `e`), **Unarchive**, **Select all shown** and **Clear**
   (`Esc`). Worktree and plugin cleanup for the whole batch is offered in one prompt.
 
+## Search
+
+Press `Cmd+K` (`Ctrl+K` on Windows and Linux) in the Control Center or an Argus chat, or run **Argus: Search**, to
+search every chat in this window's scope by title, repo and transcript, archived chats included, plus the items
+plugins add (Work board cards, ECS services and so on). Results are grouped by where they came from, with the
+matching text shown under each one. Arrow keys move, `Enter` opens the chat or the plugin's tab on that item, `Esc`
+closes. Elsewhere in VS Code, `Cmd+K` keeps its usual two-key shortcuts.
+
 ## Settings tab
 
 **Argus: Settings** opens the Control Center on a Settings tab that edits every Argus setting, Chat first, with a

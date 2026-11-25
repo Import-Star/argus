@@ -1,0 +1,9 @@
+{
+  "query": "billing",
+  "results": [
+    { "source": "chats", "group": "Chats", "id": "g1", "title": "Migrate billing to ECS", "detail": "platform", "snippet": "…move the billing service off the old cluster and point the load balancer at the new tasks…" },
+    { "source": "chats", "group": "Chats", "id": "s7", "title": "Fix invoice rounding", "detail": "web · archived", "snippet": "…the billing page shows 10.005 as 10.00 because the total is rounded before tax…" },
+    { "source": "plugin-0", "group": "Work board", "id": "card-12", "title": "Billing export to CSV", "detail": "In progress", "snippet": "Customers want a monthly billing export they can open in a spreadsheet…" },
+    { "source": "plugin-1", "group": "GitHub Actions", "id": "run-881", "title": "deploy billing-api", "detail": "failed" }
+  ]
+}

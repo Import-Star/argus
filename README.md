@@ -27,6 +27,7 @@ glance, know which ones are waiting on you, and work with them in Argus's own ch
   - [Settings tab](#settings-tab)
   - [Diff review](#diff-review)
   - [Argus chat](#argus-chat)
+  - [Search](#search)
   - [Claude plan usage](#claude-plan-usage)
 - [Plugins](#plugins)
   - [Installing one](#installing-one)
@@ -224,6 +225,13 @@ Anthropic's official installer in a terminal (`irm https://claude.ai/install.ps1
 and every 4 hours Argus compares `claude --version` with the newest release on your `autoUpdatesChannel` and, once
 per release, says when it's out of date; **Update** (or the same command) runs `claude update` in a terminal. New chats take their model, effort and permission mode from your Claude Code settings (`model`, `effortLevel`, `permissions.defaultMode`); a reopened chat keeps the model and effort last picked in it.
 
+### Search
+
+`Cmd+K` (`Ctrl+K` on Windows and Linux) in the Control Center or an Argus chat, or **Argus: Search** from anywhere,
+searches every chat (title, repo and transcript, archived chats included) plus the items plugins add, such as Work
+board cards. `Enter` opens the chat or the plugin's tab on that item. Elsewhere, `Cmd+K` keeps VS Code's two-key
+shortcuts.
+
 ### Claude plan usage
 
 A status bar item showing your Claude plan usage as a percentage (amber at 75%, red at 90%). It is on by default;
@@ -242,7 +250,8 @@ tick "Don't ask again", or any web page could start a chat.
 
 ## Plugins
 
-A plugin adds a tab to the Control Center, chips to session cards, or extra steps when a session is archived.
+A plugin adds a tab to the Control Center, chips to session cards, items to Argus search, or extra steps when a
+session is archived.
 Plugins are folders in `~/.claude/argus/plugins` that Argus loads on startup; nothing is installed into VS Code.
 
 ### Installing one
@@ -330,6 +339,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 
 - **Argus: Open Control Center** (`argus.openControlCenter`)
 - **Argus: Settings** (`argus.openSettings`)
+- **Argus: Search** (`argus.search`)
 - **Argus: Welcome** (`argus.welcome`)
 - **Argus: What's New** (`argus.whatsNew`)
 - **Argus: Sessions Needing You** (`argus.sessions.showAttention`)

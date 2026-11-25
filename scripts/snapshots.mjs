@@ -15,7 +15,7 @@ const TABS = [
   { id: "settings", title: "Settings" }
 ];
 
-const LIGHT_THEME = `:root { color-scheme: light; --vscode-editor-background: #ffffff; --vscode-editor-foreground: #3b3b3b; --vscode-foreground: #3b3b3b; --vscode-descriptionForeground: #717171; --vscode-disabledForeground: #a0a0a0; --vscode-errorForeground: #cd3131; --vscode-sideBar-background: #f8f8f8; --vscode-editorWidget-background: #f3f3f3; --vscode-widget-border: #c8c8c8; --vscode-panel-border: #e5e5e5; --vscode-input-background: #ffffff; --vscode-dropdown-background: #ffffff; --vscode-dropdown-foreground: #3b3b3b; --vscode-list-hoverBackground: #e8e8e8; --vscode-charts-green: #388a34; --vscode-charts-blue: #1a85ff; --vscode-charts-yellow: #bf8803; }`;
+const LIGHT_THEME = `:root { color-scheme: light; --vscode-editor-background: #ffffff; --vscode-editor-foreground: #3b3b3b; --vscode-foreground: #3b3b3b; --vscode-descriptionForeground: #717171; --vscode-disabledForeground: #a0a0a0; --vscode-errorForeground: #cd3131; --vscode-sideBar-background: #f8f8f8; --vscode-editorWidget-background: #f3f3f3; --vscode-widget-border: #c8c8c8; --vscode-panel-border: #e5e5e5; --vscode-input-background: #ffffff; --vscode-dropdown-background: #ffffff; --vscode-dropdown-foreground: #3b3b3b; --vscode-list-hoverBackground: #e8e8e8; --vscode-quickInput-background: #f8f8f8; --vscode-quickInput-foreground: #3b3b3b; --vscode-quickInputList-focusBackground: #0060c0; --vscode-quickInputList-focusForeground: #ffffff; --vscode-charts-green: #388a34; --vscode-charts-blue: #1a85ff; --vscode-charts-yellow: #bf8803; }`;
 
 const fixture = (name) => resolveTimes(JSON.parse(readFileSync(path.join(root, "test", "fixtures", "snapshots", `${name}.json`), "utf8")));
 
@@ -201,6 +201,14 @@ async function searchSteps(page) {
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   await page.locator(".tr-search-count", { hasText: "3 of" }).waitFor();
+}
+
+async function argusSearchSteps(page) {
+  const { query, results } = fixture("search");
+  await page.keyboard.press("ControlOrMeta+k");
+  await page.locator(".argus-search input").fill(query);
+  await page.evaluate((message) => window.__harness.play([message]), { type: "searchResults", query, results });
+  await page.keyboard.press("ArrowDown");
 }
 
 async function permissionSteps(page) {
@@ -405,7 +413,10 @@ const SCREENS = [
   { name: "header-chips", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").header, steps: headerSteps, expect: { header: ".chat-header", mcp: ".hdr-mcp", context: ".hdr-context", remote: ".hdr-pr" } },
   { name: "command-output", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").cmdout, expect: { table: "pre.tr-cmdout", markdown: ".tr-text table" } },
   { name: "mermaid", html: "mermaid.html", steps: mermaidSteps, expect: { diagrams: ".mermaid-diagram:not([hidden]) svg", toggle: ".mermaid-toggle:not([hidden])", error: ".mermaid-error:not([hidden])", fallback: ".mermaid-block[data-state=error] .code-block" } },
-  { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } }
+  { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } },
+  { name: "search", ...CHAT_PAGE, fixture: "chat", steps: argusSearchSteps, expect: { box: ".argus-search-box", groups: ".argus-search-group", rows: ".argus-search-row", selected: ".argus-search-row.selected", marks: ".argus-search mark" } },
+  { name: "search-center", ...CENTER_PAGE, tab: "sessions", messages: () => fixture("board").messages, steps: argusSearchSteps, expect: { box: ".argus-search-box", rows: ".argus-search-row" } },
+  { name: "search-light", ...CHAT_PAGE, theme: "light", fixture: "chat", steps: argusSearchSteps, expect: { box: ".argus-search-box" } }
 ];
 
 async function shoot(browser, screen, errors) {

@@ -14,6 +14,7 @@ nav_order: 6
 | **Argus: Open Control Center** | `argus.openControlCenter` |
 | **Argus: Keep Machine Awake…** | `argus.keepAwake.choose` |
 | **Argus: Settings** | `argus.openSettings` |
+| **Argus: Search** | `argus.search` |
 | **Argus: Welcome** | `argus.welcome` |
 | **Argus: What's New** | `argus.whatsNew` |
 | **Argus: Sessions Needing You** | `argus.sessions.showAttention` |

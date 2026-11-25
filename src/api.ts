@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { ArgusApi, ArgusChatExtension, ArgusTab, ChatDetailsProvider, ChatExtensionHandle, CleanupItem, NewChatOptions, PrSummary, SessionCard, SessionChip, TabHandle } from "./types";
+import { ArgusApi, ArgusChatExtension, ArgusTab, ChatDetailsProvider, ChatExtensionHandle, CleanupItem, NewChatOptions, PrSummary, SearchSource, SearchSourceHandle, SessionCard, SessionChip, TabHandle } from "./types";
+import { SearchRegistry } from "./services/search";
 import { ChatDetailsRegistry } from "./services/chatDetails";
 import { ChatExtensionRegistry } from "./services/chatExtensions";
 import { ArchiveCleanupRegistry } from "./services/archiveSession";
@@ -51,10 +52,11 @@ export interface ArgusServices {
   archiveCleanup: ArchiveCleanupRegistry;
   chatDetails: ChatDetailsRegistry;
   chatExtensions: ChatExtensionRegistry;
+  search: SearchRegistry;
 }
 
 export function createApi(services: ArgusServices): ArgusApi {
-  const { sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails, chatExtensions } = services;
+  const { sessions, prSync, controlCenter, chips, archiveCleanup, chatDetails, chatExtensions, search } = services;
 
   return {
     version: 1,
@@ -117,6 +119,10 @@ export function createApi(services: ArgusServices): ArgusApi {
 
     registerChatExtension(extension: ArgusChatExtension): ChatExtensionHandle {
       return chatExtensions.register(extension);
+    },
+
+    registerSearchSource(source: SearchSource): SearchSourceHandle {
+      return search.register(source);
     }
   };
 }

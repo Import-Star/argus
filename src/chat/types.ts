@@ -5,6 +5,7 @@ import type { ComposeProject } from "../services/composeStacks";
 import type { LiveChat } from "../services/sessionColumn";
 import type { ChatPluginSection } from "../services/chatDetails";
 import type { PermissionDecision, PermissionRequest, PlanUsage } from "./protocol";
+import type { SearchRegistry } from "../services/search";
 
 export interface ChatDeps {
   getCards(): SessionCard[];
@@ -29,6 +30,8 @@ export interface ChatDeps {
   // The usage status bar's reading, shared so chats don't each call the rate-limited endpoint. Null when it's off.
   planUsage(): PlanUsage | null | undefined;
   onDidChangePlanUsage: vscode.Event<unknown>;
+  // Argus search (Cmd+K): chats plus plugin search sources.
+  search: Pick<SearchRegistry, "search" | "open">;
 }
 
 export interface ChatExtensionHub {
@@ -50,6 +53,8 @@ export interface ChatHost extends vscode.Disposable {
   respond(sessionId: string, id: string, decision: PermissionDecision): void;
   send(sessionId: string, text: string): void;
   closeSession(sessionId: string): boolean;
+  // Shows the search overlay in the active chat tab. False when no chat tab is active.
+  showSearch(): boolean;
   onDidChangePending: vscode.Event<void>;
 }
 

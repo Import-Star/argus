@@ -15,6 +15,7 @@
 
   // Per-tab UI state, namespaced under one webview state object so a panel reload restores each tab's own state.
   const persisted = vscode.getState() || {};
+  window.argusSearch.init((message) => vscode.postMessage(message));
 
   function esc(value) {
     return String(value ?? "")
@@ -161,6 +162,7 @@
   window.addEventListener("message", (event) => {
     const message = event.data;
     if (!message || typeof message !== "object") return;
+    if (window.argusSearch.onMessage(message)) return;
     if (message.type === "tab") {
       // A tab asks for full state when it mounts, so anything sent before that is safe to drop.
       if (!mounted.has(message.tab)) return;
@@ -185,6 +187,7 @@
   renderTabBar();
   renderSections();
   mountIfReady(activeTab);
+  if (window.__argusSearch) window.argusSearch.onMessage({ type: "searchShow" });
 
   // Live "since" timers and the spinner glyph, shared by every tab.
   setInterval(() => {

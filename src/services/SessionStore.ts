@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import { PrCheck, PrSummary, SessionBoardState, SessionCard, SessionColumn, SessionRecord } from "../types";
 import { GhPrSyncService } from "./GhPrSyncService";
 import { output } from "./log";
+import { searchTerms, snippet } from "./search";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
 import { addToGroup, CardGroup, groupCards, GroupOf, pruneGroups, removeFromGroup } from "./sessionGroups";
 import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, seenReplies, withLiveChats } from "./sessionColumn";
@@ -171,9 +172,11 @@ export class SessionStore implements vscode.Disposable {
     });
   }
 
-  // Every session in this window's scope, archived ones included.
+  // Every session in this window's scope, archived ones included, with a snippet around the first term.
   public async searchTranscripts(query: string): Promise<Map<string, string>> {
-    return this.transcripts.search(transcriptRefs(this.cards), query);
+    const term = searchTerms(query)[0];
+    const matches = await this.transcripts.search(transcriptRefs(this.cards), query);
+    return new Map([...matches].map(([sessionId, text]) => [sessionId, snippet(text, term)]));
   }
 
   // Reads new transcript lines for sessions not archived, then refreshes once if token use moved.
