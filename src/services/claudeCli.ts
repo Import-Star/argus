@@ -11,7 +11,9 @@ function onPath(name: string, platform: NodeJS.Platform): string | undefined {
   }
 }
 
-// The `claude` Argus chat runs: the configured path, then PATH, then where Anthropic's native installer puts it.
+// The `claude` Argus chat runs: the configured path, then PATH, then where Anthropic's native installer puts it, then
+// Homebrew's folders. VS Code launched from the Dock can start with a bare PATH (/usr/bin:/bin:...) when reading the
+// login shell's environment times out, which hides a Homebrew install.
 export function findClaude(
   configured: string,
   platform: NodeJS.Platform = process.platform,
@@ -29,7 +31,8 @@ export function findClaude(
     return found;
   }
   const local = (platform === "win32" ? path.win32 : path.posix).join(home, ".local", "bin", name);
-  return exists(local) ? local : undefined;
+  const brew = platform === "win32" ? [] : ["/opt/homebrew/bin/claude", "/usr/local/bin/claude", "/home/linuxbrew/.linuxbrew/bin/claude"];
+  return [local, ...brew].find((file) => exists(file));
 }
 
 // Anthropic's native installer (https://code.claude.com/docs/en/setup), run in a shell that stays open afterwards so

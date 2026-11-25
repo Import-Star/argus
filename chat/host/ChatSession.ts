@@ -324,7 +324,8 @@ export class ChatSession implements vscode.Disposable {
         return;
       }
       this.options.log(`open ${this.sessionId}: ${describe(error)}`);
-      this.state = { ...this.state, meta: { ...this.meta, status: "error", statusSince: Date.now() } };
+      // The status pill shows why, e.g. that claude wasn't found, instead of only missing the model and effort pickers.
+      this.state = { ...this.state, meta: { ...this.meta, status: "error", statusSince: Date.now(), error: describe(error) } };
       this.emitter.fire({ type: "meta", meta: this.meta });
     }
   }

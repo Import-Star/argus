@@ -213,9 +213,19 @@ async function handle(client: Client, frame: ClientFrame): Promise<unknown> {
     }
     case "open": {
       // A window reopening after a restart can't tell whether the chat ever sent a message.
-      const entry = entries.get(frame.options.sessionId) ?? createEntry({ ...frame.options, resume: frame.options.resume && hasTranscript(frame.options.sessionId) });
+      const existing = entries.get(frame.options.sessionId);
+      const entry = existing ?? createEntry({ ...frame.options, resume: frame.options.resume && hasTranscript(frame.options.sessionId) });
       entry.idleMinutes = frame.options.idleMinutes;
-      entry.session.start();
+      try {
+        entry.session.start();
+      } catch (error) {
+        // Kept, it would answer every later open with this open's options (e.g. a claude path that wasn't found) and
+        // its first history load, so the chat could never start or show turns written since.
+        if (!existing) {
+          closeSession(entry);
+        }
+        throw error;
+      }
       entry.subscribers.add(client);
       client.sessions.add(frame.options.sessionId);
       clearTimeout(entry.idleTimer);
