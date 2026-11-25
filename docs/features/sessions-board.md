@@ -9,6 +9,11 @@ nav_order: 1
 A sidebar view (the Argus icon in the activity bar) groups your Claude Code sessions into columns. Cards move on
 their own as session state changes.
 
+Under each session, the sidebar lists the worktrees it made and its Docker Compose projects: the ones it started
+with `docker compose up`, `run` or `create`, and the ones running from its worktrees. A green light means the
+project has a running container, an empty circle that its containers are all stopped. The chat's Details pane shows
+the same projects. Argus checks Docker every 10 seconds while the VS Code window has focus.
+
 | Column | What's in it |
 |---|---|
 | **Needs you** | A permission request, a question, a finished reply you haven't read, or a session stopped mid-turn (shown as **interrupted**). |
@@ -49,9 +54,11 @@ their own as session state changes.
 
 A session archives itself when every PR it created is merged or closed, or when it closes without making a PR. You
 can also archive by hand. When the session has worktrees, archiving offers to remove them, shows how many
-uncommitted files each one has, and offers a force removal that deletes those files. Installed plugins can add
-their own cleanup steps; you are asked first. Archiving closes the session's Argus chat. Sending a new prompt to an
-archived session brings it back.
+uncommitted files each one has, and offers a force removal that deletes those files. Installed plugins can add their
+own cleanup steps; you are asked first. It also offers to remove Docker Compose projects the session started
+(`docker compose up`, `run` or `create`) or that run from one of its worktrees, with their volumes, unless another
+active session uses them. Archiving closes the session's Argus chat. Sending a new prompt to an archived session
+brings it back.
 
 ## Notifications
 

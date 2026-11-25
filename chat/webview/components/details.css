@@ -74,6 +74,19 @@
   align-items: center;
 }
 
+.det-light {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+}
+
+.det-light.on {
+  background: var(--green);
+  border-color: var(--green);
+}
+
 .det-grow {
   flex: 1;
   min-width: 0;

@@ -264,6 +264,7 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
   const prs = card?.prs ?? [];
   const finishedPrs = prs.filter(isFinishedPr).length;
   const worktrees = card?.worktrees ?? [];
+  const compose = card?.compose ?? [];
   const cacheExpiresAt = meta?.lastResponseAt !== undefined && meta.cacheTtlMs ? meta.lastResponseAt + meta.cacheTtlMs : undefined;
   const limits = usage?.windows ?? [];
   const runningTasks = background.filter((task) => task.state === "running");
@@ -336,6 +337,22 @@ export function DetailsPane({ sessionId }: { sessionId: string }) {
                 </button>
               </div>
               <div class="muted det-note det-wrap">{tree.path}</div>
+            </div>
+          ))}
+        </Section>
+      )}
+      {compose.length > 0 && (
+        <Section title={compose.length > 1 ? `Docker Compose · ${compose.length}` : "Docker Compose"}>
+          {compose.map((project) => (
+            <div key={project.name}>
+              <div class="det-head">
+                <span class={`det-light${project.running ? " on" : ""}`} aria-hidden="true" />
+                <div class="mono det-grow" title={project.dir}>
+                  {project.name}
+                  <span class="muted"> · {project.running ? "running" : "stopped"}</span>
+                </div>
+              </div>
+              <div class="muted det-note det-wrap">{project.dir}</div>
             </div>
           ))}
         </Section>

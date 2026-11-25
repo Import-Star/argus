@@ -1,10 +1,12 @@
 import * as path from "path";
 import * as vscode from "vscode";
+import type { ComposeMonitor } from "../services/ComposeMonitor";
+import type { ComposeProject } from "../services/composeStacks";
 import { COLUMN_LABEL, COLUMN_ORDER, formatElapsed, SessionStore } from "../services/SessionStore";
 import type { TrackingMonitor } from "../services/TrackingMonitor";
 import { SessionCard, SessionColumn } from "../types";
 
-type Node = { kind: "tracking"; message: string } | { kind: "group"; column: SessionColumn } | { kind: "session"; card: SessionCard } | { kind: "worktree"; folder: string };
+type Node = { kind: "tracking"; message: string } | { kind: "group"; column: SessionColumn } | { kind: "session"; card: SessionCard } | { kind: "worktree"; folder: string } | { kind: "compose"; project: ComposeProject };
 
 const ICON: Record<SessionColumn, vscode.ThemeIcon> = {
   "needs-you": new vscode.ThemeIcon("bell-dot", new vscode.ThemeColor("notificationsWarningIcon.foreground")),
@@ -24,9 +26,10 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
 
   public constructor(
     private readonly store: SessionStore,
-    private readonly tracking: TrackingMonitor
+    private readonly tracking: TrackingMonitor,
+    private readonly compose: ComposeMonitor
   ) {
-    this.disposables.push(store.onDidChange(() => this.render()), tracking.onDidChange(() => this.render()));
+    this.disposables.push(store.onDidChange(() => this.render()), tracking.onDidChange(() => this.render()), compose.onDidChange(() => this.emitter.fire(undefined)));
     this.tick = setInterval(() => this.emitter.fire(undefined), 30_000);
   }
 
@@ -47,9 +50,16 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
       return cards.filter((card) => card.column === element.column).map((card) => ({ kind: "session", card }));
     }
     if (element.kind === "session") {
-      return (element.card.record.worktrees ?? []).map((folder) => ({ kind: "worktree", folder }));
+      return this.sessionChildren(element.card);
     }
     return [];
+  }
+
+  private sessionChildren(card: SessionCard): Node[] {
+    return [
+      ...(card.record.worktrees ?? []).map((folder): Node => ({ kind: "worktree", folder })),
+      ...this.compose.forSession(card.record).map((project): Node => ({ kind: "compose", project }))
+    ];
   }
 
   public getTreeItem(node: Node): vscode.TreeItem {
@@ -82,11 +92,22 @@ export class SessionTreeProvider implements vscode.TreeDataProvider<Node>, vscod
       return item;
     }
 
+    if (node.kind === "compose") {
+      const item = new vscode.TreeItem(node.project.name);
+      item.description = node.project.running ? "compose · running" : "compose · stopped";
+      item.tooltip = node.project.dir;
+      item.iconPath = node.project.running
+        ? new vscode.ThemeIcon("circle-filled", new vscode.ThemeColor("charts.green"))
+        : new vscode.ThemeIcon("circle-outline", new vscode.ThemeColor("disabledForeground"));
+      item.contextValue = "compose";
+      return item;
+    }
+
     const { card } = node;
     const { record } = card;
     const item = new vscode.TreeItem(
       record.title ?? "New chat",
-      record.worktrees?.length ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None
+      this.sessionChildren(card).length > 0 ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None
     );
     const where = card.worktree ? `${card.repo}/${card.worktree}` : card.repo;
     item.description = `${where}${card.name && card.name !== record.title ? ` · ${card.name}` : ""} · ${stateLabel(card)} ${formatElapsed(record.stateSince)}`;

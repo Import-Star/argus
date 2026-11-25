@@ -91,6 +91,10 @@
       "card": {
         "sessionId": "11111111-0000-4000-8000-000000000001",
         "worktree": "/work/orders",
+        "compose": [
+          { "name": "orders-wt", "dir": "/work/orders", "running": true },
+          { "name": "orders-db", "dir": "/work/orders/db", "running": false }
+        ],
         "worktrees": [
           {
             "name": "orders",

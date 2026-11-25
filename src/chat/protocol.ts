@@ -54,6 +54,7 @@ export interface CardInfo {
   sessionId: string;
   worktree?: string;
   worktrees: { name: string; path: string; branch?: string }[];
+  compose: { name: string; dir: string; running: boolean }[];
   prs: { key: string; title?: string; url: string; state: string; isDraft: boolean; reviewDecision?: string; checks: { name: string; status: string; conclusion?: string }[] }[];
   usedTokens?: number;
   compactions?: number;
