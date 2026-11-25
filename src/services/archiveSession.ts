@@ -3,6 +3,7 @@ import * as path from "path";
 import { promisify } from "util";
 import * as vscode from "vscode";
 import { CleanupItem, SessionCard } from "../types";
+import { composeProjects, ownsProject, removeComposeProject } from "./composeStacks";
 import { output } from "./log";
 import { closeChatSession } from "./openSession";
 import { SessionStore } from "./SessionStore";
@@ -103,14 +104,18 @@ export async function archiveManyWithCleanup(sessions: SessionStore, cleanup: Ar
 }
 
 async function archiveCards(sessions: SessionStore, cleanup: ArchiveCleanupRegistry, cards: SessionCard[], ids: Set<string>): Promise<void> {
-  const cleanupItems = (await Promise.all(cards.map((card) => cleanup.collect(card)))).flat();
-  const sharedWith = new Set(
-    sessions
-      .getCards()
-      .filter((other) => !ids.has(other.record.sessionId) && other.column !== "archived")
-      .flatMap((other) => other.record.worktrees ?? [])
-  );
+  const pluginItems = (await Promise.all(cards.map((card) => cleanup.collect(card)))).flat();
+  const others = sessions.getCards().filter((other) => !ids.has(other.record.sessionId) && other.column !== "archived");
+  const sharedWith = new Set(others.flatMap((other) => other.record.worktrees ?? []));
   const worktrees = [...new Set(cards.flatMap((card) => card.record.worktrees ?? []))].filter((folder) => !sharedWith.has(folder));
+  const mayHaveStacks = cards.some((card) => card.record.composeStacks?.length || card.record.worktrees?.length);
+  const stacks = (mayHaveStacks ? await composeProjects() : []).filter(
+    (project) => cards.some((card) => ownsProject(card.record, project)) && !others.some((other) => ownsProject(other.record, project))
+  );
+  const cleanupItems: CleanupItem[] = [
+    ...pluginItems,
+    ...stacks.map((project) => ({ label: `Remove Docker Compose project and its volumes: ${project.name} (${project.dir})`, run: () => removeComposeProject(project.name) }))
+  ];
 
   if (cleanupItems.length > 0 || worktrees.length > 0) {
     const dirty = await Promise.all(worktrees.map(uncommittedFiles));

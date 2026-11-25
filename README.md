@@ -64,6 +64,9 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
 - The activity bar badge counts sessions that need you. A status bar item shows how many there are and the longest
   wait; click it to jump to one.
 - Open a session from its card: it opens in Argus chat, resuming the session.
+- Under each session, the sidebar lists its worktrees and its Docker Compose projects, with a green light when a
+  project has a running container. The chat's Details pane shows the same projects. Docker is checked every 10
+  seconds while the VS Code window has focus.
 - Each VS Code window shows only its own sessions: those started in the window's workspace folders, or in any
   checkout or worktree of the same git repo. Set `argus.sessions.scope` to `folder` in a window's Workspace
   settings to show only that window's folders (not the rest of its repo), or `all` to see every session in every
@@ -80,8 +83,10 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
 
 **Archiving.** A session archives itself when every PR it created is merged or closed, or when it closes without
 making a PR. You can also archive by hand. When the session has worktrees, archiving offers to remove them, shows
-how many uncommitted files each one has, and offers a force removal that deletes those files. Installed plugins
-can add their own cleanup steps; you are asked first. Sending a new prompt to an archived session brings it back.
+how many uncommitted files each one has, and offers a force removal that deletes those files. Installed plugins can
+add their own cleanup steps; you are asked first. It also offers to remove Docker Compose projects the session
+started (`docker compose up`, `run` or `create`) or that run from one of its worktrees, with their volumes, unless
+another active session uses them. Sending a new prompt to an archived session brings it back.
 
 **Notifications.** A warning when a session needs permission or asks a question, and an info message when it
 finishes. The **Open Session** button jumps straight to the session. No popup shows for a session whose chat is

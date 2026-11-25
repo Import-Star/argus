@@ -10,6 +10,7 @@ import { ControlCenter } from "./providers/ControlCenter";
 import { SessionTreeProvider } from "./providers/SessionTreeProvider";
 import { createSessionsTab } from "./providers/SessionsTab";
 import { createSettingsTab } from "./providers/SettingsTab";
+import { ComposeMonitor } from "./services/ComposeMonitor";
 import { ArchiveCleanupRegistry, archiveWithCleanup, deleteWorktree } from "./services/archiveSession";
 import { GhPrSyncService } from "./services/GhPrSyncService";
 import { findNode, installHooks, removeHooks } from "./services/HookInstaller";
@@ -45,6 +46,7 @@ function cardOf(arg: unknown): SessionCard | undefined {
 export function activate(context: vscode.ExtensionContext): ArgusApi {
   const prSync = new GhPrSyncService();
   const sessions = new SessionStore(prSync);
+  const compose = new ComposeMonitor(sessions);
   const controlCenter = new ControlCenter(context);
   context.subscriptions.push(controlCenter.registerSerializer());
   const chips = new SessionChipsRegistry();
@@ -73,6 +75,8 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
     pluginSections: (card) => chatDetails.sectionsFor(card),
     pluginAction: (sessionId, key, itemId, value) => chatDetails.action(sessionId, key, itemId, value),
     onDidChangePluginSections: (listener) => chatDetails.onDidChange(listener),
+    composeProjects: (record) => compose.forSession(record),
+    onDidChangeCompose: compose.onDidChange,
     chatExtensions,
     planUsage: () => (usage ? usage.service.planUsage() : null),
     onDidChangePlanUsage: usageChanged.event
@@ -89,13 +93,13 @@ export function activate(context: vscode.ExtensionContext): ArgusApi {
   settingsTab.attach(settingsTabHandle);
   context.subscriptions.push(settingsTabHandle, ...settingsTab.disposables);
 
-  const tree = new SessionTreeProvider(sessions, tracking);
+  const tree = new SessionTreeProvider(sessions, tracking, compose);
   const treeView = vscode.window.createTreeView("argusSessions", { treeDataProvider: tree });
   tree.attach(treeView);
   const status = new AttentionStatusBar(sessions);
   context.subscriptions.push(new AttentionNotifier(sessions, (sessionId) => chat.host?.isViewing(sessionId) ?? false));
 
-  context.subscriptions.push(sessions, controlCenter, treeView, tree, status, sessionsTabHandle, ...sessionsTab.disposables);
+  context.subscriptions.push(sessions, compose, controlCenter, treeView, tree, status, sessionsTabHandle, ...sessionsTab.disposables);
   context.subscriptions.push(new KeepAwake(sessions));
 
   const register = (command: string, handler: (...args: unknown[]) => unknown) =>
