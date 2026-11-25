@@ -5,6 +5,7 @@ import * as net from "net";
 import * as path from "path";
 import { daemonPaths } from "../../src/chat/daemonPaths";
 import { DAEMON_PROTOCOL, QUERY_UNSUPPORTED, SESSION_METHODS, encodeFrame, frameReader, type ClientFrame, type DaemonFrame, type HelloResult, type OpenOptions } from "../../src/chat/daemonProtocol";
+import { killProcessTree } from "../../src/chat/processTree";
 import { hasTranscript } from "../host/restore";
 import { AgentSession } from "./AgentSession";
 
@@ -59,7 +60,16 @@ const broadcastLog = (line: string): void => {
   }
 };
 
+let shuttingDown = false;
+
 function shutdown(code: number): void {
+  if (shuttingDown) {
+    return;
+  }
+  shuttingDown = true;
+  // A chat that's still working, or has background tasks, is being cut off: its Claude Code process and whatever
+  // that started would otherwise outlive this process.
+  const busy = [...entries.values()].filter((entry) => !entry.session.stoppable).map((entry) => entry.session.sessionId);
   for (const entry of entries.values()) {
     entry.session.dispose();
   }
@@ -72,12 +82,21 @@ function shutdown(code: number): void {
   if (process.platform !== "win32") {
     fs.rmSync(paths.socket, { force: true });
   }
-  // Started here rather than by the windows, whose race to spawn could bring back an older build.
-  if (nextScript) {
-    spawn(process.execPath, [nextScript], { detached: true, stdio: "ignore", windowsHide: true, env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" } }).unref();
+  const stopChildren = busy.length > 0 ? killProcessTree(process.pid, { keepRoot: true }) : Promise.resolve();
+  if (busy.length > 0) {
+    log(`stopping the processes of ${busy.join(", ")}`);
   }
-  log(`exit ${code}`);
-  setTimeout(() => process.exit(code), 200);
+  void stopChildren
+    .catch((error: unknown) => log(`couldn't stop child processes: ${error instanceof Error ? error.message : String(error)}`))
+    .then(() => {
+      // Started here rather than by the windows, whose race to spawn could bring back an older build. Started after
+      // the children are stopped, so it isn't one of them.
+      if (nextScript) {
+        spawn(process.execPath, [nextScript], { detached: true, stdio: "ignore", windowsHide: true, env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" } }).unref();
+      }
+      log(`exit ${code}`);
+      setTimeout(() => process.exit(code), 200);
+    });
 }
 
 function checkExit(): void {
