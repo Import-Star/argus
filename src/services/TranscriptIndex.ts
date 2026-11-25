@@ -95,7 +95,7 @@ export class TranscriptIndex {
     return changed;
   }
 
-  // Sessions whose prompts or replies contain every term, with a snippet around the first term.
+  // Sessions whose prompts or replies contain every term, with the first prompt or reply that has the first term.
   public async search(refs: readonly TranscriptRef[], query: string): Promise<Map<string, string>> {
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
     const matches = new Map<string, string>();
@@ -110,7 +110,7 @@ export class TranscriptIndex {
       }
       state.lower ??= state.texts.join("\n").toLowerCase();
       if (terms.every((term) => state.lower?.includes(term))) {
-        matches.set(ref.sessionId, snippet(state.texts, terms[0]));
+        matches.set(ref.sessionId, state.texts.find((text) => text.toLowerCase().includes(terms[0])) ?? "");
       }
     }
     return matches;
@@ -302,11 +302,3 @@ function timerFrom(
   }
 }
 
-function snippet(texts: string[], term: string): string {
-  const text = texts.find((candidate) => candidate.toLowerCase().includes(term)) ?? "";
-  const flat = text.replace(/\s+/g, " ");
-  const at = flat.toLowerCase().indexOf(term);
-  const start = Math.max(0, at - 60);
-  const end = Math.min(flat.length, at + term.length + 100);
-  return `${start > 0 ? "…" : ""}${flat.slice(start, end)}${end < flat.length ? "…" : ""}`;
-}

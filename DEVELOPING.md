@@ -92,6 +92,7 @@ src/services/
   archiveSession.ts               archive (one session or a batch) plus plugin-supplied cleanup (registerArchiveCleanup)
   chatDetails.ts                  plugin sections for the chat Details pane (registerChatDetails)
   chatExtensions.ts               plugin scripts that run in the chat webview (registerChatExtension)
+  search.ts                       Argus search over chats and plugin items (registerSearchSource)
   importChats.ts                  builds session records from existing Claude Code transcripts (Import Existing Claude Chats)
   PrLinkParser.ts                 PR URL parsing, exposed as api.prs.parse
   UsageService.ts                 Claude plan usage, reads from Anthropic's OAuth endpoint
@@ -103,6 +104,7 @@ media/host.js, styles.css        Control Center webview shell: tab switching, sh
 media/sessions.js                the Sessions tab: board, search, keyboard shortcuts, multi-select
 media/settings.js, settings.css  the Settings tab
 media/welcome.js                 Welcome page buttons
+media/search.js, search.css      the search overlay, loaded by the Control Center and bundled into the chat webview
 chat/host/ChatSession.ts         window-side stand-in for a chat: forwards its calls to the daemon
 chat/host/daemonClient.ts        the window's connection to the daemon: spawn, hello, reconnect
 chat/daemon/AgentSession.ts      the session that runs the Agent SDK query
@@ -245,6 +247,10 @@ These work without a tab:
   carries the rendered element, the markdown, `setActive()` and an `overlay` for floating controls. `media: ["data:"]`
   (or `"blob:"`) lets the script play audio or video it builds. Registering or disposing reloads open chat tabs. Types
   are in `argus-webview.d.ts`; check for it with `?.` like `registerChatDetails`.
+- `argus.registerSearchSource?.({ label, onOpen(item) })` makes your items findable in Argus search (Cmd+K / Ctrl+K in
+  the Control Center or a chat). Call `.set(items)` on the returned handle with every item (`id`, `title`, optional
+  `detail` and `text`) whenever your data changes; Argus does the matching. Picking a result calls `onOpen`, e.g. to
+  open your tab on that item. Check for it with `?.`.
 
 ### Start a linked session
 

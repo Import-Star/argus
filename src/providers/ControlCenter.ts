@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { ArgusTab, TabHandle } from "../types";
+import type { SearchRegistry } from "../services/search";
 
 const ACTIVE_TAB_KEY = "argus.controlCenter.activeTab";
 
@@ -30,8 +31,12 @@ export class ControlCenter implements vscode.Disposable {
   private readonly tabs = new Map<string, RegisteredTab>();
   private activeTabId: string | undefined;
   private readonly disposables: vscode.Disposable[] = [];
+  private searchOnLoad = false;
 
-  public constructor(private readonly context: vscode.ExtensionContext) {
+  public constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly search: SearchRegistry
+  ) {
     this.activeTabId = context.globalState.get<string>(ACTIVE_TAB_KEY);
   }
 
@@ -93,6 +98,17 @@ export class ControlCenter implements vscode.Disposable {
         { retainContextWhenHidden: true, ...this.webviewOptions() }
       )
     );
+  }
+
+  // Shows the search overlay, opening the Control Center first when it's closed.
+  public async showSearch(): Promise<void> {
+    if (this.panel) {
+      this.panel.reveal(undefined, false);
+      void this.panel.webview.postMessage({ type: "searchShow" });
+      return;
+    }
+    this.searchOnLoad = true;
+    await this.openControlCenter();
   }
 
   public registerSerializer(): vscode.Disposable {
@@ -165,7 +181,7 @@ export class ControlCenter implements vscode.Disposable {
   }
 
   private async handleMessage(message: unknown): Promise<void> {
-    const msg = message as { type?: string; tab?: string; message?: unknown; sessionId?: string; url?: string } | undefined;
+    const msg = message as { type?: string; tab?: string; message?: unknown; sessionId?: string; url?: string; query?: string; source?: string; id?: string } | undefined;
     if (!msg || typeof msg.type !== "string") {
       return;
     }
@@ -184,6 +200,16 @@ export class ControlCenter implements vscode.Disposable {
       case "openSession":
         if (typeof msg.sessionId === "string") {
           await vscode.commands.executeCommand("argus.sessions.open", { record: { sessionId: msg.sessionId } });
+        }
+        return;
+      case "search":
+        if (typeof msg.query === "string") {
+          void this.panel?.webview.postMessage({ type: "searchResults", query: msg.query, results: await this.search.search(msg.query) });
+        }
+        return;
+      case "searchOpen":
+        if (typeof msg.source === "string" && typeof msg.id === "string") {
+          await this.search.open(msg.source, msg.id);
         }
         return;
       case "tab": {
@@ -214,6 +240,8 @@ export class ControlCenter implements vscode.Disposable {
     const nonce = getNonce();
     const hostUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "host.js"));
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "styles.css"));
+    const searchUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "search.js"));
+    const searchStyleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "search.css"));
 
     const ordered = [...this.tabs.values()].sort((a, b) => (a.tab.order ?? 100) - (b.tab.order ?? 100));
     const active = this.activeTabId && this.tabs.has(this.activeTabId) ? this.activeTabId : ordered[0]?.tab.id;
@@ -221,15 +249,17 @@ export class ControlCenter implements vscode.Disposable {
     const tabsMeta = ordered.map((entry) => ({ id: entry.tab.id, title: entry.tab.title, badge: entry.badge }));
     // Escape "<" as the JSON escape u003c (backslash built with fromCharCode) so a tab title can never close the script element.
     const json = (value: unknown) => JSON.stringify(value).replace(/</g, String.fromCharCode(92) + "u003c");
-    const initScript = `window.__argusTabs = ${json(tabsMeta)}; window.__argusActive = ${json(active ?? "")};`;
+    const initScript = `window.__argusTabs = ${json(tabsMeta)}; window.__argusActive = ${json(active ?? "")}; window.__argusSearch = ${this.searchOnLoad};`;
+    this.searchOnLoad = false;
 
-    const styleLinks = [`<link rel="stylesheet" href="${styleUri}" />`];
+    const styleLinks = [`<link rel="stylesheet" href="${styleUri}" />`, `<link rel="stylesheet" href="${searchStyleUri}" />`];
     const extraStyles = ordered
       .filter((entry) => entry.tab.style)
       .map((entry) => `<link rel="stylesheet" href="${webview.asWebviewUri(entry.tab.style as vscode.Uri)}" />`);
 
     const scriptTags = [
       `<script nonce="${nonce}">${initScript}</script>`,
+      `<script nonce="${nonce}" src="${searchUri}"></script>`,
       `<script nonce="${nonce}" src="${hostUri}"></script>`,
       ...ordered.map((entry) => `<script nonce="${nonce}" src="${webview.asWebviewUri(entry.tab.script)}"></script>`)
     ];

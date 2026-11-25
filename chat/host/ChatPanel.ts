@@ -208,6 +208,14 @@ export class ChatPanel implements vscode.Disposable {
       await this.manager.extensions.receive(message.id, message.message, (reply) => this.post({ type: "extension", id: message.id, message: reply }));
       return;
     }
+    if (message.type === "search") {
+      this.post({ type: "searchResults", query: message.query, results: await this.manager.search.search(message.query) });
+      return;
+    }
+    if (message.type === "searchOpen") {
+      await this.manager.search.open(message.source, message.id);
+      return;
+    }
     if (message.type === "copy") {
       await vscode.env.clipboard.writeText(message.text);
       return;

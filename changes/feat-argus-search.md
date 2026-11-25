@@ -1,0 +1,1 @@
+- Search every chat and plugin item with `Cmd+K` (`Ctrl+K`) in the Control Center or an Argus chat, or **Argus: Search**. Plugins add their own items with `registerSearchSource`.

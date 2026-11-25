@@ -1,5 +1,6 @@
 import type { EffortLevel, PermissionMode, SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { Panel, PanelKind } from "./panels";
+import type { SearchResult } from "../services/search";
 
 export type { EffortLevel, PermissionMode, SDKMessage };
 
@@ -196,6 +197,8 @@ export type HostMessage =
   // refresh: update the panel only if it is already open.
   | { type: "panel"; sessionId: string; panel: Panel; refresh?: boolean }
   | { type: "openPlan"; sessionId: string }
+  | { type: "searchShow" }
+  | { type: "searchResults"; query: string; results: SearchResult[] }
   | { type: "extension"; id: string; message: unknown };
 
 export type WebviewMessage =
@@ -238,4 +241,6 @@ export type WebviewMessage =
   | { type: "asideClose"; sessionId: string }
   | { type: "pluginAction"; sessionId: string; key: string; itemId: string; value?: string }
   | { type: "panelAction"; sessionId: string; kind: PanelKind; action: string; payload?: unknown }
+  | { type: "search"; query: string }
+  | { type: "searchOpen"; source: string; id: string }
   | { type: "extension"; id: string; message: unknown };

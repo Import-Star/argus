@@ -13,6 +13,7 @@ export const activateChat: ActivateChat = (context, deps) => {
     respond: (sessionId, id, decision) => manager.respond(sessionId, id, decision),
     send: (sessionId, text) => manager.send(sessionId, text),
     closeSession: (sessionId) => manager.closeSession(sessionId),
+    showSearch: () => manager.showSearch(),
     onDidChangePending: manager.onDidChangePending,
     dispose: () => manager.dispose()
   };
