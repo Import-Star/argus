@@ -379,7 +379,7 @@ const SCREENS = [
   { name: "workflow-conversation", ...CHAT_PAGE, fixture: "workflow", steps: workflowConversationSteps, expect: { conversation: ".wf-conversation", user: ".wf-conversation .tr-user", bash: ".wf-conversation .tr-bash-cmd" } },
   { name: "findings", ...CHAT_PAGE, steps: findingsSteps, expect: { card: ".tr-finding", file: ".tr-finding-file", severity: ".tr-sev", rows: ".tr-finding-rows dt", actions: ".tr-finding-actions button" } },
   { name: "text-only", ...CHAT_PAGE, steps: textOnlySteps, expect: { pill: '.tr-pill[aria-pressed="true"]', divider: ".tr-hidden", text: ".tr-text" } },
-  { name: "details", ...CHAT_PAGE, steps: detailsSteps, expect: { limits: ".det-limit", warn: ".det-meter.warn", background: ".det-bg", output: ".det-bg-output", stop: ".det-bg-actions button[aria-label^=Stop]", finished: '.det-bg svg[aria-label="done"]' } },
+  { name: "details", ...CHAT_PAGE, steps: detailsSteps, whatsNew: { file: "0.20.0-compose.png", clip: (page) => [page.locator(".det-section", { hasText: "Docker Compose" })] }, expect: { limits: ".det-limit", warn: ".det-meter.warn", background: ".det-bg", output: ".det-bg-output", stop: ".det-bg-actions button[aria-label^=Stop]", finished: '.det-bg svg[aria-label="done"]' } },
   { name: "history", ...CHAT_PAGE, steps: historySteps, expect: { actions: ".tr-actions", usage: ".tr-usage", user: ".tr-user" } },
   { name: "history-search", ...CHAT_PAGE, messages: () => fixture("history").messages, steps: searchSteps, expect: { search: ".tr-search", count: ".tr-search-count", output: ".tr-output", thinking: ".tr-thinking-body" } },
   { name: "working", ...CHAT_PAGE, expect: { working: ".tr-working", glyph: ".tr-working-glyph", meta: ".tr-working-meta" } },
@@ -414,7 +414,7 @@ const SCREENS = [
   { name: "command-output", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").cmdout, expect: { table: "pre.tr-cmdout", markdown: ".tr-text table" } },
   { name: "mermaid", html: "mermaid.html", steps: mermaidSteps, expect: { diagrams: ".mermaid-diagram:not([hidden]) svg", toggle: ".mermaid-toggle:not([hidden])", error: ".mermaid-error:not([hidden])", fallback: ".mermaid-block[data-state=error] .code-block" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } },
-  { name: "search", ...CHAT_PAGE, fixture: "chat", steps: argusSearchSteps, expect: { box: ".argus-search-box", groups: ".argus-search-group", rows: ".argus-search-row", selected: ".argus-search-row.selected", marks: ".argus-search mark" } },
+  { name: "search", ...CHAT_PAGE, fixture: "chat", steps: argusSearchSteps, whatsNew: { file: "0.20.0-search.png", clip: (page) => [page.locator(".argus-search-box")] }, expect: { box: ".argus-search-box", groups: ".argus-search-group", rows: ".argus-search-row", selected: ".argus-search-row.selected", marks: ".argus-search mark" } },
   { name: "search-center", ...CENTER_PAGE, tab: "sessions", messages: () => fixture("board").messages, steps: argusSearchSteps, expect: { box: ".argus-search-box", rows: ".argus-search-row" } },
   { name: "search-light", ...CHAT_PAGE, theme: "light", fixture: "chat", steps: argusSearchSteps, expect: { box: ".argus-search-box" } }
 ];

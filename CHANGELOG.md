@@ -2,10 +2,27 @@
 
 First public release.
 
-## Unreleased
+## 0.20.0
 
+### Highlights
+
+- **Search everything with `Cmd+K`.** Press `Cmd+K` (`Ctrl+K`) in the Control Center or an Argus chat to find
+  any chat by its title or what was said in it, plus items from your plugins, and jump straight to it.
+
+  ![Search results grouped into chats, work board items and GitHub Actions](media/whats-new/0.20.0-search.png)
+
+- **See and clean up each session's Docker Compose projects.** The sidebar and the chat's Details pane show which
+  Compose projects a session started and whether they're running. Archiving the session offers to remove them.
+
+  ![Two Compose projects in the Details pane, one running and one stopped](media/whats-new/0.20.0-compose.png)
+
+### Changes
+
+- Search every chat and plugin item with `Cmd+K` (`Ctrl+K`) in the Control Center or an Argus chat, or **Argus: Search**. Plugins add their own items with `registerSearchSource`.
+- The sidebar and the chat's Details pane list each session's Docker Compose projects, with a green light when one is running, and archiving a session offers to remove them with their volumes.
 - Fix an Argus chat that failed to start once (e.g. `claude` wasn't found) never starting again until the background process restarted, showing the transcript as it was at that first try and no model or effort pickers. The chat's status now says why it couldn't start.
 - Find a Homebrew install of Claude Code when VS Code starts without your shell's PATH.
+- Fix **Restart Now** leaving Argus chat waiting and every agent running: it now ends the previous background process from the window, even one from an older Argus that ignores the request, along with its chats' Claude processes and their background commands. The background process also stops those processes itself when it exits while a chat is still busy.
 
 ## 0.19.0
 

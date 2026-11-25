@@ -1,1 +1,0 @@
-- The sidebar and the chat's Details pane list each session's Docker Compose projects, with a green light when one is running, and archiving a session offers to remove them with their volumes.
