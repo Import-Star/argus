@@ -212,7 +212,7 @@ handover and offers **Restart Now**, which stops the old process's running chats
   its board card would, removing the tile). Double-click a tile's title, or the group name in the bar, to rename it.
 
 `argus.chat.claudePath` sets the `claude` executable (empty: `claude` on your PATH, then `~/.local/bin`, where Claude
-Code's installer puts it). Without Claude Code, Argus offers to install it: **Argus: Install or Update Claude Code** runs
+Code's installer puts it, then Homebrew's `/opt/homebrew/bin` and `/usr/local/bin`). Without Claude Code, Argus offers to install it: **Argus: Install or Update Claude Code** runs
 Anthropic's official installer in a terminal (`irm https://claude.ai/install.ps1 | iex` on Windows,
 `curl -fsSL https://claude.ai/install.sh | bash` elsewhere), then opens `claude` once so you can sign in. On startup
 and every 4 hours Argus compares `claude --version` with the newest release on your `autoUpdatesChannel` and, once
@@ -312,7 +312,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.whatsNew.showOnUpdate` | `true` | Open **What's New** once after Argus updates. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
-| `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`. |
+| `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then Homebrew's folders. |
 | `argus.chat.askForFolder` | `false` | In a window with several workspace folders, ask which folder each new chat starts in. Off: the first folder. |
 | `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (tool calls hidden). Each chat remembers its own toggle. |
 | `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name (`Haiku 4.5`) or id. A chat's current model stays listed. |

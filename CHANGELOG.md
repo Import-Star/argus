@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- Fix an Argus chat that failed to start once (e.g. `claude` wasn't found) never starting again until the background process restarted, showing the transcript as it was at that first try and no model or effort pickers. The chat's status now says why it couldn't start.
+- Find a Homebrew install of Claude Code when VS Code starts without your shell's PATH.
+
 ## 0.19.0
 
 - Start an Argus chat from a `vscode://importstar.argus-control-center/new-agent?prompt=...` link, in the window's first folder or the folder in `cwd`.

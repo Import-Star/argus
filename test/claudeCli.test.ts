@@ -21,6 +21,12 @@ describe("findClaude", () => {
     assert.equal(findClaude("", "darwin", nowhere, (file) => file === "/Users/me/.local/bin/claude", "/Users/me"), "/Users/me/.local/bin/claude");
     assert.equal(findClaude("", "win32", nowhere, (file) => file === "C:\\Users\\me\\.local\\bin\\claude.exe", "C:\\Users\\me"), "C:\\Users\\me\\.local\\bin\\claude.exe");
   });
+  it("then Homebrew's folders, for a VS Code started with a bare PATH", () => {
+    assert.equal(findClaude("", "darwin", nowhere, (file) => file === "/opt/homebrew/bin/claude", "/Users/me"), "/opt/homebrew/bin/claude");
+    assert.equal(findClaude("", "darwin", nowhere, (file) => file === "/usr/local/bin/claude", "/Users/me"), "/usr/local/bin/claude");
+    assert.equal(findClaude("", "darwin", nowhere, (file) => file === "/Users/me/.local/bin/claude" || file === "/opt/homebrew/bin/claude", "/Users/me"), "/Users/me/.local/bin/claude");
+    assert.equal(findClaude("", "win32", nowhere, (file) => file === "/opt/homebrew/bin/claude", "C:\\Users\\me"), undefined);
+  });
   it("finds nothing when Claude Code isn't installed", () => {
     assert.equal(findClaude("", "linux", nowhere, () => false, "/home/me"), undefined);
   });
