@@ -119,6 +119,16 @@ describe("session-tracker hook", () => {
     fire({ hook_event_name: "Stop", last_assistant_message: "done" });
     assert.equal(saved().pendingWorktrees, undefined);
   });
+  it("records the folder and project of a docker compose up", () => {
+    const command = `export COMPOSE_PROJECT_NAME=wt1 && cd ${path.join(home, "repo")} && docker compose --file=infra/compose.yml up -d db`;
+    fire({ hook_event_name: "PostToolUse", cwd: home, tool_name: "Bash", tool_input: { command } });
+    fire({ hook_event_name: "PostToolUse", cwd: home, tool_name: "Bash", tool_input: { command: "docker-compose -p other up" } });
+    assert.deepEqual(saved().composeStacks, [{ dir: path.join(home, "repo", "infra"), project: "wt1" }, { dir: home, project: "other" }]);
+  });
+  it("ignores docker compose commands that create no containers", () => {
+    fire({ hook_event_name: "PostToolUse", cwd: home, tool_name: "Bash", tool_input: { command: "docker compose -f a.yml logs -f up" } });
+    assert.equal(saved().composeStacks, undefined);
+  });
 });
 
 function makeRepo(): { repo: string; git: (...args: string[]) => void } {

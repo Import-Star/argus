@@ -41,6 +41,8 @@ export interface SessionRecord {
   lastMessage?: string;
   prs: string[];
   worktrees?: string[];
+  // `docker compose up/run/create` the session ran: the folder Compose ran from, and the project name if one was set.
+  composeStacks?: { dir: string; project?: string }[];
   // Plugin links, set when a session is started with sessions.start({ link }). Key: plugin id, value: plugin item id.
   links?: Record<string, string>;
   lastTool?: string;

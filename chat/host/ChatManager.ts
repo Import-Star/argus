@@ -71,6 +71,7 @@ export class ChatManager implements vscode.Disposable {
       this.log,
       deps.onDidChangeCards(() => this.broadcastCards()),
       deps.onDidChangePluginSections(() => this.broadcastCards()),
+      deps.onDidChangeCompose(() => this.broadcastCards()),
       deps.onDidChangePlanUsage(() => this.broadcastPlanUsage()),
       deps.chatExtensions.onDidChange(() => this.reloadPanels()),
       deps.chatExtensions.onDidPost((id, message) => this.panels.forEach((panel) => panel.post({ type: "extension", id, message }))),
@@ -518,6 +519,7 @@ export class ChatManager implements vscode.Disposable {
       sessionId,
       worktree: card.worktree,
       worktrees: this.worktreesOf(card.record, card.worktree),
+      compose: this.deps.composeProjects(card.record),
       prs: card.prs.map((pr) => ({
         key: pr.key,
         title: pr.title,

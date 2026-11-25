@@ -25,10 +25,18 @@ interface SessionRecord {
   worktrees?: string[];
   // `git worktree add` paths that were not a worktree yet when the hook saw them, e.g. a background command
   pendingWorktrees?: { path: string; since: number }[];
+  composeStacks?: ComposeStack[];
   links?: Record<string, string>;
   lastTool?: string;
   endReason?: string;
   subagents?: Record<string, string>;
+}
+
+// A `docker compose up/run/create` the session ran: the folder Compose records on its containers, and the project
+// name when the command set one.
+interface ComposeStack {
+  dir: string;
+  project?: string;
 }
 
 interface HookInput {
@@ -58,6 +66,9 @@ const LEGACY_CARD_MARKER = /\[argus-card:([A-Za-z0-9_]+)\]/g;
 // `git worktree add` flags that take a value; every other flag stands alone
 const WORKTREE_ADD_VALUE_FLAGS = new Set(["-b", "-B", "--reason"]);
 const PENDING_WORKTREE_MS = 10 * 60_000;
+// `docker compose` flags before the subcommand that take a value; every other flag stands alone
+const COMPOSE_VALUE_FLAGS = new Set(["-f", "--file", "-p", "--project-name", "--project-directory", "--env-file", "--profile", "--ansi", "--progress", "--parallel"]);
+const COMPOSE_CREATES = new Set(["up", "run", "create"]);
 
 const PR_URL = /https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/\d+/g;
 
@@ -165,13 +176,9 @@ function linkPendingWorktrees(record: SessionRecord, now: number): void {
   record.pendingWorktrees = pending.length > 0 ? pending : undefined;
 }
 
-function worktreeAddPath(command: string, cwd: string): string | undefined {
-  const match = command.match(/\bgit\s+(?:-C\s+(\S+)\s+)?worktree\s+add\s+([^;&|]*)/);
-  if (!match) {
-    return undefined;
-  }
-  const before = command.slice(0, match.index);
-  // A `cd` earlier in the same command moves where a relative path starts.
+// The folder and shell variables in effect at `index` of a command, after any earlier `cd` and `NAME=value`.
+function shellContext(command: string, index: number, cwd: string): { cwd: string; vars: Map<string, string>; word: (value: string) => string } {
+  const before = command.slice(0, index);
   for (const cd of before.matchAll(/(?:^|[;&|]\s*)cd\s+(\S+)/g)) {
     cwd = path.resolve(cwd, cd[1].replace(/^["']|["']$/g, "").replace(/^~(?=$|[\\/])/, os.homedir()));
   }
@@ -181,12 +188,51 @@ function worktreeAddPath(command: string, cwd: string): string | undefined {
   }
   const word = (value: string): string =>
     value.replace(/^["']|["']$/g, "").replace(/\$\{?([A-Za-z_]\w*)\}?/g, (ref, name: string) => vars.get(name) ?? ref);
+  return { cwd, vars, word };
+}
+
+function worktreeAddPath(command: string, cwd: string): string | undefined {
+  const match = command.match(/\bgit\s+(?:-C\s+(\S+)\s+)?worktree\s+add\s+([^;&|]*)/);
+  if (!match) {
+    return undefined;
+  }
+  const { cwd: base, word } = shellContext(command, match.index ?? 0, cwd);
   const words = match[2].trim().split(/\s+/);
   for (let i = 0; i < words.length; i++) {
     if (WORKTREE_ADD_VALUE_FLAGS.has(words[i])) {
       i++;
     } else if (!words[i].startsWith("-")) {
-      return path.resolve(match[1] ? path.resolve(cwd, word(match[1])) : cwd, word(words[i]));
+      return path.resolve(match[1] ? path.resolve(base, word(match[1])) : base, word(words[i]));
+    }
+  }
+  return undefined;
+}
+
+function composeStack(command: string, cwd: string): ComposeStack | undefined {
+  const match = command.match(/\bdocker(?:\s+compose|-compose)\s+([^;&|]*)/);
+  if (!match) {
+    return undefined;
+  }
+  const context = shellContext(command, match.index ?? 0, cwd);
+  const flags = new Map<string, string>();
+  const words = match[1].trim().split(/\s+/);
+  for (let i = 0; i < words.length; i++) {
+    const [flag, inline] = words[i].split(/=(.*)/);
+    if (COMPOSE_VALUE_FLAGS.has(flag)) {
+      const value = context.word(inline ?? words[++i] ?? "");
+      // Compose takes its folder from the first -f file.
+      if (!flags.has(flag)) {
+        flags.set(flag, value);
+      }
+    } else if (!flag.startsWith("-")) {
+      if (!COMPOSE_CREATES.has(flag)) {
+        return undefined;
+      }
+      const file = flags.get("-f") ?? flags.get("--file");
+      const projectDir = flags.get("--project-directory");
+      const dir = projectDir ? path.resolve(context.cwd, projectDir) : file ? path.dirname(path.resolve(context.cwd, file)) : context.cwd;
+      const project = flags.get("-p") ?? flags.get("--project-name") ?? context.vars.get("COMPOSE_PROJECT_NAME");
+      return project ? { dir, project } : { dir };
     }
   }
   return undefined;
@@ -301,6 +347,10 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       const added = worktreeAddPath(command, input.cwd ?? record.cwd);
       if (added && !linkWorktree(record, added)) {
         record.pendingWorktrees = [...(record.pendingWorktrees ?? []).filter((item) => item.path !== added), { path: added, since: now }];
+      }
+      const stack = input.tool_name === "Bash" ? composeStack(command, input.cwd ?? record.cwd) : undefined;
+      if (stack && !(record.composeStacks ?? []).some((known) => known.dir === stack.dir && known.project === stack.project)) {
+        record.composeStacks = [...(record.composeStacks ?? []), stack];
       }
       return;
     }
