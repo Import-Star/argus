@@ -704,6 +704,10 @@
   top: -11px;
 }
 
+.tr-item:has(> .tr-user):has(> .tr-actions) {
+  padding-top: 16px;
+}
+
 .tr-usage {
   margin-top: -8px;
   color: var(--dim);
