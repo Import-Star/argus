@@ -23,4 +23,4 @@ Argus is local-only. It has no telemetry.
 
 Network use: `gh` calls to GitHub for PR state and PR diffs, using your existing `gh` login, and the Claude plan
 usage call above, and a request to `downloads.claude.ai` for the newest Claude Code version at startup and every 4
-hours. Argus chat talks to its background process over a local socket, which makes no network calls. A plugin may make its own network calls; see its README.
+hours. Argus chat talks to its background process over a local socket, which makes no network calls. A chat widget may load scripts from cdnjs.cloudflare.com, cdn.jsdelivr.net, unpkg.com or cdn.tailwindcss.com. A plugin may make its own network calls; see its README.

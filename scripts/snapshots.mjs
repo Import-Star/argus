@@ -75,6 +75,23 @@ async function mermaidSteps(page) {
   await page.locator(".mermaid-error:not([hidden])").waitFor();
 }
 
+// The widget's script only runs if the frame's CSP lets it, so wait for its output, then send a value to the composer.
+async function widgetSteps(page) {
+  const frame = page.frameLocator(".html-widget iframe");
+  await frame.locator("#out", { hasText: "°F" }).waitFor();
+  await frame.locator("#pick").click();
+  await page.waitForFunction(() => [...document.querySelectorAll("textarea")].some((box) => box.value.startsWith("Use 21 °C")));
+  // Remote images would let a widget send data out, so none of these may leave the frame.
+  const leaks = [];
+  page.on("requestfinished", (request) => request.url().startsWith("https://example.com/") && leaks.push(request.url()));
+  await page.frames().find((frame) => frame !== page.mainFrame()).evaluate(() => {
+    document.body.insertAdjacentHTML("beforeend", '<img src="https://example.com/img"><div style="background:url(https://example.com/css-bg)">x</div>');
+    new Image().src = "https://example.com/script-img";
+  });
+  await page.waitForTimeout(500);
+  if (leaks.length) throw new Error(`widget images left the frame: ${leaks.join(", ")}`);
+}
+
 async function planSteps(page) {
   await openIn(page, "Open plan");
   await page.locator(".plan-pane").waitFor();
@@ -412,6 +429,7 @@ const SCREENS = [
   { name: "panel-daemon-off", ...CHAT_PAGE, fixture: "panels", messages: panelBase("daemon-off"), expect: { state: ".daemon-dot", raw: ".daemon-raw", actions: ".daemon-actions button" } },
   { name: "header-chips", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").header, steps: headerSteps, expect: { header: ".chat-header", mcp: ".hdr-mcp", context: ".hdr-context", remote: ".hdr-pr" } },
   { name: "command-output", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").cmdout, expect: { table: "pre.tr-cmdout", markdown: ".tr-text table" } },
+  { name: "widget", html: "mermaid.html", steps: widgetSteps, cspBlocks: true, whatsNew: { file: "0.21.0-widget.png", clip: (page) => [page.locator(".tr-user").last(), page.locator(".html-widget")] }, expect: { card: ".html-widget", frame: ".html-widget iframe" } },
   { name: "mermaid", html: "mermaid.html", steps: mermaidSteps, expect: { diagrams: ".mermaid-diagram:not([hidden]) svg", toggle: ".mermaid-toggle:not([hidden])", error: ".mermaid-error:not([hidden])", fallback: ".mermaid-block[data-state=error] .code-block" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } },
   { name: "search", ...CHAT_PAGE, fixture: "chat", steps: argusSearchSteps, whatsNew: { file: "0.20.0-search.png", clip: (page) => [page.locator(".argus-search-box")] }, expect: { box: ".argus-search-box", groups: ".argus-search-group", rows: ".argus-search-row", selected: ".argus-search-row.selected", marks: ".argus-search mark" } },
@@ -423,9 +441,9 @@ async function shoot(browser, screen, errors) {
   const context = await browser.newContext({ viewport: { width: screen.width ?? 1440, height: screen.height ?? 900 }, deviceScaleFactor: WHATS_NEW ? 2 : 1 });
   const page = await context.newPage();
   const fail = (text) => errors.push(`${screen.name}: ${text}`);
-  page.on("console", (message) => message.type() === "error" && fail(`console error: ${message.text()}`));
+  page.on("console", (message) => message.type() === "error" && !(screen.cspBlocks && /Content Security Policy/.test(message.text())) && fail(`console error: ${message.text()}`));
   page.on("pageerror", (error) => fail(`page error: ${error.message}`));
-  page.on("requestfailed", (request) => fail(`request failed: ${request.url()}`));
+  page.on("requestfailed", (request) => !(screen.cspBlocks && request.failure()?.errorText === "csp") && fail(`request failed: ${request.url()}`));
 
   const tab = screen.tab;
   await page.addInitScript(`window.__SNAPSHOT_NOW = ${NOW};${tab ? `window.__argusTabs = ${JSON.stringify(TABS)}; window.__argusActive = ${JSON.stringify(tab)};` : ""}`);
