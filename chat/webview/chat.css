@@ -194,10 +194,13 @@ code,
   opacity: 0;
 }
 
+.tr-reply:has(> .tr-reply-copy) {
+  padding-top: 16px;
+}
+
 .tr-reply-copy {
-  top: auto;
-  bottom: -26px;
-  right: 0;
+  top: -11px;
+  right: 40px;
 }
 
 .code-block:hover > .copy-btn,
@@ -208,8 +211,8 @@ code,
 
 .tr-reply-actions {
   position: absolute;
-  bottom: -26px;
-  right: 28px;
+  top: -11px;
+  right: 68px;
   display: flex;
   gap: 4px;
   opacity: 0;

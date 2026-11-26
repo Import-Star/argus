@@ -10,8 +10,8 @@ describe("widgetSrcdoc", () => {
     assert.equal(doc.match(/<script nonce="abc\+\/="/gi)?.length, 3);
   });
 
-  it("limits script sources to the CDN hosts before any widget script", () => {
-    const policy = doc.indexOf(`content="script-src 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net"`);
+  it("limits scripts to the CDN hosts and images to data: before any widget script", () => {
+    const policy = doc.indexOf(`content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net"`);
     assert.ok(policy > 0 && policy < doc.search(/<script/i));
   });
 
