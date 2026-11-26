@@ -1,0 +1,1 @@
+- Fix the chat showing Claude as idle while it works on a message sent with **Send now**.

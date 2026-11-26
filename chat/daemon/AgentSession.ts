@@ -425,6 +425,10 @@ export class AgentSession {
     if (event.command_uuid && event.state) {
       this.queue.onLifecycle(event.command_uuid, event.state);
     }
+    // After an interrupt the CLI sends "running" before the stopped turn's result, so a queued message starts unannounced.
+    if (event.state === "started") {
+      this.setStatus(this.pending.size > 0 ? "needs-you" : "working");
+    }
     return true;
   }
 
