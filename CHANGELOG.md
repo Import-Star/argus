@@ -2,6 +2,21 @@
 
 First public release.
 
+## 0.21.0
+
+### Highlights
+
+- **Interactive widgets in chat.** Claude can show a small HTML/JS widget, such as a slider, calculator or chart, as
+  a card in an Argus chat. It runs in a sandboxed frame, and a button in it can put text in your message box.
+
+  ![A Celsius to Fahrenheit slider widget in an Argus chat](media/whats-new/0.21.0-widget.png)
+
+### Changes
+
+- Claude can show an interactive HTML/JS widget as a card in an Argus chat with its `show_html` tool. It runs in a sandboxed frame with no network access, and `argus.send(text)` puts text in your message box. **Show source** shows its HTML.
+- Fix the copy and fork buttons on Claude's replies in chat covering the reply's first line or the top of your next message. They now sit at the top right of the reply, above its text, and the buttons on your messages sit above the bubble instead of on its border.
+- Fix the chat showing Claude as idle while it works on a message sent with **Send now**.
+
 ## 0.20.1
 
 - Fix PR chips not updating once many PRs are linked: when GitHub times out on a batch of PRs, Argus retries in smaller batches.
