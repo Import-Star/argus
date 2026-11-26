@@ -1,0 +1,18 @@
+.html-widget iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.html-widget iframe[hidden] {
+  display: none;
+}
+
+.html-widget-source {
+  border-top: 1px solid var(--border);
+}
+
+.html-widget-source .code-block {
+  margin: 0;
+}

@@ -1,12 +1,13 @@
 // Draws ```mermaid blocks (marked up by markdown.ts) as diagrams. Mermaid is a few MB, so its bundle loads the first
 // time a diagram appears, with the same nonce as this script so the webview's CSP stays as strict as it is.
+import { nonce } from "./nonce";
+
 type Mermaid = {
   initialize(config: Record<string, unknown>): void;
   render(id: string, source: string): Promise<{ svg: string }>;
 };
 
 const self = document.currentScript as HTMLScriptElement | null;
-const nonce = self?.nonce ?? "";
 const bundleUrl = self?.src ? new URL("mermaid.js", self.src).href : "";
 
 let loading: Promise<Mermaid> | undefined;

@@ -1,4 +1,4 @@
-import { REVIEW_PROMPT_START, type SDKMessage } from "../../src/chat/protocol";
+import { REVIEW_PROMPT_START, SHOW_HTML_TOOL, type SDKMessage } from "../../src/chat/protocol";
 import { findingsFromText } from "./findings";
 import { isPlainOutput } from "../../src/chat/commandOutput";
 import { cleanUserText, splitShell } from "../../src/chat/conversationText";
@@ -45,6 +45,7 @@ export type Item =
   | { kind: "agent"; id: string; toolUseId: string; subagentType: string; description: string; taskId?: string; pending: boolean; error?: string }
   | { kind: "workflow"; id: string; toolUseId: string; input: Record<string, unknown> }
   | { kind: "tool"; id: string; name: string; summary: string; pending: boolean; error?: string }
+  | { kind: "html"; id: string; title: string; html: string }
   | { kind: "findings"; id: string; level?: string; findings: Finding[]; pending: boolean; error?: string }
   | { kind: "answers"; id: string; pairs: Answer[]; pending: boolean; skipped?: boolean }
   | { kind: "note"; id: string; text: string; tone: "muted" | "error"; reply?: boolean }
@@ -368,6 +369,8 @@ export function buildItems(messages: SDKMessage[]): Item[] {
       items.push(item);
     } else if (name === "Workflow") {
       items.push({ kind: "workflow", id, toolUseId: id, input });
+    } else if (name === SHOW_HTML_TOOL) {
+      items.push({ kind: "html", id, title: str(input.title), html: str(input.html) });
     } else {
       const item: Extract<Item, { kind: "tool" }> = { kind: "tool", id, name, summary: toolSummary(input), pending: true };
       waiting.set(id, (result) => Object.assign(item, { pending: false, error: result.isError ? result.text : undefined }));
@@ -518,7 +521,7 @@ const CALL_KINDS = new Set<Item["kind"]>(["edit", "bash", "todos", "agent", "wor
 
 const callCount = (item: Item): number => (item.kind === "lookups" ? item.calls.length : CALL_KINDS.has(item.kind) ? 1 : 0);
 
-const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || item.kind === "findings" || (item.kind === "note" && (item.tone === "error" || item.reply === true));
+const showsInTextOnly = (item: Item): boolean => item.kind === "user" || item.kind === "text" || item.kind === "usage" || item.kind === "findings" || item.kind === "html" || (item.kind === "note" && (item.tone === "error" || item.reply === true));
 
 export function textOnlyRows(items: Item[]): Row[] {
   const rows: Row[] = [];
@@ -610,6 +613,8 @@ export function searchText(item: Item): string {
       return JSON.stringify(item.input);
     case "tool":
       return [item.name, item.summary, item.error ?? ""].join("\n");
+    case "html":
+      return item.title;
     case "findings":
       return item.findings.flatMap((finding) => [finding.file, finding.title, finding.summary, finding.failureScenario]).join("\n");
     case "answers":

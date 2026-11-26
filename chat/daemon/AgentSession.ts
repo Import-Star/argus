@@ -13,7 +13,7 @@ import { chromeArgs, withLocalCommands } from "../../src/chat/localCommands";
 import type { PanelKind } from "../../src/chat/panels";
 import type { NewAgentRequest, SessionState } from "../../src/chat/daemonProtocol";
 import { countMcpIssues, toMcpServers, type McpStatus } from "../../src/chat/panels/mcp";
-import type { ChatMeta, ChatStatus, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, QueuedMessage } from "../../src/chat/protocol";
+import { MAX_WIDGET_HEIGHT, SHOW_HTML_TOOL, WIDGET_SCRIPT_HOSTS, type ChatMeta, type ChatStatus, type EffortLevel, type HostMessage, type PermissionDecision, type PermissionMode, type PermissionRequest, type QueuedMessage } from "../../src/chat/protocol";
 
 export interface AgentSessionOptions {
   sessionId?: string;
@@ -245,8 +245,9 @@ export class AgentSession {
           this.options.refreshPanel("loops");
           return {};
         }] }] },
+        // The widget is sandboxed away from the chat, files and network, so there's nothing to approve.
         canUseTool: (toolName, input, { signal, suggestions, decisionReason, blockedPath, toolUseID }) =>
-          this.ask({ toolName, input, suggestions, decisionReason, blockedPath, toolUseId: toolUseID, signal }),
+          toolName === SHOW_HTML_TOOL ? Promise.resolve({ behavior: "allow", updatedInput: input }) : this.ask({ toolName, input, suggestions, decisionReason, blockedPath, toolUseId: toolUseID, signal }),
         stderr: (data) => log(`[${this.sessionId}] ${data.trimEnd()}`)
       }
     });
@@ -279,7 +280,16 @@ export class AgentSession {
         return { content: [{ type: "text", text }] };
       }
     );
-    return createSdkMcpServer({ name: "argus", tools: [newAgent] });
+    const showHtml = tool(
+      "show_html",
+      `Show a small interactive HTML/JS widget (a calculator, slider, form or chart) as a card in this chat. Use it only when interacting helps the user more than text, a table or a mermaid diagram. The widget runs in a sandboxed frame with no access to the chat, files or network: fetch/XHR are blocked, and scripts must be inline or load from ${WIDGET_SCRIPT_HOSTS.join(" or ")} (pin a version). Inline on* attributes like onclick="..." are blocked, so attach handlers with addEventListener in a <script>. argus.send(text) puts text in the user's message box for them to send. The chat theme's --vscode-* CSS variables are set (e.g. var(--vscode-button-background)) and the body already uses its font and colours. The card shows up to ${MAX_WIDGET_HEIGHT}px tall and scrolls past that.`,
+      {
+        title: z.string().min(1).describe("Short name shown on the card."),
+        html: z.string().min(1).describe("An HTML fragment or a full document.")
+      },
+      async () => ({ content: [{ type: "text", text: "Shown in the chat." }] })
+    );
+    return createSdkMcpServer({ name: "argus", tools: [newAgent, showHtml] });
   }
 
   // Session-only loops as of the last finished turn; undefined until the first one ends.

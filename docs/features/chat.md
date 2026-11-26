@@ -43,6 +43,13 @@ running there warns you first, since two processes would write to one transcript
 - ` ```mermaid ` blocks in replies are drawn as diagrams in your theme's colours, with **Show source** to see the
   code. A block that doesn't parse stays as code, with the error above it. Mermaid loads the first time a reply has
   a diagram.
+- Claude can show a small interactive widget (a slider, calculator, form or chart) as a card in the chat with its
+  `show_html` tool, without asking first. The widget runs in a sandboxed frame: it can't read the chat page, call
+  VS Code, or make network requests (`fetch`, XHR and WebSockets are blocked). Scripts must be inline or load from
+  `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `unpkg.com` or `cdn.tailwindcss.com`, and inline `onclick=`
+  attributes don't run. A button in the widget can call `argus.send(text)` to put text in the message box; you
+  still press send. The widget uses your theme's `--vscode-*` colours and font, grows up to 600px tall and scrolls
+  past that. **Show source** shows its HTML.
 
 ## Details pane
 

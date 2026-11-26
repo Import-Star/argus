@@ -75,6 +75,14 @@ async function mermaidSteps(page) {
   await page.locator(".mermaid-error:not([hidden])").waitFor();
 }
 
+// The widget's script only runs if the frame's CSP lets it, so wait for its output, then send a value to the composer.
+async function widgetSteps(page) {
+  const frame = page.frameLocator(".html-widget iframe");
+  await frame.locator("#out", { hasText: "°F" }).waitFor();
+  await frame.locator("#pick").click();
+  await page.waitForFunction(() => [...document.querySelectorAll("textarea")].some((box) => box.value.startsWith("Use 21 °C")));
+}
+
 async function planSteps(page) {
   await openIn(page, "Open plan");
   await page.locator(".plan-pane").waitFor();
@@ -412,6 +420,7 @@ const SCREENS = [
   { name: "panel-daemon-off", ...CHAT_PAGE, fixture: "panels", messages: panelBase("daemon-off"), expect: { state: ".daemon-dot", raw: ".daemon-raw", actions: ".daemon-actions button" } },
   { name: "header-chips", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").header, steps: headerSteps, expect: { header: ".chat-header", mcp: ".hdr-mcp", context: ".hdr-context", remote: ".hdr-pr" } },
   { name: "command-output", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").cmdout, expect: { table: "pre.tr-cmdout", markdown: ".tr-text table" } },
+  { name: "widget", html: "mermaid.html", steps: widgetSteps, expect: { card: ".html-widget", frame: ".html-widget iframe" } },
   { name: "mermaid", html: "mermaid.html", steps: mermaidSteps, expect: { diagrams: ".mermaid-diagram:not([hidden]) svg", toggle: ".mermaid-toggle:not([hidden])", error: ".mermaid-error:not([hidden])", fallback: ".mermaid-block[data-state=error] .code-block" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } },
   { name: "search", ...CHAT_PAGE, fixture: "chat", steps: argusSearchSteps, whatsNew: { file: "0.20.0-search.png", clip: (page) => [page.locator(".argus-search-box")] }, expect: { box: ".argus-search-box", groups: ".argus-search-group", rows: ".argus-search-row", selected: ".argus-search-row.selected", marks: ".argus-search mark" } },

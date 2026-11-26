@@ -8,6 +8,7 @@ import { post, setUi, useSession } from "../store";
 import { scenarioParts, severityOf, type Severity } from "../findings";
 import { buildItems, displayPath, MAX_OUTPUT, messageUuid, searchText, textOnlyRows, turnOutputTokens, type Finding, type Item, type Row as TranscriptRow } from "../transcript";
 import { clearMatches, fillComposer, findMatches, paintMatches, revealMatch } from "../transcriptSearch";
+import { HtmlWidget } from "./HtmlWidget";
 import { Icon } from "./Icon";
 import { PermissionCard } from "./PermissionCard";
 import { TranscriptSearch } from "./TranscriptSearch";
@@ -432,6 +433,8 @@ export function Row({ item, sessionId, cwd, forceOpen }: { item: Item; sessionId
       return <WorkflowCard sessionId={sessionId} toolUseId={item.toolUseId} input={item.input} />;
     case "tool":
       return <Tool item={item} />;
+    case "html":
+      return <HtmlWidget item={item} sessionId={sessionId} />;
     case "findings":
       return <Findings item={item} sessionId={sessionId} forceOpen={forceOpen} />;
     case "answers":

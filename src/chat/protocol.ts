@@ -7,6 +7,10 @@ export type { EffortLevel, PermissionMode, SDKMessage };
 // Starts every review-comments prompt, so the transcript can show it as one short line.
 export const REVIEW_PROMPT_START = "Review comments on your changes.";
 
+export const SHOW_HTML_TOOL = "mcp__argus__show_html";
+export const WIDGET_SCRIPT_HOSTS = ["https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://unpkg.com", "https://cdn.tailwindcss.com"];
+export const MAX_WIDGET_HEIGHT = 600;
+
 export type ChatStatus = "starting" | "idle" | "working" | "needs-you" | "ended" | "error";
 
 export interface ModelOption {

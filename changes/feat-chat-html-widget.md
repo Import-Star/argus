@@ -1,0 +1,1 @@
+- Claude can show a small interactive HTML/JS widget in Argus chat with its `show_html` tool. The widget runs in a sandboxed frame and can put text in the message box for you to send.
