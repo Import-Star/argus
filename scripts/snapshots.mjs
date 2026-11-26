@@ -420,7 +420,7 @@ const SCREENS = [
   { name: "panel-daemon-off", ...CHAT_PAGE, fixture: "panels", messages: panelBase("daemon-off"), expect: { state: ".daemon-dot", raw: ".daemon-raw", actions: ".daemon-actions button" } },
   { name: "header-chips", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").header, steps: headerSteps, expect: { header: ".chat-header", mcp: ".hdr-mcp", context: ".hdr-context", remote: ".hdr-pr" } },
   { name: "command-output", ...CHAT_PAGE, fixture: "panels", messages: () => fixture("panels").cmdout, expect: { table: "pre.tr-cmdout", markdown: ".tr-text table" } },
-  { name: "widget", html: "mermaid.html", steps: widgetSteps, expect: { card: ".html-widget", frame: ".html-widget iframe" } },
+  { name: "widget", html: "mermaid.html", steps: widgetSteps, whatsNew: { file: "0.21.0-widget.png", clip: (page) => [page.locator(".tr-user").last(), page.locator(".html-widget")] }, expect: { card: ".html-widget", frame: ".html-widget iframe" } },
   { name: "mermaid", html: "mermaid.html", steps: mermaidSteps, expect: { diagrams: ".mermaid-diagram:not([hidden]) svg", toggle: ".mermaid-toggle:not([hidden])", error: ".mermaid-error:not([hidden])", fallback: ".mermaid-block[data-state=error] .code-block" } },
   { name: "settings", ...CENTER_PAGE, tab: "settings", messages: () => [settingsMessage()], expect: { groups: ".setting-group", settings: ".setting" } },
   { name: "search", ...CHAT_PAGE, fixture: "chat", steps: argusSearchSteps, whatsNew: { file: "0.20.0-search.png", clip: (page) => [page.locator(".argus-search-box")] }, expect: { box: ".argus-search-box", groups: ".argus-search-group", rows: ".argus-search-row", selected: ".argus-search-row.selected", marks: ".argus-search mark" } },
