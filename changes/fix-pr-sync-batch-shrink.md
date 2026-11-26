@@ -1,0 +1,2 @@
+- Fix PR chips not updating once many PRs are linked: when GitHub times out on a batch of PRs, Argus retries in smaller batches.
+- Refreshing PRs skips merged PRs and PRs in archived sessions. Closed PRs are still checked, since they can be reopened.

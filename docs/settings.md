@@ -14,7 +14,7 @@ Every Argus setting, as it appears in VS Code's Settings and on the Control Cent
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `argus.sessions.prRefreshMinutes` | `1` | How often PR states refresh in the background, for session cards. |
+| `argus.sessions.prRefreshMinutes` | `1` | How often PR states refresh in the background, for session cards. Merged PRs and PRs in archived sessions are skipped. |
 | `argus.sessions.retentionDays` | `30` | Session record files for sessions that are no longer open are deleted once they have not been updated for this many days. |
 | `argus.sessions.scope` | `"window"` | Which sessions this VS Code window shows. Set it in Workspace settings to choose per window. With no folder open, all sessions are shown.<br>`window`: Only show sessions whose folder, or git repo and worktrees, belongs to this window's workspace folders.<br>`folder`: Only show sessions whose folder (or a linked worktree) is inside this window's workspace folders; other folders of the same git repo are left out.<br>`all`: Show every Claude Code session on this machine in every window. |
 

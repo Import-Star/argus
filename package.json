@@ -186,7 +186,7 @@
           "type": "number",
           "default": 1,
           "minimum": 1,
-          "description": "How often PR states refresh in the background, for session cards."
+          "description": "How often PR states refresh in the background, for session cards. Merged PRs and PRs in archived sessions are skipped."
         },
         "argus.sessions.retentionDays": {
           "type": "number",

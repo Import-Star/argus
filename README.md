@@ -316,7 +316,7 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | Setting | Default | Description |
 | --- | --- | --- |
 | `argus.sessions.scope` | `window` | `window` shows this window's sessions, including other folders of the same git repo; `folder` shows only sessions inside this window's folders (set it in Workspace settings for a per-window choice); `all` shows every session on this machine. |
-| `argus.sessions.prRefreshMinutes` | `1` | How often PR states refresh in the background, for session cards. |
+| `argus.sessions.prRefreshMinutes` | `1` | How often PR states refresh in the background, for session cards. Merged PRs and PRs in archived sessions are skipped. |
 | `argus.sessions.retentionDays` | `30` | Session record files are deleted this many days after the session is no longer open. |
 | `argus.keepAwake.mode` | `off` | `on` keeps this machine from sleeping until you turn it off; `auto` only while a session in this window is working or scheduled, and for 2 minutes after. When it isn't `off`, an **Awake** button in the chat header switches it; **Argus: Keep Machine Awake…** does too. A **☕ Awake** status bar item shows while it's holding. Closing the lid still sleeps the machine. Replaces `argus.keepAwake.whileAgentsRun` (`true` there still means `auto` until you pick a mode). |
 | `argus.keepAwake.keepScreenOn` | `true` | Keep the screen on as well. Windows laptops with Modern Standby sleep once the screen turns off, so leave this on there. |
