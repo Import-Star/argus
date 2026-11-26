@@ -197,8 +197,10 @@ export class SessionStore implements vscode.Disposable {
 
   public async refreshPrs(): Promise<void> {
     const urls = new Set<string>();
-    for (const record of this.readRecords()) {
-      for (const url of record.prs) {
+    const { archived } = this.readBoardState();
+    for (const record of this.readRecords().filter((record) => !isArchivedManually(record, archived[record.sessionId]))) {
+      // A merged PR can't change, but a closed one can be reopened.
+      for (const url of record.prs.filter((url) => this.prByUrl.get(url)?.state !== "MERGED")) {
         urls.add(url);
       }
     }
