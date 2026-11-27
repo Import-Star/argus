@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { findClaude, installerShell, isOlder, parseVersion, releaseUrl } from "../src/services/claudeCli.ts";
+import { commandShell, findClaude, installerShell, isOlder, parseVersion, releaseUrl } from "../src/services/claudeCli.ts";
 
 const nowhere = () => undefined;
 
@@ -29,6 +29,28 @@ describe("findClaude", () => {
   });
   it("finds nothing when Claude Code isn't installed", () => {
     assert.equal(findClaude("", "linux", nowhere, () => false, "/home/me"), undefined);
+  });
+  it("passes over a configured .cmd on Windows, which can't be started without a shell, for claude.exe", () => {
+    assert.equal(findClaude("C:\\npm\\claude.cmd", "win32", () => "C:\\bin\\claude.exe", () => true), "C:\\bin\\claude.exe");
+    assert.equal(findClaude("C:\\npm\\claude.cmd", "win32", nowhere, () => false, "C:\\Users\\me"), undefined);
+  });
+});
+
+describe("commandShell", () => {
+  const files = (...paths: string[]) => (file: string) => paths.includes(file);
+  it("uses $SHELL off Windows", () => {
+    assert.equal(commandShell({ SHELL: "/bin/zsh" }, "darwin"), "/bin/zsh");
+    assert.equal(commandShell({}, "linux"), true);
+  });
+  it("finds Git Bash next to the Git on PATH, not WSL's bash", () => {
+    const bash = "C:\\Program Files\\Git\\bin\\bash.exe";
+    assert.equal(commandShell({}, "win32", () => "C:\\Program Files\\Git\\cmd\\git.exe", files(bash, "C:\\Windows\\System32\\bash.exe")), bash);
+    assert.equal(commandShell({}, "win32", () => "C:\\Program Files\\Git\\mingw64\\bin\\git.exe", files(bash)), bash);
+  });
+  it("prefers CLAUDE_CODE_GIT_BASH_PATH, and takes a SHELL only when it is a Windows file", () => {
+    const mine = "D:\\Git\\bin\\bash.exe";
+    assert.equal(commandShell({ CLAUDE_CODE_GIT_BASH_PATH: mine }, "win32", nowhere, files(mine)), mine);
+    assert.equal(commandShell({ SHELL: "/usr/bin/bash" }, "win32", nowhere, () => false), true);
   });
 });
 

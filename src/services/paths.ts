@@ -9,6 +9,46 @@ export function pathKey(folder: string): string {
   return process.platform === "win32" || process.platform === "darwin" ? resolved.toLowerCase() : resolved;
 }
 
+// A Windows folder with its drive letter upper case, as terminals and git spell it. VS Code passes `c:\...`, and
+// Claude Code keeps per-folder settings (trust, MCP servers) in ~/.claude.json under the spelling it was started
+// with, so `c:/...` would miss what a terminal session set up under `C:/...`.
+export function terminalSpelling(folder: string, platform: NodeJS.Platform = process.platform): string {
+  return platform === "win32" ? folder.replace(/^([a-z]):/, (_, drive: string) => `${drive.toUpperCase()}:`) : folder;
+}
+
+// The repo and worktree names a card shows for a session's folder: `<repo>/.worktrees/<name>`, `<repo>/worktrees/<name>`
+// and Claude Code's `<repo>/.claude/worktrees/<name>` are worktrees, anything else is a repo named after its folder.
+export function describeCwd(cwd: string, platform: NodeJS.Platform = process.platform): { repo: string; worktree?: string } {
+  // Windows takes `/` too, as in a cwd a terminal or tool reported as `C:/...`.
+  const parts = cwd.split(platform === "win32" ? /[\\/]/ : "/").filter(Boolean);
+  const index = parts.findIndex((part, i) => (part === "worktrees" || part === ".worktrees") && i > 0 && i < parts.length - 1);
+  if (index > 0) {
+    const repo = parts[index - 1] === ".claude" ? parts[index - 2] : parts[index - 1];
+    if (repo) {
+      return { repo, worktree: parts[index + 1] };
+    }
+  }
+  return { repo: parts[parts.length - 1] ?? cwd };
+}
+
+// Renames `tmp` over `target`, retrying while another process has the target open: on Windows the rename fails then
+// (EPERM), and the hook and the board read session files all the time. Removes `tmp` if it gives up.
+export function replaceFileSync(tmp: string, target: string, attempts = 10): void {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      fs.renameSync(tmp, target);
+      return;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (attempt >= attempts || (code !== "EPERM" && code !== "EACCES" && code !== "EBUSY")) {
+        fs.rmSync(tmp, { force: true });
+        throw error;
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
+    }
+  }
+}
+
 // The folders without case or separator variants of one another, keeping the first spelling of each.
 export function uniquePaths(folders: readonly string[]): string[] {
   const seen = new Set<string>();

@@ -133,7 +133,8 @@ export function parseDiff(text: string): DiffFile[] {
     let oldNo = 0;
     let newNo = 0;
     for (; i < lines.length; i++) {
-      const line = lines[i];
+      // A file committed with CRLF line ends keeps the CR on each line; the review shows and quotes text only.
+      const line = lines[i].replace(/\r$/, "");
       const header = line.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
       if (header) {
         hunk = { header: line, lines: [] };

@@ -5,6 +5,10 @@ import * as os from "os";
 import * as path from "path";
 import type { ShellRun } from "../../src/chat/protocol";
 import { shellMessage } from "../../src/chat/conversationText";
+import { commandShell } from "../../src/services/claudeCli";
+
+// Looked up once: on Windows it runs `where git.exe`.
+let shell: string | true | undefined;
 
 const MAX_KEPT = 1_000_000;
 const EMIT_EVERY_MS = 100;
@@ -37,7 +41,8 @@ export class ShellRunner {
 
   public run(command: string): void {
     // Its own process group on Unix, so Stop also ends what the command started, e.g. the tests under `npm test`.
-    const child = spawn(command, { cwd: this.backend.cwd, shell: process.env.SHELL || true, detached: process.platform !== "win32", env: process.env });
+    shell ??= commandShell();
+    const child = spawn(command, { cwd: this.backend.cwd, shell, detached: process.platform !== "win32", windowsHide: true, env: process.env });
     const run: Run = { id: randomUUID(), command, output: "", status: "running", stdout: "", stderr: "", child };
     this.runs.push(run);
     child.stdout?.on("data", (chunk: Buffer) => this.append(run, "stdout", chunk.toString()));
@@ -126,13 +131,16 @@ function kill(child: ChildProcess): void {
 
 // Files and folders that complete the last path token, written the way the user started it.
 export async function pathSuggestions(cwd: string, token: string): Promise<string[]> {
-  const head = token.slice(0, token.lastIndexOf("/") + 1);
+  // Windows paths can use `\` too; a folder then ends in the separator the user typed last.
+  const slash = process.platform === "win32" ? Math.max(token.lastIndexOf("/"), token.lastIndexOf("\\")) : token.lastIndexOf("/");
+  const head = token.slice(0, slash + 1);
   const prefix = token.slice(head.length);
-  const dir = head.startsWith("~/") ? path.join(os.homedir(), head.slice(2)) : path.resolve(cwd, head || ".");
+  const separator = head.endsWith("\\") ? "\\" : "/";
+  const dir = head.startsWith("~/") || (separator === "\\" && head.startsWith("~\\")) ?path.join(os.homedir(), head.slice(2)) : path.resolve(cwd, head || ".");
   const entries = await fs.promises.readdir(dir, { withFileTypes: true }).catch(() => []);
   return entries
     .filter((entry) => entry.name.startsWith(prefix) && (prefix.startsWith(".") || !entry.name.startsWith(".")))
-    .map((entry) => `${head}${entry.name}${entry.isDirectory() ? "/" : ""}`)
+    .map((entry) => `${head}${entry.name}${entry.isDirectory() ? separator : ""}`)
     .sort()
     .slice(0, 50);
 }

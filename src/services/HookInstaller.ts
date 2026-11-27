@@ -106,7 +106,19 @@ function copyScript(source: string, dir: string, version: string): void {
   const target = path.join(dir, SCRIPT);
   const temp = `${target}.${process.pid}.tmp`;
   fs.copyFileSync(source, temp);
-  fs.renameSync(temp, target);
+  // On Windows the rename fails (EPERM) while a hook has the script open; retry as replaceFileSync in paths.ts does.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      fs.renameSync(temp, target);
+      break;
+    } catch (error) {
+      if (attempt >= 10 || !["EPERM", "EACCES", "EBUSY"].includes((error as NodeJS.ErrnoException).code ?? "")) {
+        fs.rmSync(temp, { force: true });
+        throw error;
+      }
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 20);
+    }
+  }
   // An earlier build ran a compiled copy of the script; drop it.
   fs.rmSync(path.join(dir, "session-tracker.js"), { force: true });
   // Marks the hook as an ES module so Node skips the slow "detect module syntax" reparse and its warning. The version

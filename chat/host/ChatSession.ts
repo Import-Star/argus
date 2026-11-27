@@ -5,6 +5,7 @@ import type { DaemonFrame, NewAgentRequest, OpenOptions, SessionMethod, SessionS
 import type { Panel } from "../../src/chat/panels";
 import type { McpStatus } from "../../src/chat/panels/mcp";
 import type { ChatMeta, EffortLevel, HostMessage, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, QueuedMessage, ShellRun } from "../../src/chat/protocol";
+import { terminalSpelling } from "../../src/services/paths";
 import { ConnectionLostError, type DaemonClient } from "./daemonClient";
 import type { QueueAction } from "./messageQueue";
 import { refreshPanel } from "./panels";
@@ -66,7 +67,7 @@ export class ChatSession implements vscode.Disposable {
     this.state = {
       meta: {
         sessionId: this.sessionId,
-        cwd: options.cwd,
+        cwd: terminalSpelling(options.cwd),
         title: options.title,
         status: "starting",
         statusSince: now,
@@ -297,6 +298,7 @@ export class ChatSession implements vscode.Disposable {
     const config = vscode.workspace.getConfiguration("argus.chat");
     return {
       ...rest,
+      cwd: meta.cwd,
       sessionId: this.sessionId,
       resume,
       title: meta.title,

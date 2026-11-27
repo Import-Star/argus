@@ -67,7 +67,8 @@ A sidebar view (the Argus icon in the activity bar) groups your Claude Code sess
 - Open a session from its card: it opens in Argus chat, resuming the session.
 - Under each session, the sidebar lists its worktrees and its Docker Compose projects, with a green light when a
   project has a running container. The chat's Details pane shows the same projects. Docker is checked every 10
-  seconds while the VS Code window has focus.
+  seconds while the VS Code window has focus. On Windows with Docker Engine inside WSL rather than on PATH, set
+  `argus.docker.wslDistro` to the distro's name.
 - Each VS Code window shows only its own sessions: those started in the window's workspace folders, or in any
   checkout or worktree of the same git repo. Set `argus.sessions.scope` to `folder` in a window's Workspace
   settings to show only that window's folders (not the rest of its repo), or `all` to see every session in every
@@ -156,7 +157,7 @@ processes and everything they started, such as background commands. Its log is `
   slash commands, and paste or drop files to attach them. Type `#` to pick another session on the board; it's
   added as `#"<name>"`, the name Claude uses to message it when it's running, or its title when it isn't.
 - Start a message with `!` to run a shell command yourself, as in Claude Code's shell mode. It runs in the chat's
-  folder with your shell, without a permission prompt, and its output streams into the transcript. **Stop** (or Esc)
+  folder with your shell (Git Bash on Windows, as in Claude Code), without a permission prompt, and its output streams into the transcript. **Stop** (or Esc)
   ends it; **Background** (or Ctrl+B) lets you keep chatting while it runs. When it finishes, the command and output
   go to Claude, which replies to them. With Claude Code's `respondToBashCommands` set to `false`, the output waits
   and goes with your next message instead. Tab completes from earlier `!` commands in the same folder, and typing a
@@ -331,7 +332,8 @@ See [DEVELOPING.md](DEVELOPING.md#writing-a-plugin) for the API, the manifest an
 | `argus.whatsNew.showOnUpdate` | `true` | Open **What's New** once after Argus updates. |
 | `argus.usage.enabled` | `true` | Show Claude plan usage in the status bar. Turn off to stop reading the Claude Code sign-in. |
 | `argus.usage.refreshMinutes` | `5` | How often Claude plan usage refreshes in the background. |
-| `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then Homebrew's folders. |
+| `argus.chat.claudePath` | `""` | Path to the `claude` executable the chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, then Homebrew's folders. On Windows, `claude.exe`: a `.cmd` can't be started. |
+| `argus.docker.wslDistro` | `""` | Windows only: the WSL distro whose Docker Engine runs your Compose projects, when Docker isn't on the Windows PATH. |
 | `argus.chat.askForFolder` | `false` | In a window with several workspace folders, ask which folder each new chat starts in. Off: the first folder. |
 | `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (tool calls hidden). Each chat remembers its own toggle. |
 | `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name (`Haiku 4.5`) or id. A chat's current model stays listed. |

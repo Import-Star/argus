@@ -1,8 +1,10 @@
 import { execFile } from "child_process";
+import * as fs from "fs";
 import * as path from "path";
 import { promisify } from "util";
 import * as vscode from "vscode";
 import { CleanupItem, SessionCard } from "../types";
+import { wslDistro } from "./ComposeMonitor";
 import { composeProjects, ownsProject, removeComposeProject } from "./composeStacks";
 import { output } from "./log";
 import { pathKey, uniquePaths } from "./paths";
@@ -58,7 +60,23 @@ async function removeWorktree(folder: string, force: boolean): Promise<string | 
     const { stdout } = await execFileAsync("git", ["-C", folder, "rev-parse", "--path-format=absolute", "--git-common-dir"]);
     const repo = path.dirname(stdout.trim());
     // Double --force also removes worktrees with uncommitted changes or a lock.
-    await execFileAsync("git", ["-C", repo, "worktree", "remove", ...(force ? ["--force", "--force"] : []), folder]);
+    try {
+      await execFileAsync("git", ["-C", repo, "worktree", "remove", ...(force ? ["--force", "--force"] : []), folder]);
+    } catch (error) {
+      // On Windows git deletes the worktree's `.git` and unregisters it, then stops at a file or folder another
+      // process still holds (a chat just stopped, a terminal or dev server inside it), leaving the folder. Once git
+      // has let go of it, finish the delete, retrying while the holder exits.
+      const listed = (await execFileAsync("git", ["-C", repo, "worktree", "list", "--porcelain"])).stdout;
+      const stillListed = listed.split(/\r?\n/).some((line) => line.startsWith("worktree ") && pathKey(line.slice(9)) === pathKey(folder));
+      if (stillListed || fs.existsSync(path.join(folder, ".git"))) {
+        throw error;
+      }
+      try {
+        await fs.promises.rm(folder, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+      } catch (rmError) {
+        throw Object.assign(new Error(`git removed the worktree but its folder is still in use, delete it once it's free: ${folder}`), { cause: rmError });
+      }
+    }
     return undefined;
   } catch (error) {
     return `${path.basename(folder)}: ${(error as { stderr?: string }).stderr?.trim() || String(error)}`;
@@ -110,12 +128,13 @@ async function archiveCards(sessions: SessionStore, cleanup: ArchiveCleanupRegis
   const sharedWith = new Set(others.flatMap((other) => other.record.worktrees ?? []).map(pathKey));
   const worktrees = uniquePaths(cards.flatMap((card) => card.record.worktrees ?? [])).filter((folder) => !sharedWith.has(pathKey(folder)));
   const mayHaveStacks = cards.some((card) => card.record.composeStacks?.length || card.record.worktrees?.length);
-  const stacks = (mayHaveStacks ? await composeProjects() : []).filter(
+  const distro = wslDistro();
+  const stacks = (mayHaveStacks ? await composeProjects(distro) : []).filter(
     (project) => cards.some((card) => ownsProject(card.record, project)) && !others.some((other) => ownsProject(other.record, project))
   );
   const cleanupItems: CleanupItem[] = [
     ...pluginItems,
-    ...stacks.map((project) => ({ label: `Remove Docker Compose project and its volumes: ${project.name} (${project.dir})`, run: () => removeComposeProject(project.name) }))
+    ...stacks.map((project) => ({ label: `Remove Docker Compose project and its volumes: ${project.name} (${project.dir})`, run: () => removeComposeProject(project.name, distro) }))
   ];
 
   if (cleanupItems.length > 0 || worktrees.length > 0) {

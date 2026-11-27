@@ -12,7 +12,9 @@ their own as session state changes.
 Under each session, the sidebar lists the worktrees it made and its Docker Compose projects: the ones it started
 with `docker compose up`, `run` or `create`, and the ones running from its worktrees. A green light means the
 project has a running container, an empty circle that its containers are all stopped. The chat's Details pane shows
-the same projects. Argus checks Docker every 10 seconds while the VS Code window has focus.
+the same projects. Argus checks Docker every 10 seconds while the VS Code window has focus. On Windows, when Docker
+Engine runs inside WSL rather than on the Windows PATH, set `argus.docker.wslDistro` to the distro's name (for
+example `Ubuntu`): Argus then runs `wsl.exe -d <distro> -- docker` and maps its `/mnt/c/...` folders to `C:\...`.
 
 | Column | What's in it |
 |---|---|

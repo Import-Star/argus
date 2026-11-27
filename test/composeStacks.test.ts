@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import * as path from "node:path";
 import { describe, it } from "node:test";
 import type { SessionRecord } from "../src/types.ts";
-import { ownsProject } from "../src/services/composeStacks.ts";
+import { fromWsl, ownsProject } from "../src/services/composeStacks.ts";
+
+describe("fromWsl", () => {
+  it("maps a WSL /mnt path to its Windows folder, and leaves the distro's own folders", () => {
+    assert.equal(fromWsl("/mnt/c/Users/me/repo"), "C:\\Users\\me\\repo");
+    assert.equal(fromWsl("/mnt/d"), "D:\\");
+    assert.equal(fromWsl("/home/me/repo"), "/home/me/repo");
+  });
+});
 
 const root = path.resolve("/work");
 const record = (fields: Partial<SessionRecord>): SessionRecord => ({ sessionId: "s1", cwd: root, startedAt: 0, updatedAt: 0, stateSince: 0, state: "idle", prs: [], ...fields });
