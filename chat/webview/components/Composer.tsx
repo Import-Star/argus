@@ -418,7 +418,7 @@ export function Composer({ sessionId, compact }: { sessionId: string; compact?: 
           <div class="cmp-chips">
             {chips.map((file) => (
               <span class="cmp-chip mono" key={file}>
-                {file.split("/").pop()}
+                {file.split(/[\\/]/).pop()}
                 <button type="button" class="ghost" aria-label={`Remove ${file}`} onClick={() => removeFile(file)}>
                   ×
                 </button>

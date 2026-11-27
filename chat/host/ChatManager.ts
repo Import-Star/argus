@@ -11,6 +11,7 @@ import type { NewAgentRequest } from "../../src/chat/daemonProtocol";
 import type { CardInfo, ChatGroup, ChatStatus, EffortLevel, PermissionDecision, PermissionMode, PermissionRequest, PlanUsage, RailSession } from "../../src/chat/protocol";
 import { findClaude } from "../../src/services/claudeCli";
 import { configuredClaude, promptMissingClaude } from "../../src/services/claudeSetup";
+import { pathKey, uniquePaths } from "../../src/services/paths";
 import { BranchCache } from "./branchCache";
 import { ChatPanel } from "./ChatPanel";
 import { hasTranscript, readPanelState } from "./restore";
@@ -246,14 +247,21 @@ export class ChatManager implements vscode.Disposable {
     this.sessions.get(sessionId)?.send(text);
   }
 
+  // Kept per folder under any spelling of it: on Windows a chat started in VS Code has `c:\...` and one from a
+  // terminal `C:\...`. The next command saved merges them into one entry.
   public shellHistory(cwd: string): string[] {
-    return this.context.globalState.get<Record<string, string[]>>(SHELL_HISTORY_KEY)?.[cwd] ?? [];
+    const all = this.context.globalState.get<Record<string, string[]>>(SHELL_HISTORY_KEY) ?? {};
+    const key = pathKey(cwd);
+    const commands = Object.entries(all).flatMap(([folder, entries]) => (pathKey(folder) === key ? entries : []));
+    return [...new Set(commands)].slice(0, SHELL_HISTORY_MAX);
   }
 
   public addShellHistory(cwd: string, command: string): void {
     const all = this.context.globalState.get<Record<string, string[]>>(SHELL_HISTORY_KEY) ?? {};
-    const commands = [command, ...(all[cwd] ?? []).filter((entry) => entry !== command)].slice(0, SHELL_HISTORY_MAX);
-    void this.context.globalState.update(SHELL_HISTORY_KEY, { ...all, [cwd]: commands });
+    const key = pathKey(cwd);
+    const others = Object.fromEntries(Object.entries(all).filter(([folder]) => pathKey(folder) !== key));
+    const commands = [command, ...this.shellHistory(cwd).filter((entry) => entry !== command)].slice(0, SHELL_HISTORY_MAX);
+    void this.context.globalState.update(SHELL_HISTORY_KEY, { ...others, [cwd]: commands });
   }
 
   public remember(sessionId: string, choice: Remembered): void {
@@ -494,7 +502,7 @@ export class ChatManager implements vscode.Disposable {
 
   private worktreesOf(record: { cwd: string; worktrees?: string[] }, cwdWorktree?: string): CardInfo["worktrees"] {
     const paths = [...(cwdWorktree ? [record.cwd] : []), ...(record.worktrees ?? [])];
-    return [...new Set(paths)].map((folder) => ({ name: path.basename(folder), path: folder, branch: this.branches.get(folder) }));
+    return uniquePaths(paths).map((folder) => ({ name: path.basename(folder), path: folder, branch: this.branches.get(folder) }));
   }
 
   public worktreePath(sessionId: string, folder?: string): string | undefined {

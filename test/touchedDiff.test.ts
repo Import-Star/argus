@@ -4,7 +4,14 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { describe, it } from "node:test";
-import { loadTouchedDiff } from "../src/diffReview/git.ts";
+import { loadTouchedDiff, parseDiff } from "../src/diffReview/git.ts";
+
+describe("parseDiff", () => {
+  it("drops the CR of a file committed with CRLF line ends", () => {
+    const diff = "diff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n@@ -1,2 +1,2 @@\n one\r\n-two\r\n+TWO\r\n";
+    assert.deepEqual(parseDiff(diff)[0].hunks[0].lines.map((line) => line.text), ["one", "two", "TWO"]);
+  });
+});
 
 function repo(dir: string, files: Record<string, string>): void {
   fs.mkdirSync(dir, { recursive: true });

@@ -9,13 +9,16 @@ export function parseScope(value: unknown): SessionScope {
   return value === "folder" || value === "all" ? value : "window";
 }
 
+// The same key as pathKey in paths.ts. Tested modules each stand alone: `node --test` loads them as written,
+// where an import without its `.ts` extension would not resolve.
 export function normalize(folder: string): string {
   const resolved = path.resolve(folder).replace(/[\/]+$/, "");
   return process.platform === "win32" || process.platform === "darwin" ? resolved.toLowerCase() : resolved;
 }
 
 function within(child: string, parent: string): boolean {
-  return child === parent || child.startsWith(parent + path.sep);
+  // A drive or file system root already ends in a separator.
+  return child === parent || child.startsWith(parent.endsWith(path.sep) ? parent : parent + path.sep);
 }
 
 // Builds a predicate for "does this session belong to the folders open in this VS Code window".

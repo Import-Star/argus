@@ -25,7 +25,7 @@ export function sessionArtifacts(messages: SDKMessage[]): SessionArtifact[] {
       if (block.type === "tool_use" && block.name === "Artifact") {
         const input = block.input as { action?: string; asset?: boolean; url?: string; title?: string; file_path?: string };
         if ((input.action ?? "publish") === "publish" && !input.asset) {
-          const title = input.title || input.file_path?.split("/").pop() || "Artifact";
+          const title = input.title || input.file_path?.split(/[\\/]/).pop() || "Artifact";
           publishes.set(block.id, { url: input.url, title });
         }
       } else if (block.type === "tool_result" && !block.is_error) {

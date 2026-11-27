@@ -8,7 +8,8 @@ import { output } from "./log";
 import { searchTerms, snippet } from "./search";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
 import { addToGroup, CardGroup, groupCards, GroupOf, pruneGroups, removeFromGroup } from "./sessionGroups";
-import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, seenReplies, withLiveChats } from "./sessionColumn";
+import { columnFor, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, seenReplies, withLiveChats } from "./sessionColumn";
+import { describeCwd, existingWorktrees, replaceFileSync } from "./paths";
 import { windowFilter } from "./windowScope";
 
 const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
@@ -244,7 +245,7 @@ export class SessionStore implements vscode.Disposable {
       record.titleSource ??= titleSource;
       const tmp = `${file}.${process.pid}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(record, null, 2));
-      fs.renameSync(tmp, file);
+      replaceFileSync(tmp, file);
     } catch (error) {
       output.appendLine(`Argus: could not save title for ${sessionId}: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -419,7 +420,7 @@ export class SessionStore implements vscode.Disposable {
     try {
       const tmp = `${PR_CACHE_FILE}.${process.pid}.tmp`;
       fs.writeFileSync(tmp, JSON.stringify(prs));
-      fs.renameSync(tmp, PR_CACHE_FILE);
+      replaceFileSync(tmp, PR_CACHE_FILE);
     } catch (error) {
       output.appendLine(`Argus: could not save PR cache: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -483,15 +484,6 @@ function isAlive(pid: number): boolean {
   } catch (error) {
     return (error as NodeJS.ErrnoException).code === "EPERM";
   }
-}
-
-export function describeCwd(cwd: string): { repo: string; worktree?: string } {
-  const parts = cwd.split(path.sep).filter(Boolean);
-  const worktreeIndex = parts.findIndex((part) => part === ".claude" || part === "worktrees" || part === ".worktrees");
-  if (worktreeIndex > 0 && worktreeIndex < parts.length - 1) {
-    return { repo: parts[worktreeIndex - 1], worktree: parts[parts.length - 1] };
-  }
-  return { repo: parts[parts.length - 1] ?? cwd };
 }
 
 export function formatElapsed(sinceMs: number, now = Date.now()): string {

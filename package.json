@@ -299,10 +299,15 @@
           "minimum": 0,
           "description": "Unchanged lines shown around each change in the diff review."
         },
+        "argus.docker.wslDistro": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Windows only: the WSL distro whose Docker Engine runs your Compose projects, e.g. `Ubuntu`, when Docker isn't on the Windows PATH. Argus then runs `wsl.exe -d <distro> -- docker` to list and remove a session's projects. Empty: `docker` on PATH."
+        },
         "argus.chat.claudePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, where Claude Code's installer puts it. **Argus: Install or Update Claude Code** installs it."
+          "markdownDescription": "Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, where Claude Code's installer puts it. On Windows it must be `claude.exe`: a `.cmd` such as npm's can't be started, so Argus looks for `claude.exe` instead. **Argus: Install or Update Claude Code** installs it."
         },
         "argus.chat.askForFolder": {
           "type": "boolean",

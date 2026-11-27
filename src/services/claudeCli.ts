@@ -21,8 +21,10 @@ export function findClaude(
   exists: (file: string) => boolean = fs.existsSync,
   home: string = os.homedir()
 ): string | undefined {
-  // A configured path that's gone counts as not installed, so the user is offered the installer.
-  if (configured) {
+  // A configured path that's gone counts as not installed, so the user is offered the installer. On Windows Node
+  // can't start a `.cmd` or `.bat` without a shell (spawn EINVAL), so npm's `claude.cmd` is passed over for a
+  // `claude.exe`.
+  if (configured && !(platform === "win32" && /\.(cmd|bat)$/i.test(configured))) {
     return exists(configured) ? configured : undefined;
   }
   const name = platform === "win32" ? "claude.exe" : "claude";
@@ -33,6 +35,26 @@ export function findClaude(
   const local = (platform === "win32" ? path.win32 : path.posix).join(home, ".local", "bin", name);
   const brew = platform === "win32" ? [] : ["/opt/homebrew/bin/claude", "/usr/local/bin/claude", "/home/linuxbrew/.linuxbrew/bin/claude"];
   return [local, ...brew].find((file) => exists(file));
+}
+
+// The shell `!` commands run in, like Claude Code's own. On Windows that is Git Bash: CLAUDE_CODE_GIT_BASH_PATH, a
+// SHELL that is a Windows path, or the bash.exe of the Git on PATH (`Git\cmd\git.exe` or `Git\mingw64\bin\git.exe`
+// next to `Git\bin\bash.exe`). Never WSL's `System32\bash.exe`. `true` (the platform default) when none is found.
+export function commandShell(
+  env: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  lookup: (name: string, platform: NodeJS.Platform) => string | undefined = onPath,
+  exists: (file: string) => boolean = fs.existsSync
+): string | true {
+  if (platform !== "win32") {
+    return env.SHELL || true;
+  }
+  const win = path.win32;
+  const git = lookup("git.exe", platform);
+  const besideGit = git ? [1, 2, 3].map((up) => win.join(win.dirname(git), ...Array<string>(up - 1).fill(".."), "bin", "bash.exe")) : [];
+  const programFiles = env.ProgramFiles ? [win.join(env.ProgramFiles, "Git", "bin", "bash.exe")] : [];
+  const candidates = [env.CLAUDE_CODE_GIT_BASH_PATH, env.SHELL, ...besideGit, ...programFiles];
+  return candidates.find((file): file is string => Boolean(file) && win.isAbsolute(file!) && exists(file!)) ?? true;
 }
 
 // Anthropic's native installer (https://code.claude.com/docs/en/setup), run in a shell that stays open afterwards so

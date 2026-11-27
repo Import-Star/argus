@@ -111,6 +111,29 @@ describe("session-tracker hook", () => {
     assert.deepEqual(record.worktrees, [fs.realpathSync(wt)]);
     assert.equal(record.pendingWorktrees, undefined);
   });
+  // VS Code passes the folder as `c:\...` while git prints `C:/...`; Windows ignores the difference.
+  const respelt = (folder: string) => (process.platform === "win32" ? folder.toLowerCase() : folder);
+  it("does not take a main checkout for a worktree from a subfolder spelt in another case", () => {
+    const { repo } = makeRepo();
+    fs.mkdirSync(path.join(repo, "sub"));
+    fire({ hook_event_name: "PostToolUse", cwd: respelt(path.join(repo, "sub")), tool_name: "Bash", tool_input: { command: "ls" } });
+    assert.equal(saved().worktrees, undefined);
+  });
+  it("does not record a worktree again under another spelling", () => {
+    const { git } = makeRepo();
+    const wt = path.join(home, "wt");
+    git("worktree", "add", "-q", wt);
+    fs.mkdirSync(path.join(wt, "sub"));
+    fire({ hook_event_name: "PostToolUse", cwd: wt, tool_name: "Bash", tool_input: { command: "ls" } });
+    const file = path.join(home, ".claude", "argus", "sessions", "s1.json");
+    fs.writeFileSync(file, JSON.stringify({ ...saved(), worktrees: [respelt(wt)] }));
+    fire({ hook_event_name: "PostToolUse", cwd: respelt(path.join(wt, "sub")), tool_name: "Bash", tool_input: { command: "ls" } });
+    assert.deepEqual(saved().worktrees, [respelt(wt)]);
+  });
+  it("shows a file under the session's folder relative to it, whatever its spelling", () => {
+    fire({ hook_event_name: "PreToolUse", tool_name: "Read", tool_input: { file_path: respelt(path.join(home, "src", "a.ts")) } });
+    assert.equal(saved().lastTool, `Read(${path.join("src", "a.ts")})`);
+  });
   it("stops retrying a pending worktree after ten minutes", () => {
     fire({ hook_event_name: "PostToolUse", cwd: home, tool_name: "Bash", tool_input: { command: `git worktree add ${path.join(home, "never")}` } });
     const file = path.join(home, ".claude", "argus", "sessions", "s1.json");

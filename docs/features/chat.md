@@ -100,6 +100,7 @@ again": any web page could then start a chat with its own prompt.
 ## Finding Claude Code
 
 `argus.chat.claudePath` sets the `claude` executable. Empty: `claude` on your PATH, then `~/.local/bin`, where
-Claude Code's installer puts it. On startup and every 4 hours Argus compares `claude --version` with the newest
+Claude Code's installer puts it. On Windows it must be `claude.exe`: Node can't start a `.cmd` such as npm's
+`claude.cmd`, so Argus looks for `claude.exe` instead. On startup and every 4 hours Argus compares `claude --version` with the newest
 release on your `autoUpdatesChannel` and, once per release, says when it's out of date; **Update** (or **Argus:
 Install or Update Claude Code**) runs `claude update` in a terminal.

@@ -60,6 +60,10 @@ describe("sessionFilter", () => {
   it("matches folders case-insensitively on Windows and macOS", { skip: process.platform === "linux" }, () => {
     assert.equal(sessionFilter([argus], "folder", repoRoot)(session(argus.toUpperCase())), true);
   });
+
+  it("matches sessions under a folder that is a drive root", () => {
+    assert.equal(sessionFilter([path.parse(repo).root], "folder", repoRoot)(session(argus)), true);
+  });
 });
 
 describe("parseScope", () => {

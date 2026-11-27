@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
-import * as fs from "node:fs";
-import * as os from "node:os";
-import * as path from "node:path";
 import { describe, it } from "node:test";
 import type { PrSummary, SessionRecord } from "../src/types.ts";
-import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, type RegistryEntry, seenReplies } from "../src/services/sessionColumn.ts";
+import { columnFor, isArchivedManually, isInterrupted, type RegistryEntry, seenReplies } from "../src/services/sessionColumn.ts";
 
 const NOW = 1_000_000;
 
@@ -82,17 +79,6 @@ describe("columnFor", () => {
   it("keeps a session with every linked PR merged out of archived", () => {
     const pr = { url: "u", state: "MERGED" } as PrSummary;
     assert.equal(column(record({ prs: ["u"] }), { prs: [pr] }), "idle");
-  });
-});
-
-describe("existingWorktrees", () => {
-  it("drops worktree folders that no longer exist", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "argus-wt-"));
-    try {
-      assert.deepEqual(existingWorktrees([dir, path.join(dir, "gone")]), [dir]);
-    } finally {
-      fs.rmSync(dir, { recursive: true });
-    }
   });
 });
 

@@ -18,6 +18,12 @@ Every Argus setting, as it appears in VS Code's Settings and on the Control Cent
 | `argus.sessions.retentionDays` | `30` | Session record files for sessions that are no longer open are deleted once they have not been updated for this many days. |
 | `argus.sessions.scope` | `"window"` | Which sessions this VS Code window shows. Set it in Workspace settings to choose per window. With no folder open, all sessions are shown.<br>`window`: Only show sessions whose folder, or git repo and worktrees, belongs to this window's workspace folders.<br>`folder`: Only show sessions whose folder (or a linked worktree) is inside this window's workspace folders; other folders of the same git repo are left out.<br>`all`: Show every Claude Code session on this machine in every window. |
 
+## Docker
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `argus.docker.wslDistro` | `""` | Windows only: the WSL distro whose Docker Engine runs your Compose projects, e.g. `Ubuntu`, when Docker isn't on the Windows PATH. Argus then runs `wsl.exe -d <distro> -- docker` to list and remove a session's projects. Empty: `docker` on PATH. |
+
 ## Notifications
 
 | Setting | Default | Description |
@@ -34,7 +40,7 @@ Every Argus setting, as it appears in VS Code's Settings and on the Control Cent
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| `argus.chat.claudePath` | `""` | Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, where Claude Code's installer puts it. **Argus: Install or Update Claude Code** installs it. |
+| `argus.chat.claudePath` | `""` | Path to the `claude` executable Argus chat runs. Empty: `claude` on your PATH, then `~/.local/bin`, where Claude Code's installer puts it. On Windows it must be `claude.exe`: a `.cmd` such as npm's can't be started, so Argus looks for `claude.exe` instead. **Argus: Install or Update Claude Code** installs it. |
 | `argus.chat.askForFolder` | `false` | In a window with several workspace folders, ask which folder each new Argus chat starts in. Off: new chats start in the first workspace folder, like the Claude Code extension. |
 | `argus.chat.textOnlyDefault` | `false` | Open chats in Text only view (your messages and Claude's replies, tool calls hidden). The Text only button in a chat still switches it, and each chat remembers its own choice. |
 | `argus.chat.hiddenModels` | `[]` | Models to leave out of the chat's model picker, by name as shown (e.g. `Haiku 4.5`) or id (e.g. `claude-opus-4-6`, `haiku`). A chat's current model always stays listed. Applies to chats opened after the change. |

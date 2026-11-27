@@ -10,6 +10,7 @@ const code = (value) => `\`${JSON.stringify(value)}\``;
 
 const GROUPS = [
   ["argus.sessions.", "Sessions board"],
+  ["argus.docker.", "Docker"],
   ["argus.notifications", "Notifications"],
   ["argus.prs.", "Pull requests"],
   ["argus.chat.", "Chat"],

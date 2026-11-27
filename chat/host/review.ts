@@ -57,7 +57,7 @@ export async function fileDiff(session: ChatSession, scope: ChangeScope, file: s
 
 function lineText(cwd: string, file: string, line: number): string | undefined {
   try {
-    return readFileSync(path.resolve(cwd, file), "utf8").split("\n")[line - 1];
+    return readFileSync(path.resolve(cwd, file), "utf8").split(/\r?\n/)[line - 1];
   } catch {
     return undefined;
   }
