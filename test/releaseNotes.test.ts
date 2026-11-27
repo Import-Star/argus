@@ -95,8 +95,18 @@ describe("notesFor", () => {
 `);
     assert.deepEqual(notesFor(releases, "1.2.1"), {
       current: { version: "1.2.1", highlights: [{ text: "**Big thing.**" }], changes: [{ text: "Patch fix." }, { text: "Minor fix." }] },
+      missed: [],
       earlier: [releases[2]]
     });
     assert.deepEqual(notesFor(releases, "1.2.0").current?.changes, [{ text: "Minor fix." }]);
+  });
+  it("after an update, shows every release since the version it came from", () => {
+    const releases = parseChangelog(["3.0.1", "3.0.0", "2.10.0", "2.9.1", "2.9.0", "2.8.0"].map((version) => `## ${version}\n\n- In ${version}.\n`).join("\n"));
+    const notes = notesFor(releases, "3.0.1", "2.9.0");
+    assert.equal(notes.current?.version, "3.0.1");
+    assert.deepEqual(notes.missed.map((release) => release.version), ["3.0.1", "3.0.0", "2.10.0", "2.9.1"]);
+    assert.deepEqual(notes.earlier.map((release) => release.version), ["2.9.0", "2.8.0"]);
+    // An update within one minor version keeps the folded view.
+    assert.deepEqual(notesFor(releases, "3.0.1", "3.0.0").missed, []);
   });
 });

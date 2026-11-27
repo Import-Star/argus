@@ -64,9 +64,22 @@ export function versionToAnnounce(current: string, lastSeen: string | undefined,
   return lastSeen ? (lastSeen !== current ? current : undefined) : installedBefore ? current : undefined;
 }
 
+// Whether version `a` is newer than `b`, comparing X.Y.Z numerically.
+export function isNewer(a: string, b: string): boolean {
+  const [x, y] = [a, b].map((version) => version.split(".").map(Number));
+  for (let i = 0; i < 3; i++) {
+    if ((x[i] ?? 0) !== (y[i] ?? 0)) {
+      return (x[i] ?? 0) > (y[i] ?? 0);
+    }
+  }
+  return false;
+}
+
 // The notes to show for `version`, with the rest of its minor version folded in so 0.16.1 still shows 0.16.0's
-// highlights, then the releases before that minor version.
-export function notesFor(releases: Release[], version: string): { current?: Release; earlier: Release[] } {
+// highlights. After an update from `since` across minor versions, `missed` lists every release newer than `since`
+// one by one, newest first, so a jump from 0.19.0 to 0.22.0 also shows 0.21, 0.20 and 0.19.x; it is empty when the
+// update stayed within one minor version. `earlier` is the rest.
+export function notesFor(releases: Release[], version: string, since?: string): { current?: Release; missed: Release[]; earlier: Release[] } {
   const index = Math.max(0, releases.findIndex((release) => release.version === version));
   const minor = (release: Release) => release.version.split(".").slice(0, 2).join(".");
   let end = index + 1;
@@ -75,5 +88,8 @@ export function notesFor(releases: Release[], version: string): { current?: Rele
   }
   const line = releases.slice(index, end);
   const current = line.length ? { version: line[0].version, highlights: line.flatMap((release) => release.highlights), changes: line.flatMap((release) => release.changes) } : undefined;
-  return { current, earlier: releases.slice(end) };
+  const rest = releases.slice(end);
+  const missed = since ? rest.filter((release) => isNewer(release.version, since)) : [];
+  // With missed releases, each release since `since` is listed under its own version, current minor line included.
+  return { current, missed: missed.length ? [...line, ...missed] : [], earlier: rest.filter((release) => !missed.includes(release)) };
 }

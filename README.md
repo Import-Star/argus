@@ -47,7 +47,7 @@ glance, know which ones are waiting on you, and work with them in Argus's own ch
 2. On first install Argus opens its Welcome page, which shows whether session tracking is set up and how to add
    plugins. Click **Set Up Session Tracking** there, or run **Argus: Set Up Session Tracking** from the command
    palette (or click the link in the empty Sessions view). This installs the Claude Code hooks Argus needs; no sessions appear without it.
-   After later updates Argus opens **What's New** once, with that version's release notes.
+   After later updates Argus opens **What's New** once, with the notes of every release since the version you had.
 3. Start or resume a Claude Code session. It appears in the Argus sidebar after its first prompt. Sessions that
    were already open show up once they next fire a hook. To add earlier chats now, run **Argus: Import Existing
    Claude Chats**: it reads Claude Code's transcripts from the last `argus.sessions.retentionDays` days and adds
