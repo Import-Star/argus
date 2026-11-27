@@ -48,8 +48,9 @@ running there warns you first, since two processes would write to one transcript
   VS Code, or make network requests (`fetch`, XHR, WebSockets and remote images are blocked; images must be `data:`
   URLs). Scripts must be inline or load from `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `unpkg.com` or
   `cdn.tailwindcss.com`, and inline `onclick=` attributes don't run. A button in the widget can call
-  `argus.send(text)` to put text in the message box; you still press send. The widget uses your theme's `--vscode-*`
-  colours and font, grows up to 600px tall and scrolls past that. **Show source** shows its HTML.
+  `argus.send(text)` to put text in the message box, or `argus.send(text, { append: true })` to add it on a new
+  line after what's there; you still press send. Clicking a link in the widget opens it in
+  your browser. The widget uses your theme's `--vscode-*` colours and font, grows up to 600px tall and scrolls past that. **Show source** shows its HTML.
 
 ## Details pane
 

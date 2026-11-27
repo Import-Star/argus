@@ -3,7 +3,7 @@ import { MAX_WIDGET_HEIGHT, WIDGET_SCRIPT_HOSTS } from "../../../src/chat/protoc
 import { widgetSrcdoc } from "../htmlWidget";
 import { codeBlock } from "../markdown";
 import { nonce } from "../nonce";
-import { setUi } from "../store";
+import { post, setUi } from "../store";
 import type { Item } from "../transcript";
 import "./htmlWidget.css";
 
@@ -23,11 +23,14 @@ export function HtmlWidget({ item, sessionId }: { item: Extract<Item, { kind: "h
       if (!frame.current || event.source !== frame.current.contentWindow) {
         return;
       }
-      const data = event.data as { argusWidget?: string; height?: unknown; text?: unknown } | null;
+      const data = event.data as { argusWidget?: string; height?: unknown; text?: unknown; append?: unknown; url?: unknown } | null;
       if (data?.argusWidget === "height" && typeof data.height === "number") {
         setHeight(Math.min(data.height, MAX_WIDGET_HEIGHT));
       } else if (data?.argusWidget === "send" && typeof data.text === "string") {
-        setUi(sessionId, { draft: data.text });
+        const current = data.append === true ? (document.getElementById(`cmp-${sessionId}`) as HTMLTextAreaElement | null)?.value : "";
+        setUi(sessionId, { draft: current ? `${current}\n${data.text}` : data.text });
+      } else if (data?.argusWidget === "open" && typeof data.url === "string" && /^https?:/i.test(data.url)) {
+        post({ type: "openUrl", url: data.url });
       }
     };
     window.addEventListener("message", onMessage);

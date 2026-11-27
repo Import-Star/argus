@@ -194,7 +194,7 @@ processes and everything they started, such as background commands. Its log is `
 - Claude can show a small interactive widget (a slider, calculator, form or chart) as a card in the chat with its
   `show_html` tool. It runs in a sandboxed frame that can't reach the chat, your files or the network: scripts can
   only be inline or come from cdnjs.cloudflare.com, cdn.jsdelivr.net, unpkg.com or cdn.tailwindcss.com, and
-  images only from `data:` URLs. A widget can put text in the message box for you to send, but can't send it. **Show source** shows its HTML.
+  images only from `data:` URLs. A widget can put text in the message box for you to send, or add to what's there, but can't send it. Links in it open in your browser. **Show source** shows its HTML.
 - The details pane shows the latest plan (click to reopen it), plan usage, background shells, monitors and agents
   (with their output and a stop button), and the worktrees linked to the session.
 - A workflow or background agent opens in a side pane with its phases and agents. Click an agent for its result and
