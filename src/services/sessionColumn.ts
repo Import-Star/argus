@@ -1,4 +1,3 @@
-import * as fs from "fs";
 import type { PrSummary, SessionColumn, SessionRecord } from "../types";
 
 export interface RegistryEntry {
@@ -33,11 +32,6 @@ export function withLiveChats(registry: Map<string, RegistryEntry>, chats: reado
 // A prompt sent after archiving brings the session back.
 export function isArchivedManually(record: SessionRecord, archivedAt: number | undefined): boolean {
   return (archivedAt ?? -1) > (record.lastPromptAt ?? 0);
-}
-
-// Worktrees an agent already removed should drop off the card.
-export function existingWorktrees(worktrees: string[] | undefined): string[] | undefined {
-  return worktrees?.filter((folder) => fs.existsSync(folder));
 }
 
 // Claude Code fires no hook on Esc, so a turn that never reached Stop shows as "working" in our record. Once the

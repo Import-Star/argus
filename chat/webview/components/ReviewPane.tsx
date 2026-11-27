@@ -558,7 +558,7 @@ export function ReviewPane({ sessionId }: { sessionId: string }) {
       <section class="review" role="dialog" aria-modal="true" aria-label="Review changes" tabIndex={-1} ref={dialog}>
         <div class="review-head">
           <span class="review-title">Review changes</span>
-          {ui.worktree ? <span class="mono muted" title={ui.worktree}>{ui.worktree.split("/").pop()}</span> : meta?.branch && <span class="mono muted">{meta.branch}</span>}
+          {ui.worktree ? <span class="mono muted" title={ui.worktree}>{ui.worktree.split(/[\\/]/).pop()}</span> : meta?.branch && <span class="mono muted">{meta.branch}</span>}
           <div class="review-tabs" role="tablist" aria-label="Which changes">
             {tabs.map((item) => (
               <button type="button" key={item.scope} role="tab" aria-selected={item.scope === scope} onClick={() => setUi(sessionId, { reviewScope: item.scope })}>

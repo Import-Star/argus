@@ -148,16 +148,30 @@ function stripIdeTags(text: string): string {
   return text.replace(/<ide_[a-z_]+>[\s\S]*?<\/ide_[a-z_]+>/g, "").trim();
 }
 
+// Windows and macOS file systems ignore case, and one folder arrives spelt differently: VS Code passes `c:\...`
+// while git prints `C:/...`. Keep in step with pathKey in src/services/paths.ts.
+function pathKey(folder: string): string {
+  const resolved = path.resolve(folder);
+  return process.platform === "win32" || process.platform === "darwin" ? resolved.toLowerCase() : resolved;
+}
+
 // Linked worktree root for a folder, or undefined when the folder is a main checkout or not in git.
 function worktreeRoot(dir: string): string | undefined {
   try {
-    const out = execFileSync("git", ["-C", dir, "rev-parse", "--show-toplevel", "--git-dir", "--git-common-dir"], {
+    // From a subfolder git prints the common dir relative to the folder as given and the git dir absolute, so
+    // without absolute paths the two are spelt differently whenever the folder's case differs from the disk's.
+    const out = execFileSync("git", ["-C", dir, "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir"], {
       encoding: "utf8",
       timeout: 3000,
       stdio: ["ignore", "pipe", "ignore"]
     });
-    const [top, gitDir, commonDir] = out.trim().split("\n");
-    return path.resolve(dir, gitDir) === path.resolve(dir, commonDir) ? undefined : path.resolve(top);
+    const lines = out.trim().split(/\r?\n/);
+    // Git before 2.31 echoes the unknown --path-format back as an extra line.
+    if (lines.length !== 3) {
+      return undefined;
+    }
+    const [top, gitDir, commonDir] = lines;
+    return pathKey(gitDir) === pathKey(commonDir) ? undefined : path.resolve(top);
   } catch {
     return undefined;
   }
@@ -165,7 +179,7 @@ function worktreeRoot(dir: string): string | undefined {
 
 function linkWorktree(record: SessionRecord, dir: string | undefined): boolean {
   const root = dir ? worktreeRoot(dir) : undefined;
-  if (root && !(record.worktrees ?? []).includes(root)) {
+  if (root && !(record.worktrees ?? []).some((known) => pathKey(known) === pathKey(root))) {
     record.worktrees = [...(record.worktrees ?? []), root];
   }
   return Boolean(root);
@@ -245,7 +259,9 @@ function toolSummary(name: string, input: Record<string, unknown> | undefined): 
 
 function toolCall(name: string, input: Record<string, unknown> | undefined, cwd: string): string {
   const raw = String(input?.file_path ?? input?.command ?? input?.pattern ?? input?.url ?? input?.skill ?? input?.description ?? "");
-  const arg = raw.startsWith(`${cwd}/`) ? raw.slice(cwd.length + 1) : raw;
+  // Windows paths take either separator and ignore case, as in `C:\repo\a.ts` under a cwd of `c:\repo`.
+  const flat = (text: string) => (process.platform === "win32" ? text.replace(/\//g, "\\").toLowerCase() : text);
+  const arg = flat(raw).startsWith(`${flat(cwd)}${path.sep}`) ? raw.slice(cwd.length + 1) : raw;
   return clip(arg ? `${name}(${arg})` : name, 120);
 }
 
@@ -346,7 +362,7 @@ function apply(record: SessionRecord, input: HookInput, now: number): void {
       linkPendingWorktrees(record, now);
       const added = worktreeAddPath(command, input.cwd ?? record.cwd);
       if (added && !linkWorktree(record, added)) {
-        record.pendingWorktrees = [...(record.pendingWorktrees ?? []).filter((item) => item.path !== added), { path: added, since: now }];
+        record.pendingWorktrees = [...(record.pendingWorktrees ?? []).filter((item) => pathKey(item.path) !== pathKey(added)), { path: added, since: now }];
       }
       const stack = input.tool_name === "Bash" ? composeStack(command, input.cwd ?? record.cwd) : undefined;
       if (stack && !(record.composeStacks ?? []).some((known) => known.dir === stack.dir && known.project === stack.project)) {

@@ -8,7 +8,8 @@ import { output } from "./log";
 import { searchTerms, snippet } from "./search";
 import { TranscriptIndex, TranscriptRef } from "./TranscriptIndex";
 import { addToGroup, CardGroup, groupCards, GroupOf, pruneGroups, removeFromGroup } from "./sessionGroups";
-import { columnFor, existingWorktrees, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, seenReplies, withLiveChats } from "./sessionColumn";
+import { columnFor, isArchivedManually, isInterrupted, LiveChat, RegistryEntry, seenReplies, withLiveChats } from "./sessionColumn";
+import { existingWorktrees } from "./paths";
 import { windowFilter } from "./windowScope";
 
 const ARGUS_DIR = path.join(os.homedir(), ".claude", "argus");
@@ -486,7 +487,8 @@ function isAlive(pid: number): boolean {
 }
 
 export function describeCwd(cwd: string): { repo: string; worktree?: string } {
-  const parts = cwd.split(path.sep).filter(Boolean);
+  // Windows takes `/` too, as in a cwd a terminal or tool reported as `C:/...`.
+  const parts = cwd.split(process.platform === "win32" ? /[\\/]/ : "/").filter(Boolean);
   const worktreeIndex = parts.findIndex((part) => part === ".claude" || part === "worktrees" || part === ".worktrees");
   if (worktreeIndex > 0 && worktreeIndex < parts.length - 1) {
     return { repo: parts[worktreeIndex - 1], worktree: parts[parts.length - 1] };

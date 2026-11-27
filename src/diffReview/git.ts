@@ -170,7 +170,8 @@ async function untrackedFile(folder: string, rel: string): Promise<DiffFile> {
     file.binary = true;
     return file;
   }
-  const lines = content.toString("utf8").replace(/\n$/, "").split("\n");
+  // A Windows checkout (core.autocrlf) has CRLF line ends, which git diff leaves out.
+  const lines = content.toString("utf8").replace(/\r?\n$/, "").split(/\r?\n/);
   file.hunks.push({ header: `@@ -0,0 +1,${lines.length} @@`, lines: lines.map((text, index) => ({ type: "add", new: index + 1, text })) });
   file.additions = lines.length;
   return file;
@@ -232,7 +233,7 @@ export async function fileLines(folder: string, scope: Scope, rel: string): Prom
     scope === "committed" || scope === "staged"
       ? await git(folder, ["show", `${scope === "committed" ? "HEAD" : ""}:${rel}`])
       : await fs.readFile(path.join(folder, rel), "utf8");
-  return text.replace(/\n$/, "").split("\n");
+  return text.replace(/\r?\n$/, "").split(/\r?\n/);
 }
 
 // The repo a file or folder belongs to: a session's files can sit in a repo nested inside its folder, or outside it.

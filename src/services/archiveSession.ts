@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import { CleanupItem, SessionCard } from "../types";
 import { composeProjects, ownsProject, removeComposeProject } from "./composeStacks";
 import { output } from "./log";
+import { pathKey, uniquePaths } from "./paths";
 import { closeChatSession } from "./openSession";
 import { SessionStore } from "./SessionStore";
 
@@ -106,8 +107,8 @@ export async function archiveManyWithCleanup(sessions: SessionStore, cleanup: Ar
 async function archiveCards(sessions: SessionStore, cleanup: ArchiveCleanupRegistry, cards: SessionCard[], ids: Set<string>): Promise<void> {
   const pluginItems = (await Promise.all(cards.map((card) => cleanup.collect(card)))).flat();
   const others = sessions.getCards().filter((other) => !ids.has(other.record.sessionId) && other.column !== "archived");
-  const sharedWith = new Set(others.flatMap((other) => other.record.worktrees ?? []));
-  const worktrees = [...new Set(cards.flatMap((card) => card.record.worktrees ?? []))].filter((folder) => !sharedWith.has(folder));
+  const sharedWith = new Set(others.flatMap((other) => other.record.worktrees ?? []).map(pathKey));
+  const worktrees = uniquePaths(cards.flatMap((card) => card.record.worktrees ?? [])).filter((folder) => !sharedWith.has(pathKey(folder)));
   const mayHaveStacks = cards.some((card) => card.record.composeStacks?.length || card.record.worktrees?.length);
   const stacks = (mayHaveStacks ? await composeProjects() : []).filter(
     (project) => cards.some((card) => ownsProject(card.record, project)) && !others.some((other) => ownsProject(other.record, project))

@@ -39,7 +39,7 @@ function inside(dir: string, folder: string): boolean {
 // A session owns a project it started, or one running from inside one of its worktrees.
 export function ownsProject(record: SessionRecord, project: ComposeProject): boolean {
   return (
-    (record.composeStacks ?? []).some((stack) => (stack.project ? stack.project === project.name : path.resolve(stack.dir) === path.resolve(project.dir))) ||
+    (record.composeStacks ?? []).some((stack) => (stack.project ? stack.project === project.name : path.relative(stack.dir, project.dir) === "")) ||
     (record.worktrees ?? []).some((folder) => inside(project.dir, folder))
   );
 }
