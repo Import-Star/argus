@@ -81,6 +81,12 @@ async function widgetSteps(page) {
   await frame.locator("#out", { hasText: "°F" }).waitFor();
   await frame.locator("#pick").click();
   await page.waitForFunction(() => [...document.querySelectorAll("textarea")].some((box) => box.value.startsWith("Use 21 °C")));
+  const widget = page.frames().find((frame) => frame !== page.mainFrame());
+  await widget.evaluate(() => argus.send("and 30 °C", { append: true }));
+  await page.waitForFunction(() => [...document.querySelectorAll("textarea")].some((box) => box.value.endsWith("°F\nand 30 °C")), null, { timeout: 2000 });
+  await widget.evaluate(() => document.body.insertAdjacentHTML("beforeend", '<a href="https://example.com/docs">docs</a>'));
+  await frame.locator("a").click();
+  await page.waitForFunction(() => window.__posted.some((message) => message.type === "openUrl" && message.url === "https://example.com/docs"), null, { timeout: 2000 });
   // Remote images would let a widget send data out, so none of these may leave the frame.
   const leaks = [];
   page.on("requestfinished", (request) => request.url().startsWith("https://example.com/") && leaks.push(request.url()));
