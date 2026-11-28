@@ -2,6 +2,29 @@
 
 First public release.
 
+## 0.22.0
+
+### Highlights
+
+- **Catch up on every release you missed.** After an update, What's New shows the highlights and changes of every
+  release since the version you had, each under its own version.
+- **Better on Windows.** Your main checkout no longer shows as a worktree, Argus chats see the MCP servers and trust
+  you set up in a terminal, `!` commands run in Git Bash, and `argus.docker.wslDistro` shows Docker Compose projects
+  running inside WSL.
+
+### Changes
+
+- After an update, **What's New** shows every release since the version you had, not only the newest, with each release's changes under its version.
+- Fix a session's main checkout showing as a worktree on Windows, sometimes twice, when the session's folder was spelt in a different case than on disk (VS Code passes `c:\...`, git prints `C:/...`). Cards also drop such entries, and second spellings of one worktree, from existing sessions.
+- Fix Argus chats on Windows missing the MCP servers and folder trust set up from a terminal: chats now start in `C:\...` rather than VS Code's `c:\...`, the spelling Claude Code keeps those settings under.
+- Fix `!` commands running in cmd.exe on Windows: they run in Git Bash, as in Claude Code. Path completion takes `\` too.
+- Fix deleting a worktree on Windows leaving its folder behind when a process still had a file in it: Argus finishes the delete once the folder is free, or says which folder to delete.
+- Fix renaming a card and saving the PR cache failing on Windows while a hook had the file open.
+- Fix a `.cmd` in `argus.chat.claudePath` stopping the chat from starting on Windows: Argus looks for `claude.exe` instead.
+- Add `argus.docker.wslDistro`, so Docker Compose projects show and clean up on Windows when Docker Engine runs inside WSL.
+- Fix more Windows path handling: a card's activity line shows a file relative to the session's folder, `!` command history is shared between the `c:\...` and `C:\...` spellings of a folder, a Docker Compose project matches its session whatever the folder's spelling, the chat shows file and worktree names without their folders, review comments and diff lines no longer keep CRLF line ends, and the session scope works for a workspace folder at a drive root.
+- Fix a session in a folder under `.claude` (other than `.claude/worktrees`) showing as a worktree, and a session in a worktree's subfolder showing the subfolder as the worktree's name.
+
 ## 0.21.1
 
 - Links in chat widgets now use your theme's link colour and open in your browser instead of inside the widget. A
