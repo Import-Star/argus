@@ -226,8 +226,9 @@ export class ChatSession implements vscode.Disposable {
     return this.call("rewindFiles", userMessageId, dryRun);
   }
 
-  public relaunch(): void {
-    this.fireCall("relaunch");
+  // A new path makes the restart use that `claude`, e.g. after an update.
+  public relaunch(claudePath?: string): void {
+    this.fireCall("relaunch", claudePath);
   }
 
   public truncateTo(at: string, userMessageId: string, text: string): Promise<void> {

@@ -12,6 +12,7 @@ interface LocalCommand extends SlashItem {
 export const LOCAL_COMMANDS = [
   { name: "remote-control", aliases: ["rc"], description: "Continue this chat from claude.ai or the Claude app (on, off, or toggle)", argumentHint: "[on|off]" },
   { name: "chrome", description: "Let Claude control your browser through Claude in Chrome (on, off, toggle, or pick the browser)", argumentHint: "[on|off|browser]" },
+  { name: "restart", description: "Restart this chat's Claude process to pick up MCP config changes or a new Claude Code version", argumentHint: "", bareOnly: true },
   { name: "add-dir", description: "Give Claude access to another folder in this chat", argumentHint: "<folder>" },
   { name: "memory", description: "Open a CLAUDE.md memory file", argumentHint: "" },
   { name: "agents", description: "Open or create a subagent definition", argumentHint: "" },

@@ -8,6 +8,7 @@ import type { ChatSession } from "./ChatSession";
 import { runCliCommand } from "./cliCommands";
 import { openPanel } from "./panels";
 import { runPicker } from "./pickers";
+import { findClaude } from "../../src/services/claudeCli";
 
 const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
@@ -31,6 +32,8 @@ export async function runLocalCommand(manager: ChatManager, session: ChatSession
         return await remoteControl(session, args);
       case "chrome":
         return await chrome(manager, session, args);
+      case "restart":
+        return await restart(session);
       case "add-dir":
         return await addDir(session, args);
       case "memory":
@@ -122,6 +125,15 @@ async function pickBrowser(session: ChatSession): Promise<void> {
   if (picked) {
     await session.selectChromeBrowser(picked.id);
   }
+}
+
+// Looks up `claude` again so an updated install is used, then resumes the same session on a fresh process.
+async function restart(session: ChatSession): Promise<void> {
+  if (!(await canRestart(session, "/restart"))) {
+    return;
+  }
+  session.relaunch(findClaude(vscode.workspace.getConfiguration("argus.chat").get<string>("claudePath", "")));
+  void vscode.window.showInformationMessage("Argus: restarted Claude for this chat.");
 }
 
 async function addDir(session: ChatSession, args: string): Promise<void> {

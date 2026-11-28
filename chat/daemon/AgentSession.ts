@@ -502,7 +502,10 @@ export class AgentSession {
   }
 
   // Restarts the CLI on the same session with the current options. Remote Control comes back on if it was on.
-  public relaunch(): void {
+  public relaunch(claudePath?: string): void {
+    if (claudePath) {
+      this.options.claudePath = claudePath;
+    }
     const remote = Boolean(this.meta.remoteControlUrl);
     this.stopProcess();
     this.historyLoaded = undefined;

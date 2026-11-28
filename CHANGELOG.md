@@ -2,6 +2,11 @@
 
 First public release.
 
+## Unreleased
+
+- `/restart` in a chat restarts its Claude process on the same session, to pick up MCP config changes or a newly
+  installed Claude Code version.
+
 ## 0.22.0
 
 ### Highlights
