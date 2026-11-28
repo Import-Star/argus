@@ -168,6 +168,8 @@ processes and everything they started, such as background commands. Its log is `
   - `/chrome` lets Claude control your browser through Claude in Chrome, and `/chrome browser` picks which browser.
     The header shows **Chrome** while it's on. Each chat remembers its own choice. New chats follow Claude Code's
     `/chrome` **Enabled by default**.
+  - `/restart` restarts the chat\'s Claude process on the same session, picking up MCP config changes and a
+    newly installed Claude Code version.
   - `/add-dir` gives Claude another folder.
   - `/permissions` opens a panel to see, add and remove allow, ask and deny rules and folders across your settings files; `/hooks` lists the hooks set in them; `/memory` opens the `CLAUDE.md` file you pick, creating it if missing.
   - `/agents` opens a subagent file or makes a new one.
@@ -187,7 +189,7 @@ processes and everything they started, such as background commands. Its log is `
     Claude background service with Stop, Logs and Open config.
   - `/login`, `/logout` and `/plugin` open `claude` in a terminal.
 
-  `/chrome` and `/add-dir` restart the chat's Claude process: they wait for the turn to end, and ask first while
+  `/restart`, `/chrome` and `/add-dir` restart the chat's Claude process: they wait for the turn to end, and ask first while
   background tasks are running.
 - ` ```mermaid ` blocks in replies are drawn as diagrams in your theme's colours, with **Show source** to see the
   code. A block that doesn't parse stays as code, with the error above it. Mermaid loads the first time a reply has
