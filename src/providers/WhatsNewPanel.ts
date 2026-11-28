@@ -12,24 +12,30 @@ const EARLIER = 2;
 // Release notes from the bundled CHANGELOG.md. Opens once after Argus updates, then from "Argus: What's New".
 export class WhatsNewPanel implements vscode.Disposable {
   private panel?: vscode.WebviewPanel;
+  private since?: string;
 
   public constructor(private readonly context: vscode.ExtensionContext) {}
 
   // Call before the welcome page's first-run check: its flag tells an update from a first install.
   public showOnUpdate(): void {
     const version = this.context.extension.packageJSON.version as string;
-    const announce = versionToAnnounce(version, this.context.globalState.get<string>(SEEN_KEY), Boolean(this.context.globalState.get(WELCOME_SHOWN_KEY)));
+    const lastSeen = this.context.globalState.get<string>(SEEN_KEY);
+    const announce = versionToAnnounce(version, lastSeen, Boolean(this.context.globalState.get(WELCOME_SHOWN_KEY)));
     void this.context.globalState.update(SEEN_KEY, version);
     if (announce && vscode.workspace.getConfiguration("argus.whatsNew").get<boolean>("showOnUpdate", true) && this.releases().some((release) => release.version === announce)) {
-      this.show();
+      this.show(lastSeen);
     }
   }
 
-  public show(): void {
+  // `since`: the version Argus was updated from, whose later releases all show in full.
+  public show(since?: string): void {
     if (this.panel) {
+      this.since = since ?? this.since;
+      this.panel.webview.html = this.getHtml(this.panel.webview);
       this.panel.reveal(vscode.ViewColumn.One);
       return;
     }
+    this.since = since;
     this.panel = vscode.window.createWebviewPanel("argusWhatsNew", "What's New in Argus", vscode.ViewColumn.One, {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, "media")]
@@ -65,7 +71,7 @@ export class WhatsNewPanel implements vscode.Disposable {
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "styles.css"));
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, "media", "welcome.js"));
     const version = this.context.extension.packageJSON.version as string;
-    const { current, earlier: before } = notesFor(this.releases(), version);
+    const { current, missed, earlier: before } = notesFor(this.releases(), version, this.since);
     const items = (list: ReleaseItem[]) => `<ul>${list.map((item) => `<li>${inlineMarkdown(item.text)}</li>`).join("")}</ul>`;
     const picture = (item: ReleaseItem) => {
       if (!item.image) {
@@ -77,10 +83,19 @@ export class WhatsNewPanel implements vscode.Disposable {
       return `<img src="${webview.asWebviewUri(file)}" width="${width}" alt="${escapeHtml(item.image.alt)}" title="Click to see it full size" />`;
     };
 
-    const highlights = current?.highlights.length
-      ? `<section class="whatsnew-highlights">${current.highlights.map((item) => `<div class="welcome-step${item.image ? " has-image" : ""}"><div>${inlineMarkdown(item.text)}</div>${picture(item)}</div>`).join("")}</section>`
+    // Every release since the update's starting version, newest first: their highlights as cards, then each one's
+    // changes under its version.
+    const shown = missed.length ? missed : current ? [current] : [];
+    const allHighlights = shown.flatMap((release) => release.highlights);
+    const highlights = allHighlights.length
+      ? `<section class="whatsnew-highlights">${allHighlights.map((item) => `<div class="welcome-step${item.image ? " has-image" : ""}"><div>${inlineMarkdown(item.text)}</div>${picture(item)}</div>`).join("")}</section>`
       : "";
-    const changes = current?.changes.length ? `<section class="welcome-step"><h2>${current.highlights.length ? "Other changes" : "Changes"}</h2>${items(current.changes)}</section>` : "";
+    const changeTitle = (release: Release) => (missed.length ? `Changes in <span class="mono">${escapeHtml(release.version)}</span>` : release.highlights.length ? "Other changes" : "Changes");
+    const changes = shown
+      .filter((release) => release.changes.length)
+      .map((release) => `<section class="welcome-step"><h2>${changeTitle(release)}</h2>${items(release.changes)}</section>`)
+      .join("");
+    const title = missed.length && this.since ? `What's new since <span class="mono">${escapeHtml(this.since)}</span>` : `What's new in <span class="mono">${escapeHtml(current?.version ?? version)}</span>`;
     const earlier = before
       .slice(0, EARLIER)
       .map((release) => `<h3>${escapeHtml(release.version)}</h3>${items([...release.highlights, ...release.changes])}`)
@@ -98,7 +113,7 @@ export class WhatsNewPanel implements vscode.Disposable {
   <body class="welcome whatsnew">
     <header class="welcome-head">
       <div class="mark"><span>${MARK_SVG}</span>Argus</div>
-      <h1>What's new in <span class="mono">${escapeHtml(current?.version ?? version)}</span></h1>
+      <h1>${title}</h1>
     </header>
     ${highlights || changes ? `${highlights}${changes}` : `<p class="welcome-meta">No release notes for this version.</p>`}
     ${earlier ? `<details class="whatsnew-earlier"><summary>Earlier releases</summary>${earlier}</details>` : ""}

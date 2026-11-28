@@ -1,0 +1,1 @@
+- After an update, **What's New** shows every release since the version you had, not only the newest, with each release's changes under its version.
